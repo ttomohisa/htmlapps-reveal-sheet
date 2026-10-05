@@ -37,3 +37,30 @@ test('T08: explicit This question recenters an offscreen guided answer without a
   await page.locator('#revealCurrentButton').click();expect(await viewState(page)).toEqual(far);
   await page.locator('#focusQuestionButton').click();const focused=await viewState(page);expect(focused).not.toEqual(far);await expect(page.locator('#focusQuestionButton')).toBeHidden();
 });
+
+
+test('T08: language switch preserves guided view state and keeps the current answer closed',async({page})=>{
+  await openApp(page);await makeThree(page);await guided(page);
+  await page.locator('#viewZoomIn').click();await page.locator('#viewRight').click();const before=await viewState(page);
+  await expect(page.locator('#recalledButton')).toBeDisabled();
+  await page.locator('#languageButton').click();
+  expect(await viewState(page)).toEqual(before);
+  await expect(page.locator('#recalledButton')).toBeDisabled();
+  await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(3);
+});
+
+test('T08: page switch keeps the raw image and cover layer hidden until preview decode completes',async({page})=>{
+  await openApp(page);
+  await page.locator('#imageInput').setInputFiles([imagePath('static.png'),imagePath('static.jpg')]);
+  await expect(page.locator('#pageList button')).toHaveCount(2);await expect(page.locator('#previewImage')).toBeVisible();
+  await page.evaluate(()=>{
+    const image=document.querySelector('#previewImage'),original=image.decode.bind(image);
+    image.decode=()=>new Promise((resolve,reject)=>{window.releasePreviewDecode=()=>original().then(resolve,reject);});
+  });
+  await page.locator('#pageList button').first().click();
+  await expect.poll(()=>page.evaluate(()=>typeof window.releasePreviewDecode)).toBe('function');
+  await expect(page.locator('#previewImage')).toBeHidden();
+  await expect(page.locator('#maskSvg')).toBeHidden();
+  await page.evaluate(()=>window.releasePreviewDecode());
+  await expect(page.locator('#previewImage')).toBeVisible();
+});
