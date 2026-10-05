@@ -7,24 +7,57 @@ permissions:
   contents: read
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-      # Initial dependency-lock bootstrap only. Replace with npm ci once
-      # the resolver-generated lock is reviewed and committed in this PR.
-      - name: Resolve exact development packages
-        run: npm install --ignore-scripts --no-audit --no-fund
-      - name: Package reproducible test tooling
-        run: tar -czf development-tooling.tar.gz node_modules package-lock.json
+          cache: npm
+      - name: Install locked development packages
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Windows PowerShell syntax and assembly failures
+        shell: powershell
+        run: |
+          .\scripts\check-powershell-syntax.ps1
+          .\scripts\test-reveal-build.ps1
+      - name: Build and verify canonical artifacts
+        shell: pwsh
+        run: |
+          ./scripts/check-repository.ps1
+          ./scripts/test-reveal-build.ps1
+      - name: Unit tests
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force test-results | Out-Null
+          npm run test:unit 2>&1 | Tee-Object test-results/unit.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Install development Chromium
+        run: npx playwright install chromium
+      - name: Readable HTML direct-file tests
+        shell: pwsh
+        run: |
+          npm run test:e2e -- --project=chromium 2>&1 | Tee-Object test-results/readable.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Self-extracting HTML direct-file tests
+        shell: pwsh
+        env:
+          APP_VARIANT: self-extract
+        run: |
+          npm run test:e2e -- --project=chromium 2>&1 | Tee-Object test-results/self-extract.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Capture rendered UI and environment
+        run: node scripts/capture-qa.mjs
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
-          name: development-tooling
+          name: reveal-qa-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
-            development-tooling.tar.gz
-            package-lock.json
-          retention-days: 3
+            test-results/
+            dist/
+            reveal-sheet.html
+          retention-days: 14
           if-no-files-found: error

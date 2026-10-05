@@ -1,0 +1,17 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {loadFactory,testContext,toPlain} from '../helpers/load-factory.mjs';
+const fixture = name => new Uint8Array(fs.readFileSync('tests/fixtures/images/' + name));
+function setup() {const core=loadFactory('src/reveal/core.js','createRevealCore')(); const io=loadFactory('src/reveal/image-io.js','createImageIO')({core,env:{Blob,atob,btoa}});return {core,io};}
+for(const name of ['static.png','static.jpg','static.webp','lossy.webp','transparent.png','transparent.webp']){
+ test('T02: inspect static input '+name,()=>{const {io}=setup();const h=io.inspectHeader(fixture(name));assert.equal(h.width,120);assert.equal(h.height,80);assert.equal(h.orientation,1);});
+}
+for(let o=1;o<=8;o++) test('T02: EXIF orientation '+o+' inspected once',()=>{const {io}=setup();assert.equal(io.inspectHeader(fixture('orientation-'+o+'.jpg')).orientation,o);});
+for(const name of ['animated.png','animated.webp'])test('T02: reject animation '+name,()=>{const {io}=setup();assert.throws(()=>io.inspectHeader(fixture(name)),{code:'ANIMATED_IMAGE'});});
+for(const name of ['empty.png','truncated.png','truncated.jpg','truncated.webp','unsupported.gif','unsupported.svg'])test('T02: safely reject '+name,()=>{const {io}=setup();assert.throws(()=>io.inspectHeader(fixture(name)),e=>['UNSUPPORTED_IMAGE','DECODE_FAILED'].includes(e.code));});
+test('T02: header dimensions are bounded before decoding',()=>{const {io}=setup();assert.throws(()=>io.inspectHeader(fixture('oversize-header.png')),{code:'IMAGE_TOO_LARGE'});for(const [w,h,ok] of [[4000,4000,true],[8192,1,true],[1,8192,true],[8192,2000,false],[8193,1,false],[0,100,false],[NaN,1,false],[-1,1,false],[2.5,1,false]])assert.equal(io.checkDimensions(w,h).ok,ok,`${w} x ${h}`);});
+test('T02: MIME omitted is accepted; contradictory MIME is rejected',async()=>{const {io}=setup();const bytes=fixture('static.png');assert.equal((await io.inspectInput(new Blob([bytes]))).mime,'image/png');await assert.rejects(io.inspectInput(new Blob([bytes],{type:'image/jpeg'})),{code:'UNSUPPORTED_IMAGE'});});
+test('T02: byte limit checked before accessing bytes',async()=>{const {io}=setup();let read=false;await assert.rejects(io.inspectInput({size:20*1024**2+1,type:'image/png',arrayBuffer(){read=true;}}),{code:'IMAGE_TOO_LARGE'});assert.equal(read,false);});
+test('T02: addition preserves old document, ordering and normalized asset fields',()=>{const {core}=setup();const ctx=testContext();const old=core.newDocument(ctx);const asset={id:'a',mime:'image/png',width:120,height:80,byteLength:fixture('static.png').length,dataBase64:Buffer.from(fixture('static.png')).toString('base64')};const doc=core.appendAsset(old,asset,ctx,'ページ1');assert.equal(old.pages.length,0);assert.equal(doc.pages[0].imageId,'a');assert.equal(doc.pages[0].title,'ページ1');assert.deepEqual(toPlain(doc.assets[0]),asset);assert.equal(doc.revision,2);assert.equal('filename' in doc.assets[0],false);});
+test('T02: page limit refuses atomically',()=>{const {core}=setup();const ctx=testContext();let doc=core.newDocument(ctx);for(let n=0;n<30;n++)doc=core.appendAsset(doc,{id:'a'+n,mime:'image/png',width:1,height:1,byteLength:1,dataBase64:'AA=='},ctx,'Page');assert.throws(()=>core.appendAsset(doc,{id:'next',mime:'image/png',width:1,height:1,byteLength:1,dataBase64:'AA=='},ctx,'Page'),{code:'LIMIT_EXCEEDED'});assert.equal(doc.pages.length,30);});
