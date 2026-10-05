@@ -1,0 +1,30 @@
+name: Reveal Sheet application tests
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      # Initial dependency-lock bootstrap only. Replace with npm ci once
+      # the resolver-generated lock is reviewed and committed in this PR.
+      - name: Resolve exact development packages
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Package reproducible test tooling
+        run: tar -czf development-tooling.tar.gz node_modules package-lock.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: development-tooling
+          path: |
+            development-tooling.tar.gz
+            package-lock.json
+          retention-days: 3
+          if-no-files-found: error
