@@ -111,5 +111,104 @@ function createRevealCore() {
     for(const mask of doc.masks)result.set(mask.id,mask.kind==='auxiliary'||!open.has(mask.questionId));
     return result;
   }
-  return Object.freeze({limits,error,newDocument,appendAsset,normalizeRect,rectToPixels,applyCommand,startSession,toggleFree,hideAllFree,revealPageFree,summaryFree,visibilityFor});
+
+  function isPlainObject(value){return Boolean(value)&&typeof value==='object'&&!Array.isArray(value)&&(Object.getPrototypeOf(value)===Object.prototype||Object.getPrototypeOf(value)===null);}
+  function exactKeys(value,keys){if(!isPlainObject(value))return false;const actual=Object.keys(value).sort(),expected=[...keys].sort();return actual.length===expected.length&&actual.every((key,index)=>key===expected[index]);}
+  function validId(value){return typeof value==='string'&&/^[A-Za-z0-9_-]{1,64}$/.test(value);}
+  function codePoints(value){return [...value].length;}
+  function utf8Length(value){let length=0;for(const ch of value){const cp=ch.codePointAt(0);length+=cp<=0x7f?1:cp<=0x7ff?2:cp<=0xffff?3:4;}return length;}
+  function validText(value,max){return typeof value==='string'&&!value.includes('\0')&&codePoints(value)<=max;}
+  function validPositiveInt(value){return Number.isSafeInteger(value)&&value>=1;}
+  function decodedBase64Length(value){
+    if(typeof value!=='string'||value.length===0||value.length%4!==0||!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value))return -1;
+    let padding=0;if(value.endsWith('=='))padding=2;else if(value.endsWith('='))padding=1;
+    return value.length/4*3-padding;
+  }
+  function validStoredRect(rect,asset){
+    if(!exactKeys(rect,['x','y','w','h']))return false;
+    const values=[rect.x,rect.y,rect.w,rect.h];
+    if(!values.every(Number.isFinite)||values.some(value=>Math.abs(round6(value)-value)>1e-12))return false;
+    if(rect.x<0||rect.y<0||rect.w<=0||rect.h<=0||rect.x+rect.w>1||rect.y+rect.h>1)return false;
+    return rect.w*asset.width>=1-1e-9&&rect.h*asset.height>=1-1e-9;
+  }
+  function validateEnvelope(value){
+    const errors=[];const fail=(path,code='INVALID_SHEET')=>{errors.push({code,path});return {ok:false,errors};};
+    if(!exactKeys(value,['format','schemaVersion','appVersion','kind','document']))return fail('
+}
+);
+    if(value.format!=='reveal-sheet')return fail('$.format');
+    if(value.schemaVersion!==1)return fail('$.schemaVersion','UNSUPPORTED_SCHEMA');
+    if(typeof value.appVersion!=='string'||!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(value.appVersion))return fail('$.appVersion');
+    if(value.kind!=='editable'&&value.kind!=='lesson')return fail('$.kind');
+    const doc=value.document;
+    if(!exactKeys(doc,['id','revision','title','defaults','pages','assets','questions','masks']))return fail('$.document');
+    if(!validId(doc.id)||!validPositiveInt(doc.revision)||!validText(doc.title,120))return fail('$.document.identity');
+    if(!exactKeys(doc.defaults,['mode','otherAnswers'])||!['free','guided'].includes(doc.defaults.mode)||!['hidden','visible'].includes(doc.defaults.otherAnswers))return fail('$.document.defaults');
+    if(!Array.isArray(doc.pages)||doc.pages.length<1||doc.pages.length>limits.maxPages)return fail('$.document.pages');
+    if(!Array.isArray(doc.assets)||doc.assets.length<1)return fail('$.document.assets');
+    if(!Array.isArray(doc.questions)||doc.questions.length>limits.maxQuestions)return fail('$.document.questions');
+    if(!Array.isArray(doc.masks)||doc.masks.length>limits.maxMasks)return fail('$.document.masks');
+    if(value.kind==='lesson'&&doc.questions.length<1)return fail('$.document.questions');
+
+    const assets=new Map(),pages=new Map(),questions=new Map(),masks=new Map();
+    let totalAssetBytes=0,totalTextBytes=utf8Length(doc.title);
+
+    for(let index=0;index<doc.assets.length;index++){
+      const asset=doc.assets[index],path='$.document.assets['+index+']';
+      if(!exactKeys(asset,['id','mime','width','height','byteLength','dataBase64']))return fail(path);
+      if(!validId(asset.id)||assets.has(asset.id)||asset.mime!=='image/png')return fail(path);
+      if(!Number.isSafeInteger(asset.width)||!Number.isSafeInteger(asset.height)||asset.width<1||asset.height<1||asset.width>limits.maxSide||asset.height>limits.maxSide||asset.width*asset.height>limits.maxPixels)return fail(path);
+      if(!Number.isSafeInteger(asset.byteLength)||asset.byteLength<1||asset.byteLength>limits.maxPngBytes)return fail(path);
+      if(decodedBase64Length(asset.dataBase64)!==asset.byteLength||!asset.dataBase64.startsWith('iVBORw0KGgo'))return fail(path+'.dataBase64');
+      totalAssetBytes+=asset.byteLength;if(totalAssetBytes>limits.maxAssetBytes)return fail('$.document.assets','LIMIT_EXCEEDED');
+      assets.set(asset.id,asset);
+    }
+    for(let index=0;index<doc.pages.length;index++){
+      const page=doc.pages[index],path='$.document.pages['+index+']';
+      if(!exactKeys(page,['id','title','description','imageId','questionOrder']))return fail(path);
+      if(!validId(page.id)||pages.has(page.id)||!validText(page.title,120)||!validText(page.description,2000)||!validId(page.imageId)||!assets.has(page.imageId))return fail(path);
+      if(!Array.isArray(page.questionOrder)||page.questionOrder.some(id=>!validId(id))||new Set(page.questionOrder).size!==page.questionOrder.length)return fail(path+'.questionOrder');
+      totalTextBytes+=utf8Length(page.title)+utf8Length(page.description);pages.set(page.id,page);
+    }
+    if(totalTextBytes>1024*1024)return fail('$.document','LIMIT_EXCEEDED');
+    const referencedAssets=new Set(doc.pages.map(page=>page.imageId));if(referencedAssets.size!==assets.size)return fail('$.document.assets');
+
+    for(let index=0;index<doc.questions.length;index++){
+      const question=doc.questions[index],path='$.document.questions['+index+']';
+      if(!exactKeys(question,['id','pageId','revision','maskIds','prompt','answer']))return fail(path);
+      if(!validId(question.id)||questions.has(question.id)||!validId(question.pageId)||!pages.has(question.pageId)||!validPositiveInt(question.revision))return fail(path);
+      if(!Array.isArray(question.maskIds)||question.maskIds.length<1||question.maskIds.length>limits.maxQuestionMasks||question.maskIds.some(id=>!validId(id))||new Set(question.maskIds).size!==question.maskIds.length)return fail(path+'.maskIds');
+      if(!validText(question.prompt,2000)||!validText(question.answer,2000))return fail(path);
+      totalTextBytes+=utf8Length(question.prompt)+utf8Length(question.answer);questions.set(question.id,question);
+    }
+    if(totalTextBytes>1024*1024)return fail('$.document','LIMIT_EXCEEDED');
+
+    const masksPerPage=new Map();
+    for(let index=0;index<doc.masks.length;index++){
+      const mask=doc.masks[index],path='$.document.masks['+index+']';
+      if(!exactKeys(mask,['id','pageId','kind','questionId','rect']))return fail(path);
+      if(!validId(mask.id)||masks.has(mask.id)||!validId(mask.pageId)||!pages.has(mask.pageId)||!['answer','auxiliary'].includes(mask.kind))return fail(path);
+      if(mask.kind==='answer'&&!validId(mask.questionId))return fail(path+'.questionId');
+      if(mask.kind==='auxiliary'&&mask.questionId!==null)return fail(path+'.questionId');
+      const page=pages.get(mask.pageId),asset=assets.get(page.imageId);if(!validStoredRect(mask.rect,asset))return fail(path+'.rect');
+      const count=(masksPerPage.get(mask.pageId)||0)+1;if(count>limits.maxMasksPerPage)return fail(path,'LIMIT_EXCEEDED');masksPerPage.set(mask.pageId,count);
+      masks.set(mask.id,mask);
+    }
+
+    const referencedAnswerMasks=new Set();
+    for(const question of questions.values()){
+      const page=pages.get(question.pageId);
+      for(const maskId of question.maskIds){
+        const mask=masks.get(maskId);
+        if(!mask||mask.kind!=='answer'||mask.pageId!==question.pageId||mask.questionId!==question.id||referencedAnswerMasks.has(maskId))return fail('$.document.questions');
+        referencedAnswerMasks.add(maskId);
+      }
+      const expected=doc.questions.filter(item=>item.pageId===page.id).map(item=>item.id);
+      if(page.questionOrder.length!==expected.length||new Set(page.questionOrder).size!==expected.length||page.questionOrder.some(id=>!questions.has(id)||questions.get(id).pageId!==page.id)||expected.some(id=>!page.questionOrder.includes(id)))return fail('$.document.pages.questionOrder');
+    }
+    for(const mask of masks.values())if(mask.kind==='answer'&&!referencedAnswerMasks.has(mask.id))return fail('$.document.masks');
+    return {ok:true};
+  }
+
+  return Object.freeze({limits,error,newDocument,appendAsset,normalizeRect,rectToPixels,applyCommand,startSession,toggleFree,hideAllFree,revealPageFree,summaryFree,visibilityFor,validateEnvelope});
 }
