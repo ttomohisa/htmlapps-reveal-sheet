@@ -124,6 +124,33 @@ function createRevealCore() {
       const pages=doc.pages.map(page=>page.id===mask.pageId?{...page,questionOrder:[...page.questionOrder,qid]}:page);
       return mutation({...doc,revision:doc.revision+1,pages,questions:[...doc.questions,question],masks},{affectedQuestionIds:[qid],addedQuestionIds:[qid]});
     }
+    if(command.type==='DUPLICATE_SELECTION') {
+      const requested=[...new Set(Array.isArray(command.maskIds)?command.maskIds:[])];if(!requested.length)throw error('INVALID_SHEET');
+      const chosen=requested.map(id=>doc.masks.find(mask=>mask.id===id));if(chosen.some(mask=>!mask))throw error('INVALID_SHEET');
+      const selectedQuestionIds=new Set(chosen.filter(mask=>mask.kind==='answer').map(mask=>mask.questionId));
+      const selectedAux=chosen.filter(mask=>mask.kind==='auxiliary');
+      const selectedQuestions=doc.pages.flatMap(page=>page.questionOrder.filter(id=>selectedQuestionIds.has(id)).map(id=>doc.questions.find(question=>question.id===id)));
+      const duplicateMaskCount=selectedQuestions.reduce((sum,question)=>sum+question.maskIds.length,0)+selectedAux.length;
+      if(doc.masks.length+duplicateMaskCount>limits.maxMasks||doc.questions.length+selectedQuestions.length>limits.maxQuestions)throw error('LIMIT_EXCEEDED');
+      const extraPerPage=new Map();
+      for(const question of selectedQuestions)extraPerPage.set(question.pageId,(extraPerPage.get(question.pageId)||0)+question.maskIds.length);
+      for(const mask of selectedAux)extraPerPage.set(mask.pageId,(extraPerPage.get(mask.pageId)||0)+1);
+      for(const [pageId,extra] of extraPerPage){if(doc.masks.filter(mask=>mask.pageId===pageId).length+extra>limits.maxMasksPerPage)throw error('LIMIT_EXCEEDED');}
+      const newMasks=[],newQuestions=[],duplicateQuestionByOriginal=new Map();
+      function offsetMask(source,newId,questionId,kind){
+        const {asset}=pageAsset(doc,source.pageId),dx=10/asset.width,dy=10/asset.height;
+        const rect=normalizeRect({x:Math.min(1-source.rect.w,source.rect.x+dx),y:Math.min(1-source.rect.h,source.rect.y+dy),w:source.rect.w,h:source.rect.h},asset);
+        return {id:newId,pageId:source.pageId,kind,questionId,rect};
+      }
+      for(const question of selectedQuestions){
+        const qid=ctx.newId('question'),maskIds=[];
+        for(const sourceId of question.maskIds){const source=doc.masks.find(mask=>mask.id===sourceId),mid=ctx.newId('mask');maskIds.push(mid);newMasks.push(offsetMask(source,mid,qid,'answer'));}
+        duplicateQuestionByOriginal.set(question.id,qid);newQuestions.push({id:qid,pageId:question.pageId,revision:1,maskIds,prompt:question.prompt,answer:question.answer});
+      }
+      for(const source of selectedAux){const mid=ctx.newId('mask');newMasks.push(offsetMask(source,mid,null,'auxiliary'));}
+      const pages=doc.pages.map(page=>({...page,questionOrder:page.questionOrder.flatMap(id=>duplicateQuestionByOriginal.has(id)?[id,duplicateQuestionByOriginal.get(id)]:[id])}));
+      return mutation({...doc,revision:doc.revision+1,pages,questions:[...doc.questions,...newQuestions],masks:[...doc.masks,...newMasks]},{addedQuestionIds:newQuestions.map(question=>question.id),affectedQuestionIds:newQuestions.map(question=>question.id)});
+    }
     if(command.type==='RENAME_PAGE') {
       const page=doc.pages.find(item=>item.id===command.pageId);if(!page||!validText(command.title,120))throw error('INVALID_SHEET');
       const pages=doc.pages.map(item=>item.id===page.id?{...item,title:command.title}:item);
