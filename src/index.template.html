@@ -5,616 +5,222 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#f5f5f2">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; media-src 'self' data: blob:; worker-src 'self' blob:; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
-  <title>Single HTML App Starter</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src 'none'; media-src 'none'; worker-src 'none'; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Reveal Sheet</title>
   <link rel="icon" href="__APP_ICON_DATA_URI__">
   <style>
-    :root {
-      color-scheme: light;
-      --bg: #f5f5f2;
-      --surface: #ffffff;
-      --surface-muted: #f0f0ed;
-      --surface-hover: #e9e9e5;
-      --text: #20211f;
-      --muted: #666963;
-      --line: #dadbd6;
-      --line-strong: #bfc1ba;
-      --accent: #16624f;
-      --accent-hover: #0e503f;
-      --accent-soft: #e1f0ea;
-      --danger: #b3261e;
-      --focus: #4d8bc7;
-      --shadow-sm: 0 1px 2px rgba(25, 28, 24, .08), 0 1px 6px rgba(25, 28, 24, .04);
-      --shadow-md: 0 12px 34px rgba(25, 28, 24, .10);
-      --radius: 12px;
-      --header-height: 66px;
-    }
-    * { box-sizing: border-box; }
-    html { min-height: 100%; background: var(--bg); scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", "Yu Gothic UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
-      font-size: 15px;
-      line-height: 1.5;
-      -webkit-font-smoothing: antialiased;
-    }
-    button, textarea, input { font: inherit; }
-    button { color: inherit; }
-    button:focus-visible, textarea:focus-visible, input:focus-visible, summary:focus-visible {
-      outline: 3px solid color-mix(in srgb, var(--focus) 55%, transparent);
-      outline-offset: 2px;
-    }
-    .app-header {
-      position: sticky;
-      z-index: 30;
-      top: 0;
-      min-height: var(--header-height);
-      border-bottom: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
-      background: color-mix(in srgb, var(--bg) 92%, transparent);
-      backdrop-filter: blur(16px) saturate(1.2);
-    }
-    .header-inner {
-      width: min(1180px, 100%);
-      min-height: var(--header-height);
-      margin: 0 auto;
-      padding: 10px clamp(14px, 2.8vw, 30px);
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-    .brand-mark {
-      display: block;
-      width: 38px;
-      height: 38px;
-      flex: 0 0 auto;
-      border-radius: 11px;
-      overflow: hidden;
-      box-shadow: var(--shadow-sm);
-    }
-    .brand-mark img { width: 100%; height: 100%; display: block; }
-    .brand-copy { min-width: 0; }
-    .brand-name {
-      margin: 0;
-      font-size: 17px;
-      line-height: 1.2;
-      letter-spacing: .01em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .version-badge {
-      display: inline-flex;
-      align-items: center;
-      margin-left: 7px;
-      padding: 1px 6px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      color: var(--muted);
-      background: var(--surface-muted);
-      font-size: 10px;
-      font-weight: 650;
-      vertical-align: 2px;
-    }
-    .brand-meta {
-      margin: 2px 0 0;
-      color: var(--muted);
-      font-size: 12px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .header-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-    .button {
-      border: 1px solid var(--line);
-      background: var(--surface);
-      border-radius: 10px;
-      cursor: pointer;
-      transition: border-color .16s ease, background .16s ease, transform .16s ease;
-    }
-    .button:hover { border-color: var(--line-strong); background: var(--surface-hover); }
-    .button:active { transform: translateY(1px); }
-    .language-button {
-      min-width: 0;
-      padding: 5px 1px;
-      border: 0;
-      background: transparent;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 750;
-      letter-spacing: .02em;
-      cursor: pointer;
-      transition: color .16s ease, opacity .16s ease;
-    }
-    .language-button:hover { color: var(--text); }
-    .language-button:active { opacity: .65; }
-    .icon-button {
-      display: inline-grid;
-      place-items: center;
-      width: 38px;
-      height: 38px;
-      padding: 0;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: var(--surface);
-      cursor: pointer;
-      transition: border-color .16s ease, background .16s ease, transform .16s ease;
-    }
-    .icon-button:hover { border-color: var(--line-strong); background: var(--surface-hover); }
-    .icon-button:active { transform: translateY(1px); }
-    .icon-button svg { width: 18px; height: 18px; display: block; }
-    .header-icon-button {
-      width: auto;
-      height: auto;
-      padding: 5px 1px;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
-      color: var(--muted);
-      transition: color .16s ease, opacity .16s ease;
-    }
-    .header-icon-button:hover { border-color: transparent; background: transparent; color: var(--text); }
-    .header-icon-button:active { transform: none; opacity: .65; }
-    .header-icon-button svg { width: 20px; height: 20px; }
-    .main {
-      width: min(1180px, 100%);
-      margin: 0 auto;
-      padding: 22px clamp(14px, 2.8vw, 30px) 54px;
-    }
-    .page-intro {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 20px;
-      padding: 0 2px 18px;
-    }
-    .page-intro h2 {
-      margin: 0;
-      font-size: clamp(21px, 3vw, 26px);
-      line-height: 1.3;
-      letter-spacing: -.025em;
-    }
-    .page-intro p { margin: 5px 0 0; max-width: 760px; color: var(--muted); font-size: 13px; }
-    .local-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      flex: 0 0 auto;
-      margin-top: 3px;
-      padding: 7px 10px;
-      border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
-      border-radius: 999px;
-      color: var(--accent);
-      background: var(--accent-soft);
-      font-size: 12px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-    .local-badge svg { width: 15px; height: 15px; display: block; }
-    .workspace {
-      margin: 0 0 28px;
-      padding: 20px;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: var(--surface);
-      box-shadow: var(--shadow-sm);
-    }
-    .workspace-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; margin-bottom: 15px; }
-    .workspace h2, .section-title { margin: 0; letter-spacing: -.02em; }
-    .workspace h2 { font-size: 19px; }
-    .workspace-head p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
-    .stats { display: flex; flex-wrap: wrap; gap: 7px; }
-    .stat { min-width: 70px; padding: 7px 10px; border-radius: 10px; background: var(--surface-muted); text-align: center; }
-    .stat-value { display: block; font-size: 15px; font-weight: 780; line-height: 1.2; }
-    .stat-label { color: var(--muted); font-size: 10px; }
-    textarea {
-      width: 100%;
-      min-height: 260px;
-      resize: vertical;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 16px;
-      background: #fbfbf9;
-      color: var(--text);
-      line-height: 1.7;
-    }
-    textarea:hover { border-color: var(--line-strong); }
-    .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-top: 12px; }
-    .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
-    .button { min-height: 40px; padding: 8px 14px; font-weight: 700; }
-    .button.primary { border-color: var(--accent); color: white; background: var(--accent); }
-    .button.primary:hover { border-color: var(--accent-hover); background: var(--accent-hover); }
-    .button.danger { color: var(--danger); }
-    .save-status { align-self: center; color: var(--muted); font-size: 12px; }
-    .export-row { display: flex; align-items: end; gap: 10px; margin-top: 12px; }
-    .export-field { display: grid; gap: 5px; min-width: min(100%, 320px); }
-    .export-label { color: var(--muted); font-size: 11px; font-weight: 700; }
-    .filename-control { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
-    .filename-control:focus-within { border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 20%, transparent); }
-    .filename-input { width: 100%; min-width: 0; min-height: 40px; padding: 8px 10px; border: 0; outline: 0; background: transparent; color: var(--text); }
-    .filename-extension { padding: 0 10px; color: var(--muted); font-size: 12px; user-select: none; }
-    .section { padding: 26px 0; }
-    .section-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; margin-bottom: 15px; }
-    .section-title { font-size: 20px; }
-    .section-head p { margin: 0; color: var(--muted); font-size: 13px; }
-    .card-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-    .card { min-height: 150px; padding: 17px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-sm); }
-    .card-number { color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: .08em; }
-    .card h3 { margin: 17px 0 6px; font-size: 15px; }
-    .card p { margin: 0; color: var(--muted); font-size: 12px; }
-    details { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; box-shadow: var(--shadow-sm); }
-    summary { cursor: pointer; padding: 14px 16px; font-weight: 720; }
-    .build-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 16px 16px; }
-    .build-item { padding: 11px; border-radius: 10px; background: var(--surface-muted); }
-    .build-item span { display: block; color: var(--muted); font-size: 10px; }
-    .build-item strong { display: block; overflow-wrap: anywhere; font-size: 12px; }
-    footer { width: min(1180px, 100%); margin: 0 auto; padding: 0 clamp(14px, 2.8vw, 30px) 34px; color: var(--muted); font-size: 12px; }
-    /* Reusable toast / Undo component. Canonical source: components/toast.html */
-    .app-toast {
-      position: fixed; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 60;
-      display: flex; align-items: center; gap: 12px; max-width: min(420px, calc(100vw - 36px));
-      padding: 10px 12px 10px 14px; border: 1px solid var(--line); border-radius: 12px;
-      background: var(--surface); color: var(--text); box-shadow: var(--shadow-md); opacity: 0;
-      transform: translateY(12px); pointer-events: none; transition: opacity .18s ease, transform .18s ease;
-    }
-    .app-toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
-    .app-toast[data-tone="success"] { border-color: color-mix(in srgb, var(--accent) 34%, var(--line)); }
-    .app-toast[data-tone="warning"] { border-color: #c58a24; }
-    .app-toast-message { min-width: 0; flex: 1 1 auto; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
-    .app-toast-action { flex: 0 0 auto; min-height: 34px; padding: 5px 8px; border: 0; border-radius: 8px; background: transparent; color: var(--accent); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
-    .app-toast-action:hover { background: var(--surface-hover); }
-    .app-toast-action[hidden] { display: none; }
-    dialog {
-      width: min(640px, calc(100% - 28px));
-      max-height: min(760px, calc(100dvh - 28px));
-      padding: 0;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: var(--surface);
-      color: var(--text);
-      box-shadow: var(--shadow-md);
-    }
-    dialog::backdrop { background: rgba(15, 17, 14, .52); backdrop-filter: blur(4px); }
-    #helpDialog[open] {
-      display: flex;
-      flex-direction: column;
-      max-height: calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-    }
-    .dialog-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex: 0 0 auto;
-      gap: 12px;
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--line);
-    }
-    .dialog-header h2 { margin: 0; font-size: 17px; }
-    .dialog-body {
-      min-height: 0;
-      flex: 1 1 auto;
-      padding: 20px 20px calc(28px + env(safe-area-inset-bottom));
-      overflow: auto;
-      overscroll-behavior: contain;
-      -webkit-overflow-scrolling: touch;
-    }
-    .dialog-body h3 {
-      margin: 25px 0 8px;
-      padding-top: 19px;
-      border-top: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
-      font-size: 14px;
-    }
-    .dialog-body h3:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
-    .dialog-body p, .dialog-body li { color: var(--muted); font-size: 13px; line-height: 1.7; }
-    .dialog-body p { margin: 8px 0 0; }
-    .dialog-body ul, .dialog-body ol { margin: 8px 0 0; padding-left: 22px; }
-    .dialog-body li + li { margin-top: 7px; }
-    .dialog-note {
-      margin-top: 12px;
-      padding: 11px 12px;
-      border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line));
-      border-radius: 10px;
-      background: var(--accent-soft);
-      color: var(--text) !important;
-    }
+:root { color-scheme:light; --bg:#f5f5f2;--surface:#fff;--surface-hover:#e9e9e5;--text:#20211f;--muted:#626b64;--line:#d9dfd9;--line-strong:#bfc8c0;--accent:#16624f;--accent-hover:#0e503f;--danger:#b3261e;--focus:#16624f;--shadow-md:0 12px 34px #191c181a; }
+* { box-sizing:border-box; }
+body { margin:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+button,input { font:inherit;color:inherit; }
+button { cursor:pointer; }
+button:focus-visible,input:focus-visible,summary:focus-visible { outline:3px solid #16624f;outline-offset:3px; }
+.app-header { position:sticky;top:0;z-index:40;background:#f9faf7f5;border-bottom:1px solid var(--line); }
+.header-inner { min-height:68px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:10px; }
+.brand { display:flex;align-items:center;gap:10px;min-width:0; }
+.brand-mark { width:40px;height:40px;flex:0 0 40px; }
+.brand-mark img { display:block;width:100%;height:100%; }
+.brand-copy { min-width:0; }
+.brand-name { margin:0;display:flex;align-items:center;gap:7px;white-space:nowrap;font-size:16px;font-weight:650; }
+#brandName { overflow:hidden;text-overflow:ellipsis; }
+.version-badge { font-size:10px;color:var(--muted);border:1px solid var(--line);padding:0 4px;border-radius:4px; }
+.brand-meta { margin:0;font-size:11px;color:var(--muted); }
+.header-actions { display:flex;align-items:center;gap:8px;flex-shrink:0; }
+.language-button,.icon-button { border:0;background:transparent;min-width:48px;min-height:48px;border-radius:10px;display:grid;place-items:center;padding:8px;font-size:13px; }
+.icon-button svg { width:20px;height:20px; }
+.language-button:hover,.icon-button:hover { background:var(--surface-hover); }
+.main { margin:0 auto; }
+.page-intro h1 { line-height:1.4;margin:0; }
+.page-intro p { color:var(--muted);margin:8px 0 12px;font-size:14px;line-height:1.8; }
+.local-badge { display:inline-flex;align-items:center;gap:6px;border:1px solid #a9c4b8;background:#e7f1eb;color:#16624f;padding:5px 10px;border-radius:24px;font-size:12px;font-weight:600; }
+.local-badge svg { width:16px;height:16px; }
+.button { border:1px solid var(--line);border-radius:11px;padding:10px 16px;background:var(--surface);font-size:14px;font-weight:600; }
+.button:hover { background:var(--surface-hover); }
+.button.primary { background:var(--accent);color:white;border-color:var(--accent); }
+.button.primary:hover { background:var(--accent-hover); }
+.reveal-shell { background:white;border:1px solid var(--line);border-radius:18px; }
+.export-field { display:flex;flex-direction:column;gap:8px;max-width:480px; }
+.export-label { font-size:13px; }
+.filename-control { display:flex;align-items:center;gap:8px; }
+.filename-input { flex:1;border:1px solid var(--line);border-radius:8px;padding:12px; }
+.filename-extension { font-size:12px; }
+footer { padding:32px 16px;text-align:center;font-size:12px;color:var(--muted); }
+.sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
+dialog { color:var(--text);background:var(--surface); }
+#helpDialog { width:min(640px,calc(100vw - 24px));max-width:100%;max-height:calc(100dvh - 24px);padding:0;border:1px solid var(--line);border-radius:18px;overflow:hidden; }
+#helpDialog[open] { display:flex;flex-direction:column; }
+#helpDialog::backdrop { background:#0f110e7a; }
+.dialog-header { display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;border-bottom:1px solid var(--line);flex-shrink:0; }
+.dialog-header h2 { margin:0;font-size:18px; }
+.dialog-body { overflow:auto;overscroll-behavior:contain;padding:18px 22px calc(22px + env(safe-area-inset-bottom));font-size:14px;line-height:1.9; }
+.dialog-body h3 { font-size:16px;margin:18px 0 8px; }
+.dialog-body h3:first-child { margin-top:0; }
+.dialog-body li { margin-bottom:10px; }
+.dialog-note { background:#edf4f0;padding:14px;border-radius:10px; }
+@media(max-width:479px) { .version-badge { display:none; } }
+/* Adapt canonical confirmation to short viewports without losing its bottom sheet. */
+.app-confirm-dialog { max-height:calc(100dvh - 16px); }
+.app-confirm-dialog[open] { display:flex;flex-direction:column; }
+.app-confirm-header { flex-shrink:0; }
+.app-confirm-body { overflow:auto;overscroll-behavior:contain; }
 
-    /* Reusable confirmation component. Canonical source: components/confirm-dialog.html */
-    .app-confirm-dialog { width: min(420px, calc(100% - 24px)); max-width: 100%; }
-    .app-confirm-dialog::backdrop { background: rgba(15, 17, 14, .48); backdrop-filter: blur(3px); }
-    .app-confirm-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 15px 18px 13px;
-      border-bottom: 1px solid var(--line);
-    }
-    .app-confirm-title { margin: 0; font-size: 17px; letter-spacing: -.01em; }
-    .app-confirm-close {
-      display: grid;
-      place-items: center;
-      width: 36px;
-      height: 36px;
-      padding: 0;
-      border: 0;
-      border-radius: 10px;
-      background: transparent;
-      color: var(--text);
-      cursor: pointer;
-    }
-    .app-confirm-close:hover { background: var(--surface-hover); }
-    .app-confirm-close svg { width: 19px; height: 19px; }
-    .app-confirm-body { padding: 18px; }
-    .app-confirm-message {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.7;
-      overflow-wrap: anywhere;
-    }
-    .app-confirm-actions {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 18px;
-    }
-    .app-confirm-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 44px;
-      padding: 8px 12px;
-      border: 1px solid var(--line);
-      border-radius: 11px;
-      background: var(--surface);
-      color: var(--text);
-      font: inherit;
-      font-size: 12px;
-      font-weight: 760;
-      cursor: pointer;
-    }
-    .app-confirm-button:hover { border-color: var(--line-strong); background: var(--surface-hover); }
-    .app-confirm-button.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
-    .app-confirm-button.primary:hover { border-color: var(--accent-hover); background: var(--accent-hover); }
-    .app-confirm-button.danger { border-color: var(--danger); background: var(--danger); color: #fff; }
-    .app-confirm-button:focus-visible, .app-confirm-close:focus-visible {
-      outline: 3px solid color-mix(in srgb, var(--focus) 55%, transparent);
-      outline-offset: 2px;
-    }
-
-    code { padding: 1px 5px; border-radius: 5px; background: var(--surface-muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .92em; }
-    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-    @media (max-width: 820px) {
-      .page-intro { align-items: stretch; flex-direction: column; gap: 10px; }
-      .local-badge { align-self: flex-start; }
-      .workspace-head, .section-head { align-items: stretch; flex-direction: column; }
-      .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .build-grid { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 520px) {
-      :root { --header-height: 58px; }
-      .header-inner { padding-block: 8px; }
-      .brand-mark { width: 34px; height: 34px; border-radius: 10px; }
-      .brand-name { font-size: 15px; }
-      .brand-meta { display: none; }
-      .header-actions { gap: 11px; }
-      .language-button { padding-block: 6px; }
-      .header-icon-button { padding-block: 6px; }
-      .main { padding-top: 18px; }
-      .page-intro { padding-bottom: 14px; }
-      .workspace { padding: 14px; border-radius: 14px; }
-      .stats { width: 100%; }
-      .stat { flex: 1 1 0; min-width: 0; }
-      .card-grid { grid-template-columns: 1fr; }
-      .toolbar, .button-row { width: 100%; }
-      .button-row .button { flex: 1 1 auto; }
-      .export-row, .export-field { width: 100%; }
-      .app-toast { left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); max-width: none; }
-      textarea { min-height: 235px; }
-      #helpDialog {
-        width: calc(100% - 20px);
-        max-height: calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-      }
-      #helpDialog .dialog-body {
-        padding: 18px 18px calc(24px + env(safe-area-inset-bottom));
-      }
-      .app-confirm-dialog {
-        width: 100%;
-        max-width: none;
-        margin: auto 0 0;
-        border-width: 1px 0 0;
-        border-radius: 22px 22px 0 0;
-      }
-      .app-confirm-dialog::backdrop { background: rgba(0, 0, 0, .42); backdrop-filter: blur(2px); }
-      .app-confirm-header { padding: 14px 18px 12px; }
-      .app-confirm-body { padding: 12px 18px calc(env(safe-area-inset-bottom) + 18px); }
-      .app-confirm-message { font-size: 14px; line-height: 1.75; }
-      .app-confirm-actions { grid-template-columns: 1fr; gap: 10px; margin-top: 16px; }
-      .app-confirm-button { min-height: 48px; font-size: 14px; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
-    }
+/* Canonical confirmation component from components/confirm-dialog.html. */
+.app-confirm-dialog { width:min(420px,calc(100% - 24px));max-width:100%;padding:0;overflow:hidden;border:1px solid var(--line,#dadbd6);border-radius:17px;background:var(--surface,#fff);color:var(--text,#20211f);box-shadow:var(--shadow-md,0 12px 34px rgba(25,28,24,.10)); }
+.app-confirm-dialog::backdrop { background:rgba(15,17,14,.48);backdrop-filter:blur(3px); }
+.app-confirm-header { display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px 13px;border-bottom:1px solid var(--line,#dadbd6); }
+.app-confirm-title { margin:0;font-size:17px;letter-spacing:-.01em; }
+.app-confirm-close { display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;border-radius:10px;background:transparent;color:var(--text,#20211f);cursor:pointer; }
+.app-confirm-close:hover { background:var(--surface-hover,#e9e9e5); }
+.app-confirm-close svg { width:19px;height:19px; }
+.app-confirm-body { padding:18px; }
+.app-confirm-message { margin:0;color:var(--muted,#666963);font-size:13px;line-height:1.7;overflow-wrap:anywhere; }
+.app-confirm-actions { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:18px; }
+.app-confirm-button { display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 12px;border:1px solid var(--line,#dadbd6);border-radius:11px;background:var(--surface,#fff);color:var(--text,#20211f);font:inherit;font-size:12px;font-weight:760;cursor:pointer; }
+.app-confirm-button:hover { border-color:var(--line-strong,#bfc1ba);background:var(--surface-hover,#e9e9e5); }
+.app-confirm-button.primary { border-color:var(--accent,#16624f);background:var(--accent,#16624f);color:#fff; }
+.app-confirm-button.primary:hover { border-color:var(--accent-hover,#0e503f);background:var(--accent-hover,#0e503f); }
+.app-confirm-button.danger { border-color:var(--danger,#b3261e);background:var(--danger,#b3261e);color:#fff; }
+.app-confirm-button:focus-visible,.app-confirm-close:focus-visible { outline:3px solid color-mix(in srgb,var(--focus,#4d8bc7) 55%,transparent);outline-offset:2px; }
+@media(max-width:520px) {
+ .app-confirm-dialog { width:100%;max-width:none;margin:auto 0 0;border-width:1px 0 0;border-radius:22px 22px 0 0; }
+ .app-confirm-dialog::backdrop { background:rgba(0,0,0,.42);backdrop-filter:blur(2px); }
+ .app-confirm-header { padding:14px 18px 12px; }
+ .app-confirm-body { padding:12px 18px calc(env(safe-area-inset-bottom) + 18px); }
+ .app-confirm-message { font-size:14px;line-height:1.75; }
+ .app-confirm-actions { grid-template-columns:1fr;gap:10px;margin-top:16px; }
+ .app-confirm-button { min-height:48px;font-size:14px; }
+}
+@media(prefers-reduced-motion:reduce) { .app-confirm-dialog,.app-confirm-button,.app-confirm-close { transition:none!important; } }
+/* Canonical toast / Undo component from components/toast.html. */
+.app-toast { position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:60;display:flex;align-items:center;gap:12px;max-width:min(420px,calc(100vw - 36px));padding:10px 12px 10px 14px;border:1px solid var(--line,#dadbd6);border-radius:12px;background:var(--surface,#fff);color:var(--text,#20211f);box-shadow:var(--shadow-md,0 12px 34px rgba(25,28,24,.10));opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity .18s ease,transform .18s ease; }
+.app-toast.show { opacity:1;transform:translateY(0);pointer-events:auto; }
+.app-toast[data-tone="success"] { border-color:color-mix(in srgb,var(--accent,#16624f) 34%,var(--line,#dadbd6)); }
+.app-toast[data-tone="warning"] { border-color:#c58a24; }
+.app-toast-message { min-width:0;flex:1 1 auto;font-size:13px;line-height:1.45;overflow-wrap:anywhere; }
+.app-toast-action { flex:0 0 auto;min-height:34px;padding:5px 8px;border:0;border-radius:8px;background:transparent;color:var(--accent,#16624f);font:inherit;font-size:12px;font-weight:800;cursor:pointer; }
+.app-toast-action:hover { background:var(--surface-hover,#e9e9e5); }
+.app-toast-action[hidden] { display:none; }
+@media(max-width:520px) { .app-toast { left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));max-width:none; } }
+/* REVEAL:SHARED_CSS */
   </style>
 </head>
 <body>
   <header class="app-header">
     <div class="header-inner">
       <div class="brand">
-        <div class="brand-mark" aria-hidden="true">
-          <img id="appBrandIcon" src="__APP_ICON_DATA_URI__" alt="">
-        </div>
+        <div class="brand-mark" aria-hidden="true"><img id="appBrandIcon" src="__APP_ICON_DATA_URI__" alt=""></div>
         <div class="brand-copy">
-          <p class="brand-name"><span id="brandName">Single HTML App Starter</span><span class="version-badge" id="versionBadge">v1.1.0</span></p>
-          <p class="brand-meta" data-i18n="brandMeta">Single file · Local-first · GitHub Pages</p>
+          <p class="brand-name"><span id="brandName">Reveal Sheet</span><span class="version-badge" id="versionBadge">v0.1.0</span></p>
+          <p class="brand-meta" data-i18n="brandMeta">Study sheets from your images</p>
         </div>
       </div>
       <div class="header-actions">
         <button class="language-button" id="languageButton" type="button" aria-label="Switch language">EN</button>
-        <button class="icon-button header-icon-button" id="helpButton" type="button" data-i18n-title="helpTitle" data-i18n-aria-label="helpTitle" title="使い方と注意事項" aria-label="使い方と注意事項">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.35 2.35 0 1 1 3.72 1.9c-.92.67-1.52 1.12-1.52 2.1"/><path d="M12 17h.01"/></svg>
-        </button>
+        <button class="icon-button header-icon-button" id="helpButton" type="button" data-i18n-title="helpTitle" data-i18n-aria-label="helpTitle" title="使い方と注意事項" aria-label="使い方と注意事項"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.35 2.35 0 1 1 3.72 1.9c-.92.67-1.52 1.12-1.52 2.1"/><path d="M12 17h.01"/></svg></button>
       </div>
     </div>
   </header>
-
   <main class="main">
     <section class="page-intro" aria-labelledby="heroTitle">
-      <div>
-        <h2 id="heroTitle" data-i18n="introTitle">単一HTMLアプリのスターター</h2>
-        <p data-i18n="lead">PDF Organizerと同じ、固定依存・完全内包・実行時通信なしの構成から、新しいブラウザーアプリを作れます。</p>
-      </div>
-      <div class="local-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6z"/><path d="m9 12 2 2 4-5"/></svg>
-        <span data-i18n="localBadge">実行時通信なし</span>
-      </div>
+      <div><h1 id="heroTitle" data-i18n="introTitle">Reveal Sheet</h1><p data-i18n="lead">Add an image to get started.</p></div>
+      <div class="local-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6z"/><path d="m9 12 2 2 4-5"/></svg><span data-i18n="localBadge">端末内で画像を処理</span></div>
     </section>
-
-    <!-- APP:BEGIN Replace this demo workspace with the real application. -->
-    <section class="shell workspace" aria-labelledby="workspaceTitle">
-      <div class="workspace-head">
-        <div>
-          <h2 id="workspaceTitle" data-i18n="workspaceTitle">Starter workspace</h2>
-          <p data-i18n="workspaceBody">Text stays in this browser. It is never sent by this app.</p>
-        </div>
-        <div class="stats" aria-live="polite">
-          <div class="stat"><span class="stat-value" id="characterCount">0</span><span class="stat-label" data-i18n="characters">Characters</span></div>
-          <div class="stat"><span class="stat-value" id="wordCount">0</span><span class="stat-label" data-i18n="words">Words</span></div>
-          <div class="stat"><span class="stat-value" id="lineCount">0</span><span class="stat-label" data-i18n="lines">Lines</span></div>
+    <!-- APP:BEGIN Reveal Sheet foundation -->
+    <p id="developmentNote" class="release-note" data-i18n="developmentNote"></p>
+    <nav class="reveal-nav" aria-label="Workflow" data-i18n-aria-label="workflow">
+      <button id="createButton" type="button" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5M8 16h8"/></svg><span data-i18n="create"></span></button>
+      <button id="studyButton" type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m9 5 11 7-11 7z"/></svg><span data-i18n="study"></span></button>
+      <button id="saveButton" type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 15v6h16v-6"/></svg><span data-i18n="save"></span></button>
+    </nav>
+    <section class="shell reveal-shell" aria-label="Create a sheet" data-i18n-aria-label="create">
+      <div class="reveal-tools" id="editControls">
+        <button class="button primary" id="addButton" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m4 17 5-5 4 4 3-3 5 5M15 8h3m-1.5-1.5v3"/></svg><span data-i18n="addImages"></span></button>
+        <button class="button" id="openButton" type="button"><span data-i18n="openSheet"></span></button>
+        <input id="imageInput" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple hidden><input id="sheetInput" type="file" accept=".reveal.json,application/json" hidden>
+        <div class="cover-tools" aria-label="Cover tools"><button class="button tool-button" id="moveImageButton" type="button" aria-pressed="true" disabled><span data-i18n="moveImage"></span></button><button class="button tool-button" id="coverButton" type="button" aria-pressed="false" disabled><span data-i18n="cover"></span></button><button class="button tool-button" id="twoPointButton" type="button" aria-pressed="false" disabled><span data-i18n="twoPoint"></span></button></div>
+        <div class="secondary-tools">
+          <button class="button" id="undoButton" type="button" disabled data-i18n-aria-label="undo" data-i18n-title="undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m9 5-5 5 5 5M5 10h9a5 5 0 0 1 0 10"/></svg></button>
+          <button class="button" id="redoButton" type="button" disabled data-i18n-aria-label="redo" data-i18n-title="redo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m15 5 5 5-5 5M19 10h-9a5 5 0 0 0 0 10"/></svg></button>
+          <button class="button" id="newButton" type="button" disabled data-i18n="newSheet"></button>
         </div>
       </div>
-      <label class="sr-only" for="editor" data-i18n="editorLabel">Text editor</label>
-      <textarea id="editor" spellcheck="true"></textarea>
-      <div class="export-row">
-        <label class="export-field" for="outputFilename">
-          <span class="export-label" data-i18n="outputFilename">出力ファイル名</span>
-          <span class="filename-control">
-            <input class="filename-input" id="outputFilename" type="text" maxlength="120" autocomplete="off" spellcheck="false" aria-describedby="outputFilenameHint">
-            <span class="filename-extension" aria-hidden="true">.txt</span>
-          </span>
-          <span class="sr-only" id="outputFilenameHint" data-i18n="outputFilenameHint">拡張子は自動で .txt が付きます</span>
-        </label>
-      </div>
-      <div class="toolbar">
-        <div class="button-row">
-          <button class="button primary" id="copyButton" type="button" data-i18n="copy">Copy</button>
-          <button class="button" id="downloadButton" type="button" data-i18n="download">Download text</button>
-          <button class="button" id="sampleButton" type="button" data-i18n="sample">Restore sample</button>
+      <div id="maskControls" class="mask-controls" hidden aria-label="Selected cover controls"><div class="mask-control-group"><button class="button" id="maskMoveLeft" type="button" data-i18n="moveLeft"></button><button class="button" id="maskMoveRight" type="button" data-i18n="moveRight"></button><button class="button" id="maskMoveUp" type="button" data-i18n="moveUp"></button><button class="button" id="maskMoveDown" type="button" data-i18n="moveDown"></button></div><div class="mask-control-group"><button class="button" id="maskWider" type="button" data-i18n="wider"></button><button class="button" id="maskNarrower" type="button" data-i18n="narrower"></button><button class="button" id="maskTaller" type="button" data-i18n="taller"></button><button class="button" id="maskShorter" type="button" data-i18n="shorter"></button><button class="button" id="maskDuplicate" type="button" data-i18n="duplicateCover"></button><button class="button" id="maskDelete" type="button" data-i18n="deleteCover"></button></div></div>
+      <section id="studyPanel" class="study-panel" hidden aria-labelledby="freeStudyTitle"><div class="study-summary"><div><h3 id="freeStudyTitle" data-i18n="freeStudy"></h3><p><span data-i18n="confirmedLabel"></span> <strong id="confirmedCount">0</strong> / <strong id="studyQuestionCount">0</strong></p></div><div class="study-actions"><button class="button" id="hideAllButton" type="button" data-i18n="hideAll"></button><button class="button" id="revealPageButton" type="button" data-i18n="revealPage"></button></div></div><div id="questionList" class="question-list" aria-label="Questions"></div></section>
+      <section id="savePanel" class="save-panel" hidden aria-labelledby="savePanelTitle">
+        <h3 id="savePanelTitle" data-i18n="savePanelTitle"></h3>
+        <div class="save-summary">
+          <span><span data-i18n="savePages"></span> <strong id="savePageCount">0</strong></span>
+          <span><span data-i18n="saveQuestions"></span> <strong id="saveQuestionCount">0</strong></span>
+          <span><span data-i18n="saveImageSize"></span> <strong id="saveImageBytes">0 B</strong></span>
         </div>
-        <div class="button-row">
-          <button class="button danger" id="clearButton" type="button" data-i18n="clear">Clear</button>
+        <p class="save-note" data-i18n="saveIncludesImages"></p>
+        <label class="export-field" for="outputFilename"><span class="export-label" data-i18n="outputFilename"></span><span class="filename-control"><input class="filename-input" id="outputFilename" type="text" value="reveal-sheet" autocomplete="off" spellcheck="false"><span class="filename-extension">.reveal.json</span></span></label>
+        <button class="button primary" id="downloadJsonButton" type="button" data-i18n="saveEditable"></button>
+      </section>
+      <p class="input-note" data-i18n="inputHint"></p>
+      <div class="input-status-row"><p id="inputStatus" role="status" aria-live="polite"></p><button class="button" id="cancelButton" type="button" hidden data-i18n="stop"></button></div>
+      <div id="loadedSection" hidden class="sheet-header"><h2 id="sheetTitle"></h2><span id="sheetCount"></span></div>
+      <div class="reveal-grid">
+        <aside class="page-panel"><h3 data-i18n="pages"></h3><div id="pageList" class="page-list" aria-label="Pages" data-i18n-aria-label="pages"></div></aside>
+        <div class="preview-column">
+          <div class="preview-surface" id="dropZone">
+            <div class="empty-preview" id="emptyPreview"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="12" y="8" width="40" height="48" rx="5"/><path d="M21 20h22M21 30h22M21 40h12"/><rect x="30" y="26" width="17" height="8" rx="2" fill="currentColor"/></svg><h2 data-i18n="emptyTitle"></h2><p data-i18n="emptyBody"></p></div>
+            <p class="preview-wait" id="previewWait" hidden></p>
+            <img id="previewImage" alt="" hidden decoding="async">
+            <svg id="maskSvg" class="mask-layer" tabindex="0" aria-label="Image covers" hidden></svg>
+          </div>
+          <div class="image-meta" id="imageMeta" hidden><span><strong id="imageDimensions"></strong> · PNG · <span id="imageBytes"></span></span><span data-i18n="unchangedSize"></span></div>
+          <div id="pageControls" class="page-controls" hidden>
+            <label class="page-name-field" for="pageTitleInput"><span data-i18n="pageNameLabel"></span><input id="pageTitleInput" type="text" maxlength="120" autocomplete="off" spellcheck="false"></label>
+            <div class="page-order-actions"><button class="button" id="pagePrevButton" type="button" data-i18n="pageEarlier"></button><button class="button" id="pageNextButton" type="button" data-i18n="pageLater"></button><button class="button" id="pageDeleteButton" type="button" data-i18n="deletePage"></button></div>
+          </div>
+          <section id="coverPanel" class="cover-panel" hidden aria-labelledby="coverPanelTitle"><div class="cover-panel-head"><h3 id="coverPanelTitle" data-i18n="coverPanelTitle"></h3><span><span data-i18n="questionCountEditLabel"></span> <strong id="questionCountEdit">0</strong></span></div><p id="overlapWarning" class="overlap-warning" hidden></p><div id="coverList" class="cover-list" aria-label="Covers"></div><div class="cover-list-actions"><button class="button" id="groupButton" type="button" disabled data-i18n="groupSelected"></button><button class="button" id="ungroupButton" type="button" disabled data-i18n="ungroupSelected"></button><button class="button" id="makeAuxiliaryButton" type="button" disabled data-i18n="makeAuxiliary"></button><button class="button" id="makeAnswerButton" type="button" disabled data-i18n="makeAnswer"></button><button class="button" id="duplicateSelectionButton" type="button" disabled data-i18n="duplicateSelection"></button></div></section>
         </div>
-        <span class="save-status" id="saveStatus" data-i18n="savedLocally">Saved locally</span>
       </div>
+      <section id="failureSection" class="failure-section" hidden aria-labelledby="failuresTitle"><h3 id="failuresTitle" data-i18n="failures"></h3><ul class="failure-list" id="failureList"></ul><button class="button" id="retryButton" type="button" data-i18n="chooseAgain"></button></section>
+      <p class="data-notice"><span data-i18n="memoryNotice"></span> <span data-i18n="totalImageSize"></span> <strong id="totalBytes">0 B</strong></p>
+      <details class="future-section"><summary data-i18n="nextStage"></summary><p id="notAvailable" data-i18n="notAvailable"></p></details>
     </section>
     <!-- APP:END -->
-
-    <section class="shell section" aria-labelledby="guaranteesTitle">
-      <div class="section-head">
-        <h2 class="section-title" id="guaranteesTitle" data-i18n="guaranteesTitle">Template guarantees</h2>
-        <p data-i18n="guaranteesBody">Keep these constraints unless the product specification explicitly changes them.</p>
-      </div>
-      <div class="card-grid">
-        <article class="card"><div class="card-number">01</div><h3 data-i18n="card1Title">One deliverable</h3><p data-i18n="card1Body">The release artifact is dist/index.html. It opens directly and can be hosted as a static page.</p></article>
-        <article class="card"><div class="card-number">02</div><h3 data-i18n="card2Title">Pinned dependencies</h3><p data-i18n="card2Body">Third-party npm assets are version-pinned, hashed, and embedded during the build.</p></article>
-        <article class="card"><div class="card-number">03</div><h3 data-i18n="card3Title">No runtime network</h3><p data-i18n="card3Body">Content Security Policy blocks runtime connections. User data stays inside the page.</p></article>
-        <article class="card"><div class="card-number">04</div><h3 data-i18n="card4Title">LLM-ready workflow</h3><p data-i18n="card4Body">AGENTS.md and APP_SPEC.md give coding agents a stable contract, acceptance criteria, and handoff format.</p></article>
-      </div>
-    </section>
-
-    <section class="shell section">
-      <details>
-        <summary data-i18n="buildInfo">Build information</summary>
-        <div class="build-grid">
-          <div class="build-item"><span data-i18n="appVersion">App version</span><strong id="buildVersion">—</strong></div>
-          <div class="build-item"><span data-i18n="builtAt">Built at</span><strong id="builtAt">—</strong></div>
-          <div class="build-item"><span data-i18n="dependencies">Embedded dependencies</span><strong id="dependencyCount">0</strong></div>
-        </div>
-      </details>
-    </section>
   </main>
-
-  <footer><span id="footerName">Single HTML App Starter</span> · MIT License · <span data-i18n="footer">Generated as one self-contained HTML file</span></footer>
-  <div class="app-toast" id="appToast" role="status" aria-live="polite" aria-atomic="true" data-tone="default">
-    <span class="app-toast-message" id="appToastMessage"></span>
-    <button class="app-toast-action" id="appToastAction" type="button" hidden></button>
-  </div>
-
-  <!-- Reusable confirmation component. Keep in sync with components/confirm-dialog.html. -->
+  <footer><span id="footerName">Reveal Sheet</span> · MIT License · <span data-i18n="footer">Single HTML · On-device processing</span></footer>
+  <div class="app-toast" id="appToast" role="status" aria-live="polite" aria-atomic="true" data-tone="default"><span class="app-toast-message" id="appToastMessage"></span><button class="app-toast-action" id="appToastAction" type="button" hidden></button></div>
   <dialog class="app-confirm-dialog" id="appConfirmDialog" aria-labelledby="appConfirmTitle" aria-describedby="appConfirmMessage">
-    <div class="app-confirm-header">
-      <h2 class="app-confirm-title" id="appConfirmTitle">確認</h2>
-      <button class="app-confirm-close" id="appConfirmClose" type="button" data-i18n-aria-label="close" aria-label="閉じる">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
-      </button>
-    </div>
-    <div class="app-confirm-body">
-      <p class="app-confirm-message" id="appConfirmMessage"></p>
-      <div class="app-confirm-actions">
-        <button class="app-confirm-button" id="appConfirmCancel" type="button">キャンセル</button>
-        <button class="app-confirm-button primary" id="appConfirmOk" type="button">実行する</button>
-      </div>
-    </div>
+    <div class="app-confirm-header"><h2 class="app-confirm-title" id="appConfirmTitle">確認</h2><button class="app-confirm-close" id="appConfirmClose" type="button" data-i18n-aria-label="close" aria-label="閉じる"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="app-confirm-body"><p class="app-confirm-message" id="appConfirmMessage"></p><div class="app-confirm-actions"><button class="app-confirm-button" id="appConfirmCancel" type="button">キャンセル</button><button class="app-confirm-button primary" id="appConfirmOk" type="button">実行する</button></div></div>
   </dialog>
-
   <dialog id="helpDialog" aria-labelledby="helpTitle">
-    <div class="dialog-header">
-      <h2 id="helpTitle" data-i18n="helpTitle">使い方と注意事項</h2>
-      <button class="icon-button" id="closeHelpButton" type="button" data-i18n-title="close" data-i18n-aria-label="close" title="閉じる" aria-label="閉じる">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg>
-      </button>
-    </div>
+    <div class="dialog-header"><h2 id="helpTitle" data-i18n="helpTitle">使い方と注意事項</h2><button class="icon-button" id="closeHelpButton" type="button" data-i18n-title="close" data-i18n-aria-label="close" title="閉じる" aria-label="閉じる"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg></button></div>
     <div class="dialog-body">
-      <!-- APP:HELP:BEGIN Update this section together with the real application. -->
-      <h3 data-i18n="helpBasicsTitle">基本操作</h3>
-      <ol>
-        <li data-i18n="helpStep1">作業領域へテキストを入力します。内容は入力のたびに端末内へ保存されます。</li>
-        <li data-i18n="helpStep2">出力ファイル名を必要に応じて変更し、「コピー」または「テキスト保存」で入力内容を取り出せます。</li>
-        <li data-i18n="helpStep3">「サンプルに戻す」や「消去」の直後は、トーストの「元に戻す」から取り消せます。</li>
-      </ol>
-
-      <h3 data-i18n="helpPrivacyTitle">プライバシー</h3>
-      <p data-i18n="helpPrivacyBody">入力内容と操作はブラウザー内で処理され、このアプリから外部へ送信されません。必要なコードと依存ファイルも配布用HTMLに内包されます。</p>
-
-      <h3 data-i18n="helpNotesTitle">注意事項</h3>
-      <ul>
-        <li data-i18n="helpNoteStorage">ブラウザーのサイトデータを削除すると、端末内に保存した入力内容も消える場合があります。必要な内容はファイルとして保存してください。</li>
-        <li data-i18n="helpNoteBrowser">一部の機能はブラウザーの制限や端末性能の影響を受けます。重要な成果物は保存後に内容を確認してください。</li>
-        <li data-i18n="helpNoteTemplate">この画面はスターターの例です。新しいアプリを作る際は、機能と一緒にこのヘルプも実際の操作へ書き換えます。</li>
-      </ul>
-      <p class="dialog-note" data-i18n="helpOffline">配布物は dist/index.html ひとつです。ローカルで直接開くことも、GitHub Pagesで公開することもできます。</p>
+      <!-- APP:HELP:BEGIN -->
+      <h3 data-i18n="helpBasicsTitle"></h3><ol><li data-i18n="helpStep1"></li><li data-i18n="helpStep2"></li><li data-i18n="helpStep3"></li></ol>
+      <h3 data-i18n="helpPrivacyTitle"></h3><p data-i18n="helpPrivacyBody"></p>
+      <h3 data-i18n="helpNotesTitle"></h3><p data-i18n="limitsNote"></p><p data-i18n="unsupportedNote"></p><p data-i18n="normalizationNote"></p>
+      <p class="dialog-note" data-i18n="redactionNote"></p><p data-i18n="rightsNote"></p><p data-i18n="helpOffline"></p>
       <!-- APP:HELP:END -->
     </div>
   </dialog>
-
+  <noscript><p>JavaScriptを実行できるブラウザで開いてください。 / Open this file in a browser that can run JavaScript.</p></noscript>
   <script>
     (() => {
       'use strict';
-
       const APP_CONFIG = __APP_CONFIG_JSON__;
       const BUILD_MANIFEST = __BUILD_MANIFEST_JSON__;
       // Asset payloads are Base64 exactly once. The JSON bundle itself is embedded directly.
       const assetBundle = __EMBEDDED_ASSET_BUNDLE_JSON__;
       const blobUrls = new Set();
       const assetByteCache = new Map();
-
       function decodeBase64Bytes(base64) {
         const binary = atob(base64);
         const bytes = new Uint8Array(binary.length);
         for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
         return bytes;
       }
-
       function getAsset(dependencyId, assetKey) {
         const asset = assetBundle.dependencies?.[dependencyId]?.assets?.[assetKey];
         if (!asset) throw new Error(`Embedded asset not found: ${dependencyId}/${assetKey}`);
         return asset;
       }
-
       async function inflateAsset(asset) {
         const stored = decodeBase64Bytes(asset.base64);
         if (!asset.compression || asset.compression === 'none') return stored;
@@ -622,26 +228,16 @@
         if (typeof DecompressionStream !== 'function') throw new Error('This browser cannot expand gzip-compressed embedded assets.');
         const stream = new Blob([stored]).stream().pipeThrough(new DecompressionStream('gzip'));
         const expanded = new Uint8Array(await new Response(stream).arrayBuffer());
-        if (Number.isFinite(asset.originalBytes) && expanded.byteLength !== asset.originalBytes) {
-          throw new Error(`Embedded gzip asset size mismatch: expected ${asset.originalBytes}, got ${expanded.byteLength}`);
-        }
+        if (Number.isFinite(asset.originalBytes) && expanded.byteLength !== asset.originalBytes) throw new Error(`Embedded gzip asset size mismatch: expected ${asset.originalBytes}, got ${expanded.byteLength}`);
         return expanded;
       }
-
       window.StandaloneAssets = Object.freeze({
         manifest: BUILD_MANIFEST,
-        list() {
-          return Object.entries(assetBundle.dependencies || {}).flatMap(([dependencyId, dependency]) =>
-            Object.keys(dependency.assets || {}).map(assetKey => `${dependencyId}/${assetKey}`));
-        },
-        has(dependencyId, assetKey) {
-          return Boolean(assetBundle.dependencies?.[dependencyId]?.assets?.[assetKey]);
-        },
+        list() { return Object.entries(assetBundle.dependencies || {}).flatMap(([dependencyId, dependency]) => Object.keys(dependency.assets || {}).map(assetKey => `${dependencyId}/${assetKey}`)); },
+        has(dependencyId, assetKey) { return Boolean(assetBundle.dependencies?.[dependencyId]?.assets?.[assetKey]); },
         bytes(dependencyId, assetKey) {
           const asset = getAsset(dependencyId, assetKey);
-          if (asset.compression && asset.compression !== 'none') {
-            throw new Error(`Embedded asset ${dependencyId}/${assetKey} is gzip-compressed; use await StandaloneAssets.bytesAsync().`);
-          }
+          if (asset.compression && asset.compression !== 'none') throw new Error(`Embedded asset ${dependencyId}/${assetKey} is gzip-compressed; use await StandaloneAssets.bytesAsync().`);
           return decodeBase64Bytes(asset.base64);
         },
         async bytesAsync(dependencyId, assetKey) {
@@ -649,329 +245,137 @@
           if (!assetByteCache.has(cacheKey)) assetByteCache.set(cacheKey, inflateAsset(getAsset(dependencyId, assetKey)));
           return new Uint8Array(await assetByteCache.get(cacheKey));
         },
-        text(dependencyId, assetKey) {
-          return new TextDecoder().decode(this.bytes(dependencyId, assetKey));
-        },
-        async textAsync(dependencyId, assetKey) {
-          return new TextDecoder().decode(await this.bytesAsync(dependencyId, assetKey));
-        },
+        text(dependencyId, assetKey) { return new TextDecoder().decode(this.bytes(dependencyId, assetKey)); },
+        async textAsync(dependencyId, assetKey) { return new TextDecoder().decode(await this.bytesAsync(dependencyId, assetKey)); },
         blobUrl(dependencyId, assetKey) {
           const asset = getAsset(dependencyId, assetKey);
           const url = URL.createObjectURL(new Blob([this.bytes(dependencyId, assetKey)], { type: asset.mime || 'application/octet-stream' }));
-          blobUrls.add(url);
-          return url;
+          blobUrls.add(url); return url;
         },
         async blobUrlAsync(dependencyId, assetKey) {
           const asset = getAsset(dependencyId, assetKey);
           const url = URL.createObjectURL(new Blob([await this.bytesAsync(dependencyId, assetKey)], { type: asset.mime || 'application/octet-stream' }));
-          blobUrls.add(url);
-          return url;
+          blobUrls.add(url); return url;
         },
         async loadClassicScript(dependencyId, assetKey, globalName = '') {
           const sourceUrl = await this.blobUrlAsync(dependencyId, assetKey);
           try {
             await new Promise((resolve, reject) => {
-              const script = document.createElement('script');
-              script.src = sourceUrl;
-              script.onload = resolve;
-              script.onerror = () => reject(new Error(`Failed to load embedded script: ${dependencyId}/${assetKey}`));
-              document.head.append(script);
+              const script = document.createElement('script');script.src = sourceUrl;script.onload = resolve;
+              script.onerror = () => reject(new Error(`Failed to load embedded script: ${dependencyId}/${assetKey}`));document.head.append(script);
             });
             return globalName ? window[globalName] : true;
-          } finally {
-            URL.revokeObjectURL(sourceUrl);
-            blobUrls.delete(sourceUrl);
-          }
+          } finally { URL.revokeObjectURL(sourceUrl);blobUrls.delete(sourceUrl); }
         },
         async importModule(dependencyId, assetKey) {
           const sourceUrl = await this.blobUrlAsync(dependencyId, assetKey);
-          try {
-            return await import(sourceUrl);
-          } finally {
-            URL.revokeObjectURL(sourceUrl);
-            blobUrls.delete(sourceUrl);
-          }
+          try { return await import(sourceUrl); } finally { URL.revokeObjectURL(sourceUrl);blobUrls.delete(sourceUrl); }
         }
       });
-
-      window.addEventListener('pagehide', () => {
-        blobUrls.forEach(url => URL.revokeObjectURL(url));
-        blobUrls.clear();
-      });
-
+      window.addEventListener('pagehide', () => { blobUrls.forEach(url => URL.revokeObjectURL(url));blobUrls.clear(); });
       const translations = {
         ja: {
-          brandMeta: '単一HTML・ローカル処理・GitHub Pages',
-          helpTitle: '使い方と注意事項', close: '閉じる',
-          helpBasicsTitle: '基本操作',
-          helpStep1: '作業領域へテキストを入力します。内容は入力のたびに端末内へ保存されます。',
-          helpStep2: '出力ファイル名を必要に応じて変更し、「コピー」または「テキスト保存」で入力内容を取り出せます。',
-          helpStep3: '「サンプルに戻す」や「消去」の直後は、トーストの「元に戻す」から取り消せます。',
-          helpPrivacyTitle: 'プライバシー',
-          helpPrivacyBody: '入力内容と操作はブラウザー内で処理され、このアプリから外部へ送信されません。必要なコードと依存ファイルも配布用HTMLに内包されます。',
-          helpNotesTitle: '注意事項',
-          helpNoteStorage: 'ブラウザーのサイトデータを削除すると、端末内に保存した入力内容も消える場合があります。必要な内容はファイルとして保存してください。',
-          helpNoteBrowser: '一部の機能はブラウザーの制限や端末性能の影響を受けます。重要な成果物は保存後に内容を確認してください。',
-          helpNoteTemplate: 'この画面はスターターの例です。新しいアプリを作る際は、機能と一緒にこのヘルプも実際の操作へ書き換えます。',
-          helpOffline: '配布物は dist/index.html ひとつです。ローカルで直接開くことも、GitHub Pagesで公開することもできます。',
-          introTitle: '単一HTMLアプリのスターター',
-          lead: 'PDF Organizerと同じ、固定依存・完全内包・実行時通信なしの構成から、新しいブラウザーアプリを作れます。',
-          localBadge: '実行時通信なし',
-          workspaceTitle: 'スターター作業領域',
-          workspaceBody: '入力内容はこのブラウザー内だけに保存され、このアプリから送信されません。',
-          characters: '文字', words: '単語', lines: '行', editorLabel: 'テキスト入力',
-          copy: 'コピー', download: 'テキスト保存', sample: 'サンプルに戻す', clear: '消去', savedLocally: '端末内に保存済み', outputFilename: '出力ファイル名', outputFilenameHint: '拡張子は自動で .txt が付きます', undo: '元に戻す', undone: '元に戻しました',
-          confirmTitle: '確認', confirmAction: '実行する', cancel: 'キャンセル',
-          guaranteesTitle: 'テンプレートの基本保証',
-          guaranteesBody: 'アプリ仕様で明示的に変更しない限り、この制約を維持します。',
-          card1Title: '配布物はひとつ', card1Body: 'リリース成果物は dist/index.html。直接開くことも、静的サイトとして公開することもできます。',
-          card2Title: '依存を固定して内包', card2Body: 'npmの外部素材はバージョンとtarball hashを固定し、検証してからHTMLへ内包します。',
-          card3Title: '実行時通信なし', card3Body: 'Content Security Policyで実行時通信を遮断し、ユーザーデータをページ内に保ちます。',
-          card4Title: 'LLM向けの作業契約', card4Body: 'AGENTS.mdとAPP_SPEC.mdで、実装方針、受入条件、完了報告を安定して伝えます。',
-          buildInfo: 'ビルド情報', appVersion: 'アプリバージョン', builtAt: '生成日時', dependencies: '内包依存数',
-          footer: '完全内包HTMLとして生成', copied: 'コピーしました', copyFailed: 'コピーできませんでした', downloaded: 'テキストを保存しました', cleared: '入力を消去しました', restored: 'サンプルを復元しました'
+          brandMeta:'画像から作る暗記シート',introTitle:'図やノートを、めくる教材に。',lead:'答えが書かれた画像を、そのまま教材に。まずは画像を追加してください。',localBadge:'端末内で画像を処理',
+          developmentNote:'v0.2.0 開発版：画像、四角い覆い、自由にめくる学習、画像入り編集データの保存・再読込に対応しています。',
+          loadedDevelopmentNote:'覆いを作って学習し、画像込みの編集データとして保存・再読込できます。',
+          addImages:'画像を追加',openSheet:'教材を開く',workflow:'作業画面',create:'作る',study:'学習',save:'保存',newSheet:'新しい教材',undo:'元に戻す',redo:'やり直す',pages:'ページ',pageName:'ページ{number}',pageCount:'{count}ページ',untitled:'無題の教材',pageNameLabel:'ページ名',pageEarlier:'前へ',pageLater:'後ろへ',deletePage:'ページを削除',pageDeleteTitle:'このページを削除しますか？',pageDeleteMessage:'「{name}」と、このページの{count}問を削除します。元に戻すことができます。',pageDeleteAction:'削除する',moveImage:'画像を動かす',cover:'隠す',twoPoint:'二点で囲む',moveLeft:'左へ',moveRight:'右へ',moveUp:'上へ',moveDown:'下へ',wider:'幅を広げる',narrower:'幅を狭める',taller:'高さを広げる',shorter:'高さを狭める',duplicateCover:'複製',deleteCover:'削除',coverAdded:'覆いを追加しました。',coverChanged:'覆いを調整しました。',coverDeleted:'覆いを削除しました。',pageRenamed:'ページ名を変更しました。',pageMoved:'ページの順序を変更しました。',pageDeleted:'ページを削除しました。',chooseSecondPoint:'反対側の角を選んでください。',coverTooSmall:'覆いが小さすぎます。1画像px以上の範囲を選んでください。',freeStudy:'自由にめくる',confirmedLabel:'確認済み',revealQuestion:'問題{number}の答えを見る',hideQuestion:'問題{number}を隠す',hideAll:'全部隠す',revealPage:'このページの答えをすべて表示',coverPanelTitle:'覆いと問題',coverAnswerItem:'覆い{number}・答え',coverAuxItem:'覆い{number}・学習中は隠したまま',groupSelected:'まとめてめくる',ungroupSelected:'まとめを解除',makeAuxiliary:'学習中は隠したまま',makeAnswer:'答えに戻す',duplicateSelection:'選択を複製',overlapWarning:'重なっている覆いがあります（{count}件）。学習時は閉じた覆いを優先して表示します。',questionCountEditLabel:'問題数',groupedCovers:'選んだ問題をまとめました。',ungroupedCovers:'まとめを解除しました。',madeAuxiliary:'学習中は隠したままに変更しました。',madeAnswer:'答え用の覆いに戻しました。',duplicatedSelection:'選択した覆いを複製しました。',
+          inputHint:'JPEG・静止PNG・静止WebP。ここにドロップ、または画像ファイルを貼り付けできます。1枚20 MiBまで。',
+          emptyTitle:'画像を追加してください',emptyBody:'図、写真、ノートなど、答えが書かれた画像を選びます。複数枚をまとめて追加できます。',emptyStatus:'画像はまだありません。',
+          processing:'画像を確認しています：{done} / {total}',addedStatus:'{added}枚を追加しました。',partialStatus:'{added}枚を追加しました。{failed}枚は読み込めませんでした。',cancelledStatus:'追加を中止しました。処理済みの{added}枚は残っています。',cancelling:'追加を中止しています。',stop:'中止',preparing:'画像を準備しています。',imageAlt:'{name}の編集用画像',unchangedSize:'向きを固定・縮小なし',
+          failures:'読み込めなかった画像',chooseAgain:'画像を選び直す',unnamedImage:'名前のない画像',totalImageSize:'教材内の画像容量：',
+          memoryNotice:'自動保存はまだありません。必要な作業は「保存」から画像入り編集データとして手動保存してください。未保存の変更は画面を閉じると失われます。',nextStage:'この開発版の範囲と次の段階',
+          notAvailable:'ページの並べ替え、グループ、補助の覆い、一問ずつ学習、自動保存、教材HTMLは後続段階です。',outputFilename:'編集データのファイル名',savePanelTitle:'編集データを保存',saveEditable:'編集データを保存',saveIncludesImages:'画像と覆いを含む編集データです。個人の学習結果やUndo履歴、元ファイル名は含めません。',savePages:'ページ',saveQuestions:'問題',saveImageSize:'画像容量',openingSheet:'教材を確認しています。',sheetOpened:'教材を開きました。',sheetOpenCancelled:'教材の置き換えをキャンセルしました。',saveStarted:'保存を開始しました。',replaceSheetTitle:'現在の教材を置き換えますか？',replaceSheetMessage:'選んだ編集データの検証は完了しています。現在の教材を置き換えます。未保存の変更がある場合は先に保存してください。',replaceSheetAction:'この教材を開く',
+          undone:'直前のページ追加を元に戻しました。',redone:'ページ追加をやり直しました。',newTitle:'新しい教材にしますか？',newMessage:'現在の{count}ページと追加中の画像を閉じます。未保存の変更はあとから復元できません。',newAction:'新しい教材にする',confirmTitle:'確認',confirmAction:'実行する',cancel:'キャンセル',helpTitle:'使い方と注意事項',close:'閉じる',helpBasicsTitle:'基本操作',
+          helpStep1:'「画像を追加」でJPEG・静止PNG・静止WebPを選びます。パソコンではファイルのドロップや画像ファイルの貼り付けも利用できます。',
+          helpStep2:'読み込めた画像は選択順に追加されます。ページを押して表示を切り替えます。読み込めなかった画像は別欄に表示します。',
+          helpStep3:'「隠す」で画像上をドラッグするか、「二点で囲む」で二隅を選びます。覆いが一つあれば「学習」で自由にめくれます。「保存」では画像込みの編集データを書き出せ、「教材を開く」で再読込できます。',
+          helpPrivacyTitle:'プライバシーと作業内容',helpPrivacyBody:'画像と編集データはこのブラウザ内で処理され、外部へ送信されません。元ファイル名は読み込み失敗の一時表示だけに使用します。自動保存はまだ行いません。必要な作業は編集データとして手動保存してください。',helpNotesTitle:'対応形式と制限',
+          limitsNote:'最大30ページ。入力1枚20 MiB、各辺8192px、1600万画素まで。向き固定後のPNGは1枚32 MiB、教材全体64 MiBまでです。これらは入力上限であり、すべての端末での動作保証ではありません。',
+          unsupportedNote:'GIF、アニメーションPNG・WebP、SVG、HEIC・HEIF、AVIF、PDFは非対応です。外部のURLやHTMLを貼り付けても画像は取得しません。',
+          normalizationNote:'画像は向きを固定したPNGとして教材に含めます。画像の大きさは変えません。PNG化で容量が増えることがあります。元のEXIFやファイル名を教材へコピーしませんが、画素に写った氏名や場所は消えません。',
+          redactionNote:'覆いは学習用です。元の答えや画像は教材ファイルに含まれます。個人情報や機密情報を消す機能ではありません。',rightsNote:'教材として配布する場合は、配布する権限のある資料を使用してください。',
+          helpOffline:'単一HTMLを実行できるブラウザで開けば、画像処理に追加通信は不要です。OSのファイルプレビューでは動かない場合があります。スマートフォン実機の動作確認はまだ完了していません。',footer:'単一HTML・端末内処理',
+          error_UNSUPPORTED_IMAGE:'対応していない形式、または画像の種類が一致しません。JPEG・静止PNG・静止WebPを選び直してください。',error_ANIMATED_IMAGE:'動く画像には対応していません。静止画像を用意してください。',
+          error_IMAGE_TOO_LARGE:'画像が上限を超えています。入力20 MiB、各辺8192px、1600万画素、PNG化後32 MiB以内の画像を用意してください。',error_DECODE_FAILED:'画像を読み込めませんでした。破損している可能性があります。別の画像を選び直してください。',error_LIMIT_EXCEEDED:'教材またはファイルが上限を超えています。内容を減らしてもう一度お試しください。',error_INVALID_SHEET:'編集データを開けませんでした。Reveal Sheetの有効な編集データか確認してください。',error_UNSUPPORTED_SCHEMA:'この編集データは、この版ではまだ開けません。新しいReveal Sheetで開いてください。'
         },
         en: {
-          brandMeta: 'Single file · Local-first · GitHub Pages',
-          helpTitle: 'How to use & notes', close: 'Close',
-          helpBasicsTitle: 'Basics',
-          helpStep1: 'Enter text in the workspace. The content is saved locally as you type.',
-          helpStep2: 'Change the output filename if needed, then use Copy or Download text.',
-          helpStep3: 'After Restore sample or Clear, use Undo in the toast to reverse the change.',
-          helpPrivacyTitle: 'Privacy',
-          helpPrivacyBody: 'Your content and actions are processed in the browser and are not sent outside by this app. Required code and dependencies are embedded in the distributable HTML.',
-          helpNotesTitle: 'Notes',
-          helpNoteStorage: 'Clearing browser site data may also remove content saved locally. Download anything important as a file.',
-          helpNoteBrowser: 'Some features are affected by browser restrictions and device performance. Review important output after saving it.',
-          helpNoteTemplate: 'This screen is a starter example. When building a new app, update this help together with the real features and workflow.',
-          helpOffline: 'The deliverable is one dist/index.html file. It can open locally or be published with GitHub Pages.',
-          introTitle: 'Single HTML App Starter',
-          lead: 'Build a new browser app from the same pinned-dependency, fully embedded, no-runtime-network foundation used by PDF Organizer.',
-          localBadge: 'No runtime network',
-          workspaceTitle: 'Starter workspace',
-          workspaceBody: 'Text stays in this browser. It is never sent by this app.',
-          characters: 'Characters', words: 'Words', lines: 'Lines', editorLabel: 'Text editor',
-          copy: 'Copy', download: 'Download text', sample: 'Restore sample', clear: 'Clear', savedLocally: 'Saved locally', outputFilename: 'Output filename', outputFilenameHint: 'The .txt extension is added automatically', undo: 'Undo', undone: 'Restored',
-          confirmTitle: 'Confirm', confirmAction: 'Continue', cancel: 'Cancel',
-          guaranteesTitle: 'Template guarantees',
-          guaranteesBody: 'Keep these constraints unless the product specification explicitly changes them.',
-          card1Title: 'One deliverable', card1Body: 'The release artifact is dist/index.html. It opens directly and can be hosted as a static page.',
-          card2Title: 'Pinned dependencies', card2Body: 'Third-party npm assets are version-pinned, hashed, and embedded during the build.',
-          card3Title: 'No runtime network', card3Body: 'Content Security Policy blocks runtime connections. User data stays inside the page.',
-          card4Title: 'LLM-ready workflow', card4Body: 'AGENTS.md and APP_SPEC.md give coding agents a stable contract, acceptance criteria, and handoff format.',
-          buildInfo: 'Build information', appVersion: 'App version', builtAt: 'Built at', dependencies: 'Embedded dependencies',
-          footer: 'Generated as one self-contained HTML file', copied: 'Copied', copyFailed: 'Could not copy', downloaded: 'Text downloaded', cleared: 'Text cleared', restored: 'Sample restored'
+          brandMeta:'Study sheets from your images',introTitle:'Turn a diagram into a study sheet.',lead:'Start with an image that already contains the answers. Add your diagram, photo or notes.',localBadge:'Images processed on this device',
+          developmentNote:'v0.2.0 development build: images, rectangular covers, free reveal study, and image-embedded editable JSON save/reopen are available.',loadedDevelopmentNote:'Create covers, study them, and save or reopen the image-embedded editable sheet.',
+          addImages:'Add images',openSheet:'Open a sheet',workflow:'Workflow',create:'Create',study:'Study',save:'Save',newSheet:'New sheet',undo:'Undo',redo:'Redo',pages:'Pages',pageName:'Page {number}',pageCount:'{count} pages',untitled:'Untitled sheet',pageNameLabel:'Page name',pageEarlier:'Earlier',pageLater:'Later',deletePage:'Delete page',pageDeleteTitle:'Delete this page?',pageDeleteMessage:'Delete “{name}” and its {count} questions. You can Undo this edit.',pageDeleteAction:'Delete page',moveImage:'Move image',cover:'Cover',twoPoint:'Two points',moveLeft:'Move left',moveRight:'Move right',moveUp:'Move up',moveDown:'Move down',wider:'Make wider',narrower:'Make narrower',taller:'Make taller',shorter:'Make shorter',duplicateCover:'Duplicate',deleteCover:'Delete',coverAdded:'Added a cover.',coverChanged:'Adjusted the cover.',coverDeleted:'Deleted the cover.',pageRenamed:'Renamed the page.',pageMoved:'Moved the page.',pageDeleted:'Deleted the page.',chooseSecondPoint:'Choose the opposite corner.',coverTooSmall:'The cover is too small. Select at least one image pixel.',freeStudy:'Reveal freely',confirmedLabel:'Checked',revealQuestion:'Reveal answer {number}',hideQuestion:'Hide answer {number}',hideAll:'Hide all',revealPage:'Reveal all answers on this page',coverPanelTitle:'Covers and questions',coverAnswerItem:'Cover {number} · answer',coverAuxItem:'Cover {number} · keep covered while studying',groupSelected:'Reveal together',ungroupSelected:'Ungroup',makeAuxiliary:'Keep covered while studying',makeAnswer:'Make answer cover',duplicateSelection:'Duplicate selection',overlapWarning:'Some covers overlap ({count}). Closed covers remain visible while studying.',questionCountEditLabel:'Questions',groupedCovers:'Grouped the selected questions.',ungroupedCovers:'Ungrouped the question.',madeAuxiliary:'This cover will stay closed while studying.',madeAnswer:'Changed this to an answer cover.',duplicatedSelection:'Duplicated the selected covers.',
+          inputHint:'JPEG, static PNG or static WebP. Drop files here or paste an image file. Up to 20 MiB per image.',emptyTitle:'Add your first image',emptyBody:'Choose a diagram, photo or page of notes with answers already on it. You can add several images at once.',emptyStatus:'No images yet.',
+          processing:'Checking images: {done} / {total}',addedStatus:'Added {added} images.',partialStatus:'Added {added} images. Could not open {failed} images.',cancelledStatus:'Stopped adding images. Kept the {added} completed images.',cancelling:'Stopping image import.',stop:'Stop',preparing:'Preparing the image.',imageAlt:'Editing image for {name}',unchangedSize:'Orientation fixed · Not resized',
+          failures:'Images that could not be opened',chooseAgain:'Choose images again',unnamedImage:'Unnamed image',totalImageSize:'Image data in this sheet:',memoryNotice:'Automatic saving is not available yet. Use Save to export an image-embedded editable sheet. Unsaved changes are lost when this page closes.',nextStage:'This build and the next stage',
+          notAvailable:'Page reordering, groups, auxiliary covers, one-at-a-time study, automatic saving, and study HTML come in later stages.',outputFilename:'Editable sheet filename',savePanelTitle:'Save editable sheet',saveEditable:'Save editable sheet',saveIncludesImages:'This editable file includes the images and covers. It does not include personal study results, Undo history, or original filenames.',savePages:'Pages',saveQuestions:'Questions',saveImageSize:'Image data',openingSheet:'Checking the sheet.',sheetOpened:'Opened the sheet.',sheetOpenCancelled:'Kept the current sheet.',saveStarted:'Started saving.',replaceSheetTitle:'Replace the current sheet?',replaceSheetMessage:'The selected editable sheet has passed validation. Opening it replaces the current sheet. Save any changes you want to keep first.',replaceSheetAction:'Open this sheet',undone:'Undid the previous page addition.',redone:'Redid the page addition.',
+          newTitle:'Start a new sheet?',newMessage:'Close the current {count} pages and stop any import. Unsaved changes cannot be recovered.',newAction:'Start new sheet',confirmTitle:'Confirm',confirmAction:'Continue',cancel:'Cancel',helpTitle:'How to use & notes',close:'Close',helpBasicsTitle:'Basics',
+          helpStep1:'Choose JPEG, static PNG or static WebP files with Add images. On a desktop, you can also drop files or paste an image file.',helpStep2:'Accepted images are added in selection order. Select a page to preview it. Failed images appear in a separate list.',helpStep3:'Use Cover and drag on the image, or Two points and choose opposite corners. Once a cover exists, Study lets you reveal answers freely. Save exports an image-embedded editable sheet, and Open a sheet reopens it.',
+          helpPrivacyTitle:'Privacy and your work',helpPrivacyBody:'Images and editable sheet data are processed inside this browser and are not sent outside. Original filenames are only used temporarily to identify failed image imports. Automatic saving is not available yet; export an editable sheet to keep your work.',helpNotesTitle:'Formats and limits',
+          limitsNote:'Up to 30 pages. Input: 20 MiB per image, 8192 px per side and 16 million pixels. Normalized PNG: 32 MiB each, 64 MiB total. These are safety limits, not a guarantee of device capacity.',unsupportedNote:'GIF, animated PNG / WebP, SVG, HEIC / HEIF, AVIF and PDF are not supported. Pasting a URL or HTML does not fetch images.',
+          normalizationNote:'Images are converted into orientation-fixed PNGs without resizing. PNG files can be larger. Original EXIF data and filenames are not copied into the sheet, but names or places visible in the pixels are not removed.',redactionNote:'Covers are for studying. The original answers and images remain in the sheet file. This tool does not redact personal or confidential information.',rightsNote:'Use materials you have permission to distribute when sharing a sheet.',
+          helpOffline:'After opening the single HTML in a browser that can run it, image processing needs no additional network access. An OS file preview may not execute the app. Real-device smartphone verification is not complete yet.',footer:'Single HTML · On-device processing',
+          error_UNSUPPORTED_IMAGE:'Unsupported format or mismatched file type. Choose a JPEG, static PNG or static WebP image.',error_ANIMATED_IMAGE:'Animated images are not supported. Choose a still image.',error_IMAGE_TOO_LARGE:'The image exceeds a limit: input 20 MiB, 8192 px per side, 16 million pixels, or 32 MiB after PNG conversion. Choose a smaller image.',error_DECODE_FAILED:'The image could not be decoded. It may be damaged. Choose another image.',error_LIMIT_EXCEEDED:'The sheet or file exceeds a safety limit. Reduce its contents and try again.',error_INVALID_SHEET:'Could not open this editable sheet. Check that it is a valid Reveal Sheet editable file.',error_UNSUPPORTED_SCHEMA:'This sheet was created with a newer save format. Open it with a newer Reveal Sheet version.'
         }
       };
-
-      const storageKeys = {
-        text: `${APP_CONFIG.slug}:starter-text`,
-        language: `${APP_CONFIG.slug}:language`
-      };
-      const sampleText = {
-        ja: 'この領域はサンプルです。\n\n新しいアプリを作るときは APP_SPEC.md に目的と受入条件を書き、LLMに AGENTS.md から読むよう指示してください。',
-        en: 'This workspace is a sample.\n\nFor a new app, describe the goal and acceptance criteria in APP_SPEC.md, then tell the LLM to start with AGENTS.md.'
-      };
-
       const $ = selector => document.querySelector(selector);
-      const editor = $('#editor');
-      const outputFilename = $('#outputFilename');
-      let language = readStorage(storageKeys.language) || detectLanguage();
-
+      let language = (APP_CONFIG.defaultLanguage === 'ja' || APP_CONFIG.defaultLanguage === 'en') ? APP_CONFIG.defaultLanguage : ((navigator.language || '').toLowerCase().startsWith('ja') ? 'ja' : 'en');
+      function translate(key, values = {}) {
+        const text = translations[language]?.[key] ?? translations.en[key] ?? key;
+        return text.replace(/\{([a-zA-Z]+)\}/g, (match, name) => Object.hasOwn(values, name) ? String(values[name]) : match);
+      }
       // Reusable Promise-based confirmation API. Canonical source: components/confirm-dialog.html.
       const AppConfirm = (() => {
-        const dialog = $('#appConfirmDialog');
-        const title = $('#appConfirmTitle');
-        const message = $('#appConfirmMessage');
-        const closeButton = $('#appConfirmClose');
-        const cancelButton = $('#appConfirmCancel');
-        const okButton = $('#appConfirmOk');
-        let resolver = null;
-        let restoreFocus = null;
-
+        const dialog=$('#appConfirmDialog'),title=$('#appConfirmTitle'),message=$('#appConfirmMessage');
+        const closeButton=$('#appConfirmClose'),cancelButton=$('#appConfirmCancel'),okButton=$('#appConfirmOk');
+        let resolver=null,restoreFocus=null;
         function finish(result) {
-          if (!dialog.open) return;
-          const currentResolver = resolver;
-          resolver = null;
-          dialog.close();
-          if (restoreFocus instanceof HTMLElement && restoreFocus.isConnected) restoreFocus.focus({ preventScroll: true });
-          restoreFocus = null;
-          if (currentResolver) currentResolver(result);
+          if(!dialog.open)return;
+          const currentResolver=resolver;resolver=null;dialog.close();
+          if(restoreFocus instanceof HTMLElement && restoreFocus.isConnected)restoreFocus.focus({preventScroll:true});
+          restoreFocus=null;if(currentResolver)currentResolver(result);
         }
-
-        function ask({ title: heading, message: body, confirmLabel, cancelLabel, tone = 'default' } = {}) {
-          if (dialog.open) finish(false);
-          title.textContent = heading || translate('confirmTitle');
-          message.textContent = body || '';
-          cancelButton.textContent = cancelLabel || translate('cancel');
-          okButton.textContent = confirmLabel || translate('confirmAction');
-          okButton.classList.toggle('danger', tone === 'danger');
-          okButton.classList.toggle('primary', tone !== 'danger');
-          restoreFocus = document.activeElement;
-          return new Promise(resolve => {
-            resolver = resolve;
-            dialog.showModal();
-            requestAnimationFrame(() => cancelButton.focus({ preventScroll: true }));
-          });
+        function ask({title:heading,message:body,confirmLabel,cancelLabel,tone='default'}={}) {
+          if(dialog.open)finish(false);
+          title.textContent=heading||translate('confirmTitle');message.textContent=body||'';
+          cancelButton.textContent=cancelLabel||translate('cancel');okButton.textContent=confirmLabel||translate('confirmAction');
+          okButton.classList.toggle('danger',tone==='danger');okButton.classList.toggle('primary',tone!=='danger');restoreFocus=document.activeElement;
+          return new Promise(resolve=>{resolver=resolve;dialog.showModal();requestAnimationFrame(()=>cancelButton.focus({preventScroll:true}));});
         }
-
-        closeButton.addEventListener('click', () => finish(false));
-        cancelButton.addEventListener('click', () => finish(false));
-        okButton.addEventListener('click', () => finish(true));
-        dialog.addEventListener('cancel', event => { event.preventDefault(); finish(false); });
-        dialog.addEventListener('click', event => {
-          const rect = dialog.getBoundingClientRect();
-          const outside = event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
-          if (outside) finish(false);
-        });
-
-        return Object.freeze({ ask });
+        closeButton.addEventListener('click',()=>finish(false));cancelButton.addEventListener('click',()=>finish(false));okButton.addEventListener('click',()=>finish(true));
+        dialog.addEventListener('cancel',event=>{event.preventDefault();finish(false);});
+        dialog.addEventListener('click',event=>{const rect=dialog.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)finish(false);});
+        return Object.freeze({ask});
       })();
-      window.AppConfirm = AppConfirm;
-
-      function readStorage(key) {
-        try { return localStorage.getItem(key); } catch { return null; }
-      }
-      function writeStorage(key, value) {
-        try { localStorage.setItem(key, value); } catch { /* Storage may be unavailable in private contexts. */ }
-      }
-      function detectLanguage() {
-        if (APP_CONFIG.defaultLanguage === 'ja' || APP_CONFIG.defaultLanguage === 'en') return APP_CONFIG.defaultLanguage;
-        return (navigator.language || '').toLowerCase().startsWith('ja') ? 'ja' : 'en';
-      }
-      function translate(key) { return translations[language]?.[key] ?? translations.en[key] ?? key; }
-
+      window.AppConfirm=AppConfirm;
       // Reusable toast / Undo API. Canonical source: components/toast.html.
       const AppToast = (() => {
-        const root = $('#appToast');
-        const message = $('#appToastMessage');
-        const action = $('#appToastAction');
-        let timer = 0;
-        let actionHandler = null;
-        function dismiss() {
-          clearTimeout(timer);
-          timer = 0;
-          root.classList.remove('show');
-          actionHandler = null;
+        const root=$('#appToast'),message=$('#appToastMessage'),action=$('#appToastAction');let timer=0,actionHandler=null;
+        function dismiss(){clearTimeout(timer);timer=0;root.classList.remove('show');actionHandler=null;}
+        function show({message:text='',actionLabel='',onAction=null,duration=3200,tone='default'}={}){
+          clearTimeout(timer);message.textContent=String(text);root.dataset.tone=tone;actionHandler=typeof onAction==='function'?onAction:null;action.textContent=actionLabel||'';action.hidden=!actionHandler||!actionLabel;root.classList.add('show');if(duration>0)timer=window.setTimeout(dismiss,duration);return Object.freeze({dismiss});
         }
-        function show({ message: text = '', actionLabel = '', onAction = null, duration = 3200, tone = 'default' } = {}) {
-          clearTimeout(timer);
-          message.textContent = String(text);
-          root.dataset.tone = tone;
-          actionHandler = typeof onAction === 'function' ? onAction : null;
-          action.textContent = actionLabel || '';
-          action.hidden = !actionHandler || !actionLabel;
-          root.classList.add('show');
-          if (duration > 0) timer = window.setTimeout(dismiss, duration);
-          return Object.freeze({ dismiss });
-        }
-        action.addEventListener('click', () => {
-          const handler = actionHandler;
-          dismiss();
-          if (handler) handler();
-        });
-        return Object.freeze({ show, dismiss });
+        action.addEventListener('click',()=>{const handler=actionHandler;dismiss();if(handler)handler();});return Object.freeze({show,dismiss});
       })();
-      window.AppToast = AppToast;
-      function showToast(message, options = {}) { AppToast.show({ message, ...options }); }
-      function applyLanguage() {
-        document.documentElement.lang = language;
-        document.querySelectorAll('[data-i18n]').forEach(element => { element.textContent = translate(element.dataset.i18n); });
-        document.querySelectorAll('[data-i18n-title]').forEach(element => { element.title = translate(element.dataset.i18nTitle); });
-        document.querySelectorAll('[data-i18n-aria-label]').forEach(element => { element.setAttribute('aria-label', translate(element.dataset.i18nAriaLabel)); });
-        $('#languageButton').textContent = language === 'ja' ? 'EN' : '日本語';
-        $('#languageButton').setAttribute('aria-label', language === 'ja' ? '英語に切り替え' : 'Switch to Japanese');
-        document.title = language === 'ja' ? APP_CONFIG.nameJa : APP_CONFIG.name;
-        $('#brandName').textContent = language === 'ja' ? APP_CONFIG.nameJa : APP_CONFIG.name;
-        $('#footerName').textContent = language === 'ja' ? APP_CONFIG.nameJa : APP_CONFIG.name;
-        if (!editor.value) editor.value = sampleText[language];
-        updateStats();
+      window.AppToast=AppToast;
+      /* REVEAL:APP_JS */
+      const REVEAL_PLAYER_TEMPLATE = __REVEAL_PLAYER_TEMPLATE_JSON__;
+      const core=createRevealCore();
+      const imageIO=createImageIO({core,env:window});
+      const projectIO=createProjectIO({core,imageIO,env:window});
+      let revealEditor=null;
+      function applyLanguage(){
+        document.documentElement.lang=language;
+        document.querySelectorAll('[data-i18n]').forEach(node=>{node.textContent=translate(node.dataset.i18n);});
+        document.querySelectorAll('[data-i18n-title]').forEach(node=>{node.title=translate(node.dataset.i18nTitle);});
+        document.querySelectorAll('[data-i18n-aria-label]').forEach(node=>{node.setAttribute('aria-label',translate(node.dataset.i18nAriaLabel));});
+        $('#languageButton').textContent=language==='ja'?'EN':'日本語';$('#languageButton').setAttribute('aria-label',language==='ja'?'英語に切り替え':'Switch to Japanese');
+        document.title=language==='ja'?APP_CONFIG.nameJa+' | Reveal Sheet':APP_CONFIG.name;
+        $('#brandName').textContent=language==='ja'?APP_CONFIG.nameJa:APP_CONFIG.name;$('#footerName').textContent=APP_CONFIG.name;revealEditor?.localize();
       }
-      function updateStats() {
-        const value = editor.value;
-        const words = value.trim() ? (value.match(/[\p{L}\p{N}]+(?:['’_-][\p{L}\p{N}]+)*/gu) || []).length : 0;
-        $('#characterCount').textContent = new Intl.NumberFormat(language).format([...value].length);
-        $('#wordCount').textContent = new Intl.NumberFormat(language).format(words);
-        $('#lineCount').textContent = new Intl.NumberFormat(language).format(value ? value.split(/\r?\n/).length : 0);
-        $('#saveStatus').textContent = translate('savedLocally');
-      }
-      function saveText() {
-        writeStorage(storageKeys.text, editor.value);
-        updateStats();
-      }
-      async function copyText() {
-        try {
-          await navigator.clipboard.writeText(editor.value);
-          showToast(translate('copied'));
-        } catch {
-          editor.select();
-          const ok = document.execCommand('copy');
-          showToast(translate(ok ? 'copied' : 'copyFailed'));
-        }
-      }
-      function normalizedFilenameBase() {
-        const fallback = APP_CONFIG.slug || 'text';
-        const cleaned = outputFilename.value.trim().replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-').replace(/\.+$/g, '').trim();
-        let base = cleaned.replace(/\.txt$/i, '') || fallback;
-        if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(base)) base = `${base}-file`;
-        if (!cleaned) outputFilename.value = fallback;
-        return base.slice(0, 120);
-      }
-      function downloadText() {
-        const url = URL.createObjectURL(new Blob([editor.value], { type: 'text/plain;charset=utf-8' }));
-        const anchor = document.createElement('a');
-        const filenameBase = normalizedFilenameBase();
-        outputFilename.value = filenameBase;
-        anchor.href = url;
-        anchor.download = `${filenameBase}.txt`;
-        anchor.click();
-        URL.revokeObjectURL(url);
-        showToast(translate('downloaded'), { tone: 'success' });
-      }
-
-      $('#languageButton').addEventListener('click', () => {
-        language = language === 'ja' ? 'en' : 'ja';
-        writeStorage(storageKeys.language, language);
-        applyLanguage();
-      });
-      const helpDialog = $('#helpDialog');
-      $('#helpButton').addEventListener('click', () => helpDialog.showModal());
-      $('#closeHelpButton').addEventListener('click', () => helpDialog.close());
-      helpDialog.addEventListener('click', event => {
-        const rect = helpDialog.getBoundingClientRect();
-        const outside = event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
-        if (outside) helpDialog.close();
-      });
-      editor.addEventListener('input', saveText);
-      outputFilename.addEventListener('blur', () => { outputFilename.value = normalizedFilenameBase(); });
-      $('#copyButton').addEventListener('click', copyText);
-      $('#downloadButton').addEventListener('click', downloadText);
-      $('#sampleButton').addEventListener('click', () => {
-        const before = editor.value;
-        editor.value = sampleText[language];
-        saveText();
-        showToast(translate('restored'), { actionLabel: translate('undo'), onAction: () => { editor.value = before; saveText(); editor.focus(); showToast(translate('undone')); } });
-      });
-      $('#clearButton').addEventListener('click', () => {
-        if (!editor.value) return;
-        const before = editor.value;
-        editor.value = '';
-        saveText();
-        editor.focus();
-        showToast(translate('cleared'), {
-          actionLabel: translate('undo'),
-          onAction: () => { editor.value = before; saveText(); editor.focus(); showToast(translate('undone')); },
-          duration: 5000
-        });
-      });
-
-      editor.value = readStorage(storageKeys.text) || sampleText[language];
-      outputFilename.value = APP_CONFIG.slug || 'text';
-      $('#versionBadge').textContent = `v${APP_CONFIG.version}`;
-      $('#buildVersion').textContent = APP_CONFIG.version;
-      $('#builtAt').textContent = BUILD_MANIFEST.generatedAtUtc || '—';
-      $('#dependencyCount').textContent = String(BUILD_MANIFEST.dependencies?.length || 0);
       applyLanguage();
+      revealEditor=createEditor({core,imageIO,projectIO,appVersion:APP_CONFIG.version,env:window,translate,getLanguage:()=>language});
+      $('#versionBadge').textContent=`v${APP_CONFIG.version}`;
+      $('#languageButton').addEventListener('click',()=>{language=language==='ja'?'en':'ja';applyLanguage();});
+      const helpDialog=$('#helpDialog');$('#helpButton').addEventListener('click',()=>helpDialog.showModal());$('#closeHelpButton').addEventListener('click',()=>helpDialog.close());
+      helpDialog.addEventListener('click',event=>{const rect=helpDialog.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)helpDialog.close();});
     })();
   </script>
 </body>

@@ -352,6 +352,8 @@ $manifest = [ordered]@{
 
 Write-Step "Generating standalone HTML"
 $template = [System.IO.File]::ReadAllText($TemplatePath, [System.Text.Encoding]::UTF8)
+. (Join-Path $Root "scripts/assemble-reveal.ps1")
+$template = Expand-RevealTemplate -Template $template -Root $Root
 $assetBundleJson = ConvertTo-SafeJson $assetBundle 50
 $replacements = [ordered]@{
   "__APP_CONFIG_JSON__" = ConvertTo-SafeJson $appConfig 20
@@ -385,6 +387,8 @@ New-Item -ItemType Directory -Force -Path $outputDirectory | Out-Null
   -Path $OutputPath `
   -RequireNetworkBlock ([bool]$appConfig.build.blockRuntimeNetwork) `
   -ForbiddenPlaceholders @($replacements.Keys)
+
+& (Join-Path $Root "scripts/verify-reveal.ps1") -Path $OutputPath
 
 if (-not [string]::IsNullOrWhiteSpace($rootHtmlOutputPath)) {
   [System.IO.File]::Copy($OutputPath, $rootHtmlOutputPath, $true)
@@ -488,5 +492,5 @@ Write-Host "[OK] Size: $outputSizeMb MB"
 Write-Host "[OK] SHA-256: $outputHash"
 Write-Host "[OK] Fetch/XHR/WebSocket-style runtime network access is blocked by CSP."
 if ($selfExtractEnabled) {
-  Write-Host "[OK] Self-extracting HTML: $selfExtractOutputPath" -ForegroundColor Green
+  Write-Host "[OK] Self-extracting HTML: $selfExtractOutputPath"
 }

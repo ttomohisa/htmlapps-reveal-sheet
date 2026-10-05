@@ -1,15 +1,15 @@
 {
   "$schema": "./schemas/app-config.schema.json",
-  "name": "Single HTML App Starter",
-  "nameJa": "単一HTMLアプリ スターター",
-  "slug": "single-html-app-starter",
-  "version": "1.3.0",
-  "description": "A reusable starter for privacy-friendly, fully self-contained browser apps.",
-  "descriptionJa": "プライバシーに配慮した完全内包型ブラウザーアプリの再利用テンプレートです。",
+  "name": "Reveal Sheet",
+  "nameJa": "めくる暗記シート",
+  "slug": "reveal-sheet",
+  "version": "0.3.0",
+  "description": "Create study sheets from images with page management, grouped answers, auxiliary covers, free reveal study, and editable JSON save/reopen.",
+  "descriptionJa": "画像に覆いを作り、ページ整理・まとめてめくる・補助の覆い・自由学習・画像込み編集データ保存に対応する暗記シート。",
   "defaultLanguage": "auto",
   "repository": {
-    "owner": "OWNER",
-    "name": "single-html-app-template"
+    "owner": "ttomohisa",
+    "name": "htmlapps-reveal-sheet"
   },
   "build": {
     "output": "dist/index.html",
@@ -19,8 +19,8 @@
       "output": "dist/index.self-extract.html"
     },
     "sizeBudget": {
-      "readableWarningMb": 25,
-      "selfExtractWarningMb": 12
+      "readableWarningMb": 2,
+      "selfExtractWarningMb": 1
     }
   }
 }

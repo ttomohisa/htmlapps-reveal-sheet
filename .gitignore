@@ -5,3 +5,14 @@ dist/*
 *.part
 .DS_Store
 Thumbs.db
+node_modules/
+test-results/
+playwright-report/
+.superpowers/
+source-snapshot.zip
+/reveal-sheet.html
+tests/fixtures/images/*.png
+tests/fixtures/images/*.jpg
+tests/fixtures/images/*.webp
+tests/fixtures/images/*.gif
+tests/fixtures/images/*.svg

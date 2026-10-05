@@ -1,128 +1,592 @@
-# APP_SPEC.md
+# Reveal Sheet／めくる暗記シート — 正式仕様書
 
-This file is the product contract for the application created from this template. Replace the starter specification below before asking an LLM to build a new product.
+**文書版:** 1.0  
+**作成日:** 2026-10-05（Asia/Tokyo）  
+**対象リリース:** アプリ v0.1.0〜v1.0.0  
+**状態:** 合意した方向を具体化した実装用仕様。文書版1.0はアプリv1.0.0の完成を意味しない。実装の進捗・実際の試験結果はREADMEとdocs/QA_RESULTS.mdを参照する。  
+**仕様の正:** ユーザー提供のAPP_SPEC.md文書版1.0。本ファイルはその製品契約を転記したもの。文書にある設計上の要件を、実装済みや試験合格の意味で読まない。
 
-## 1. Product identity
+## 1. 製品の目的と成功条件
 
-- **Working name:** Single HTML App Starter
-- **One-sentence purpose:** Demonstrate the template's local-first, responsive, bilingual, single-file application foundation.
-- **Primary users:** Developers and LLM coding agents starting a new browser utility.
-- **Release artifacts:** `dist/index.html`, `dist/index.self-extract.html`, and a repository-root copy of the readable build named from `repository.name` with a leading `htmlapps-` removed
+> 手元の図・写真・ノートを、文字を打ち直さずに、めくって確認できる教材にする。
 
-## 2. Problem and outcome
+一回の利用で「画像を入れる → 答えを覆う → 学習する → 必要な箇所だけ直す → 同じ場所から続ける → 教材として保存する」が完結することを成功とする。教材を他端末に持ち出せることは第二の価値とし、作成直後の学習体験を優先する。
 
-The starter must make the repository's constraints visible and testable without pretending to be a finished end-user product. A user can enter text, see basic counts, copy it, save it, and persist it locally.
+主対象は、答えがすでに書かれている図、説明付き設備写真、表、手書きノートを覚えたい人。長期学習の管理、学校・クラスの運営、問題の自動生成は主対象にしない。
 
-A successful replacement app should state here:
+価値を「習得率が上がる」「記憶が定着する」などの未検証の学習効果で説明しない。「画像の答えを隠して確認できる」「教材を画像ごと保存できる」という実際の機能で説明する。競合の現行機能・市場規模・利用者数は本仕様の前提に含めない。
 
-- What concrete problem it solves.
-- Who experiences the problem.
-- What result the user gets in one session.
-- Why a local single-HTML implementation is useful.
+## 2. 決定の根拠と今回の具体化
 
-## 3. Core user flow
+### 2.1 引き継ぐ範囲
 
-1. Open the page locally or through GitHub Pages.
-2. Enter or paste text.
-3. See character, word, and line counts update immediately.
-4. Edit the suggested output filename, then copy or download the text.
-5. Use Clear or Restore sample and undo the reversible change from the toast when needed.
-6. Reload and recover the locally saved text.
+四角い覆い、グループ化、補助の覆い、自由／一問ずつの学習、表示位置保持、教材HTMLと編集データ、再編集、スマートフォン、日英をv1.0.0の範囲とする。
 
-## 4. Functional requirements
+Browser Kitty Guideの登録不要・端末内処理・単一HTML・スマートフォン・SVG・出力と保存の明確さ・リリース確認を共通制約として採用する。ガイドを現在のコードや公開状態の証拠にはしない。
 
-- Provide a responsive text area.
-- Calculate Unicode-aware character count.
-- Calculate approximate word and line counts.
-- Copy text with a compatibility fallback.
-- Download UTF-8 plain text with a user-editable output filename and a predictable `.txt` extension.
-- Save the current text in local storage when available.
-- Use the reusable `AppToast.show()` Undo pattern for reversible Clear / Restore sample operations. Reserve `AppConfirm.ask()` for irreversible or high-risk actions.
-- Switch Japanese and English without reloading.
-- Use a light-only interface; do not add a dark-mode or theme switcher.
-- Expose build version, generation timestamp, and embedded dependency count.
+### 2.2 本書で具体化した設計判断
 
-## 5. Data and privacy
+以下は外部資料に書かれた事実ではなく、実装を曖昧にしないための製品上の決定である。
 
-- Input text remains in browser memory and local storage.
-- The app performs no runtime network request.
-- There is no server-side storage, login, analytics, telemetry, or tracking.
-- Download occurs only after a user action.
+| 決定 | 内容 |
+|---|---|
+| D01 | 読み込んだ静止画像は、縮小せず向きを固定したPNGへ正規化し、その画像を以後の座標の正とする |
+| D02 | 覆いと問題を別IDで管理する。一つの覆いを複数の問題に兼用しない |
+| D03 | 学習結果は自己評価。自由にめくっただけでは正解・習得として数えない |
+| D04 | 答え範囲や答え文字の変更は、小さな修正でも当該問題を未回答へ戻す。補助の覆いの変更は同じページの問題へ影響する |
+| D05 | 教材HTML・編集データのどちらにも個人の学習結果、Undo履歴、表示位置、元ファイル名を含めない |
+| D06 | 教材HTMLは学習専用。再編集はアプリでそのHTMLまたは編集データを読み込んで行う |
+| D07 | 自動保存は初期OFF。明示的にONにした場合のみ端末内へ教材や学習記録を保存する |
+| D08 | 編集データの保存と再読込をv0.2.0、教材HTMLをv0.6.0までに提供する |
+| D09 | 入力上限・資源予算を先に固定し、性能を保証する数字と混同しない |
+| D10 | 初版はPDF、印刷、OCR、AI、多角形、覆いの回転、長期復習管理を含めない |
 
-## 6. Non-goals
+## 3. 製品名・リポジトリ・ビルド
 
-- Collaborative editing.
-- Cloud synchronization.
-- Rich text formatting.
-- Server-side conversion.
-- Account management.
+| 項目 | 決定 |
+|---|---|
+| 英語名 | Reveal Sheet |
+| 日本語名 | めくる暗記シート |
+| slug | reveal-sheet |
+| リポジトリ | ttomohisa/htmlapps-reveal-sheet。実装時にライブ確認 |
+| 配布方針 | 各アプリ原則Public。Browser Kitty本体は変更しない。PRのマージはユーザーが行う |
+| 着手時テンプレート | ttomohisa/htmlapps-template、main、cb908779682fa315ccd0f1eb58549f6c208f36f0 |
+| テンプレート設定版 | 1.3.0。アプリ版とは別物 |
+| アプリ生成物 | dist/index.html、dist/index.self-extract.html、repository.nameから命名する通常版のルートコピー |
+| 利用者が生成する教材 | 教材名.reveal.html、教材名.reveal.json。アプリ配布物とは区別する |
 
-## 7. UX and accessibility
+実装開始時に対象リポジトリとテンプレートを再確認する。別のZIP・ブランチ・コミットを指定された場合はそれを正とする。将来の実装ファイル名は本書と計画で提案するものであり、テンプレートに既に存在するとは説明しない。
 
-- Mobile-first responsive layout from 320px upward.
-- All controls have visible labels or accessible names.
-- Keyboard focus is visible.
-- Motion respects `prefers-reduced-motion`.
-- Reversible changes provide a visible Undo action in the reusable toast.
-- Irreversible or high-risk destructive actions use the reusable confirmation component, centered on desktop and presented as a safe-area-aware bottom sheet on smartphones.
-- Status messages use an `aria-live` region.
-- If the finished app needs persistent smartphone access to 3-5 sections or workflow actions, reuse `components/mobile-bottom-bar.html` rather than inventing another fixed bottom bar. For long multi-section tools, prefer its mobile page-tab mode (`data-mobile-page-target`) so tapping a bottom tab shows only that group on smartphones while desktop still shows all sections. Keep unavailable actions disabled until their prerequisites exist.
+通常版とルートコピーはバイト一致、自己展開版は通常版をバイト一致で復元する。生成HTMLを手編集しない。テンプレートのfavicon、プレースホルダー、PowerShell互換、依存ロックの検査を削除して合格させない。
 
-## 8. Performance expectations
+## 4. v1.0.0の範囲
 
-- Initial UI should become interactive without network access.
-- Input updates should remain smooth for at least 100,000 characters on a typical desktop browser.
-- Avoid rebuilding large DOM sections on every keystroke.
+**必須:** 静止画像の追加、複数ページ、四角い覆い、移動・サイズ変更・複製・削除、Undo／Redo、まとめてめくる、補助の覆い、二つの学習モード、表示位置保持、画像入り編集データと教材HTML、再読込・再編集、任意の端末内保存、PC／スマートフォン・日英。
 
-## 9. Browser target
+**将来候補:** PDFの選択ページ取り込み、問題用／解答用の印刷、回転・多角形、Ankiへの出力。同じ保存形式へ無断で追加しない。
 
-Current stable desktop and mobile versions of Chromium, Firefox, and Safari. Direct `file://` opening is required.
+**対象外:** AI・OCR・自動問題生成、答えが書かれていない写真の自動命名、自動採点、間隔反復スケジュール、クラウド同期、教室・アカウント管理、ランキング、URLからの画像取得、共同編集、動画・音声、教材の自動公開、機密情報の墨消し、試験の不正防止。
 
-## 10. Acceptance criteria
+## 5. 用語
 
-- `build-standalone.ps1` produces the readable HTML, a gzip self-extracting variant, and an exact repository-root copy named from `repository.name` with a leading `htmlapps-` removed (for example `htmlapps-tap-counter` → `tap-counter.html`).
-- Embedded asset bytes are Base64-encoded exactly once; the complete asset-bundle JSON is not wrapped in a second Base64 layer.
-- Assets configured with `gzip` / `auto` can be read through the async embedded-asset API, and the build writes `build-size-report.json`.
-- `scripts/verify-standalone.ps1` passes.
-- The self-extract loader is ASCII-only, inherits the embedded favicon from the readable HTML, and restores the source HTML byte-for-byte.
-- The generated HTML contains no unresolved build placeholder.
-- The generated HTML contains no external script, stylesheet, frame, module import, or CSS asset URL.
-- Runtime CSP includes `connect-src 'none'`.
-- The full core user flow works after opening either generated HTML directly.
-- No data leaves the page.
-- Japanese and English copy both fit at 360px width.
-- Clear happens immediately but offers Undo for long enough to recover the previous text.
-- The output filename can be edited before download; invalid filename characters are sanitized and an empty name falls back to the app slug.
+| 用語 | 定義 |
+|---|---|
+| 教材 | 画像を含む一組のページ・問題・覆い・教材設定 |
+| ページ | 一枚の正規化済み画像を背景として使う単位 |
+| 覆い | 画像上に配置する不透明な四角。答え用または補助用 |
+| 問題 | 一つ以上の答え用覆いを持つ出題単位。自己評価は問題単位 |
+| まとめてめくる | 同一ページの複数の答え用覆いを一問にする操作 |
+| 補助の覆い | ヒントを隠すための覆い。出題数に含めず、学習中は開かない |
+| 学習回 | 開始時点の出題列を一巡する単位。長期成績ではない |
+| 確認済み | 自由モードで一度でも答えを開いた問題。習得の意味ではない |
+| 思い出せた／もう一度 | 答えを見た後の本人による判断 |
+| 編集データ | 画像を含む.reveal.json。ブラウザ内の自動保存とは別 |
 
-## 11. Open decisions for a new app
+## 6. 基本フロー
 
-Replace these with explicit decisions before implementation:
+### 6.1 新規教材
 
-- Maximum accepted input size.
-- Supported input file types.
-- Export file formats, default filename, editable filename behavior, sanitization, and extension rules.
-- Persistence strategy and reset behavior.
-- Undo/redo scope.
-- Error and recovery behavior, including stale async-result invalidation when inputs can change during processing.
-- Explicit async phases (`empty`, `ready`, `loading-runtime` if needed, `processing`, `result`, `error`) for heavy processing apps.
-- Mobile relationship between previews and their directly related controls.
-- Smartphone navigation model: bottom-tab page switching, section-scrolling bottom bar, workflow-action bar, or no fixed bottom bar.
-- Media coordinate/orientation strategy when drawing overlays.
-- Required third-party libraries.
-- Whether the app intentionally needs peer-to-peer WebRTC. If so, decide whether the fully serverless same-LAN QR pairing component is appropriate, what DataChannels are required, and how paired-device data is described to users.
-- Whether bilingual UI is required.
+初期画面の主操作は「画像を追加」。副操作は「教材を開く」。タイトルやフォルダの入力を要求しない。最初の画像が使える状態になったら編集画面へ進む。初期タイトルは「無題の教材」／「Untitled sheet」、ページ名は「ページ1」等。元ファイル名をタイトルへ自動転記しない。
 
-## In-app help
+覆いを一個作った時点で学習できる。学習開始時に未確定のドラッグがある場合は確定を求めるかキャンセルし、中途半端な矩形を保存しない。
 
-The upper-right header includes a compact help button. It opens a bilingual “使い方と注意事項” dialog containing:
+### 6.2 学習から編集へ
 
-- the real user workflow,
-- privacy and local-processing behavior,
-- limitations and data-loss risks,
-- any browser or device constraints relevant to the app.
+「この問題を直す」で元のページ・問題・表示位置へ移る。編集完了後は「学習に戻る」。変更のない問題の自己評価は保持し、変更のあった問題だけを未回答へ戻す。詳細は14章。
 
-Acceptance criteria: help content is updated together with each user-facing behavior change, contains no leftover starter instructions, and remains fully scrollable at narrow smartphone widths / short viewport heights so the final item and close control are always reachable.
+### 6.3 保存と再利用
 
-## WebRTC readiness requirement
+編集データは有効なページが一枚あれば保存可能。問題ゼロの下書きも保存する。教材HTMLは問題が一問以上あるときだけ生成可能。教材を開くときは、編集データまたはReveal Sheet形式の教材HTMLを選ぶ。新規入力画像と既存教材ファイルを同じ選択操作で混在させない。
 
-When an app uses peer-to-peer WebRTC DataChannels, define which reliable channel represents application readiness. Custom channel layouts must set `readyChannelLabel`; do not define application-ready from ICE/PeerConnection `connected` alone.
+既存教材がある場合、新しい教材の検証を終えてから置換確認する。失敗・キャンセルで元の教材を破壊しない。入力画像の追加は既存教材に追加する操作であり、全置換とは区別する。
+
+## 7. 画像入力と正規化
+
+### 7.1 対応形式
+
+JPEG、静止PNG、静止WebP。ファイル選択・複数選択、PCのDrag & Drop、画像ファイルが入った貼り付けイベントに対応する。クリップボードのHTML、URL、外部画像参照は取り込まない。貼り付けはユーザー操作のpasteから取り、権限付きの常時クリップボード監視をしない。
+
+GIF、APNG、アニメーションWebP、SVG、HEIC／HEIF、AVIF、PDFは初版非対応。拡張子だけで判定せず、シグネチャ・ヘッダー・アニメーションフラグ・寸法・実デコードを照合する。MIME未設定はヘッダーから判断し、矛盾するMIMEは説明付きで拒否する。HEICなどを外部サービスへ送って変換しない。
+
+### 7.2 正規化
+
+デコード前にヘッダーを調べて画素数と寸法を検査する。境界外参照・切れたヘッダー・壊れた長さを安全に拒否する。ブラウザの画像向きを適用してデコードし、縮小しないキャンバスへ描画してPNGとして固定する。ブラウザAPIの向き適用を二重に行わない。
+
+EXIF orientation 1〜8、縦横写真、透過PNGを検証用素材で確認する。正規化後のPNGの幅・高さを座標の唯一の正とする。上限超過時は自動縮小・自動切り取りをせず、より小さい画像を用意するよう案内する。
+
+入力ファイルのEXIF、元ファイル名、ファイルの更新日時を教材のメタデータへ意図してコピーしない。元画像のバイト列を追加で保持・書き出ししない。ただし、画像の画素に写っている氏名や場所などは消えない。完全な匿名化・メタデータ除去の保証とは説明しない。
+
+PNG化で容量が増える場合がある。「画像は向きを固定したPNGとして教材に含めます。画像の大きさは変えません」とヘルプで説明し、保存前に実際の出力容量を示す。
+
+### 7.3 非同期処理
+
+一度に正規化する画像は一枚。元教材generation、追加バッチID、キャンセル状態を持つ。別教材へ切り替えた後の古い読み込み結果は無視し、Blob URLとデコード画像を解放する。成功分だけを選択順で追加し、失敗分はファイル名・理由・再選択操作を別欄に示す。ファイル名はこの一時的な入力欄だけで使い、教材へ保存しない。
+
+バッチのキャンセルは処理済み分を残し、未完了の追加を中止する。成功追加はページごとのUndo単位とする。別教材の全体インポートは一部成功を採用せず、全件検証成功後の一括置換とする。
+
+## 8. ページと覆い
+
+### 8.1 ページ
+
+複数ページの追加、タイトル変更、順序変更、削除。順序変更にはドラッグ以外に「前へ／後ろへ」を用意する。同名タイトルを許可し、参照はIDで行う。ページ削除は問題数を示した確認後に実行し、Undoできる。最後のページを消すと空状態となり、以前の画像を残さない。
+
+画像の後差し替え、回転、トリミング、縮小は初版で提供しない。別画像は新しいページとして追加する。既存の覆いを異なる画像へ暗黙に適用しない。
+
+学習中のページ切り替えは番号・ページ名を使う。答えの見える無加工サムネイルを表示しない。編集画面のサムネイルは元画像表示可とし、編集画面であることを明示する。
+
+### 8.2 座標
+
+正規化後画像を基準に、矩形をx, y, w, hの0〜1の数値で保持する。すべて有限、x,y >= 0、w,h > 0、x+w <= 1、y+h <= 1。幅・高さは各軸で元画像1px以上とする。UI操作の確定時は小数6桁へ丸め、丸め後も範囲と最小寸法を満たすよう検査する。受信した不正矩形は自動補正せず拒否する。
+
+画像と覆いを同じSVG座標系／同一変換で描く。CSS座標、画像座標、devicePixelRatioを混同しない。画面から画像への逆変換は一か所に定義する。
+
+境界のアンチエイリアス対策として描画だけを各方向0.5画像px広げ、画像端でクリップする。保存座標やヒット領域はこの描画補正で変えない。覆う範囲そのものの妥当性は作成者が確認する。
+
+### 8.3 覆いの操作
+
+移動、サイズ変更、複製、削除、複数選択、Undo／Redo。複製は新しい覆い・問題を作り、元の学習結果をコピーしない。複数選択を複製する場合は元の問題グループ構造を複製する。
+
+初期の操作状態は「画像を動かす」。「隠す」を押すと一つの四角を作れる。作成後は移動へ戻す。「続けて隠す」をONにした間だけ連続作成する。モードを色だけで示さない。
+
+四角作成はドラッグ、または「二点で囲む」で二隅をタップ。選択した覆いには上下左右への移動、幅・高さの増減、削除などのボタンを用意する。キーボード矢印は1画像px、Shift併用で10画像px。図の移動にも方向ボタンと拡大・縮小・全体表示を用意する。入力欄・モーダルで編集中のキー操作を奪わない。
+
+pointercancel、画面ロック、タブ非表示、別画面への移動で、未確定のジェスチャーは開始前へ戻す。確定済みの編集は維持する。移動距離6CSSpxを超えた操作をタップとして解釈せず、パン後に答えを開かない。
+
+### 8.4 Undo／Redo
+
+すべての確定編集は、適用後の参照整合・件数・文字量を先に検証し、上限超過なら文書・履歴・学習状態を変更しない。一操作を部分的に確定しない。
+
+最大100操作。覆い作成・移動・サイズ変更・複製・削除・グループ化・解除・種類変更、ページ追加・削除・順序変更、名称や問題文の確定編集を対象にする。ドラッグ中の各フレームは履歴にせず、確定一回を一操作とする。画像バイト列は参照共有し、履歴ごとに複製しない。
+
+Undo後の新規編集はRedoを破棄する。教材の全置換は履歴の境界であり、事前に未保存警告を出す。自動保存領域の削除や外部ファイル出力はUndo対象外。再起動・ファイル保存に履歴を含めない。履歴を戻しても古い自己評価を自動復活させない。
+
+## 9. 問題・グループ・補助の覆い
+
+### 9.1 参照の不変条件
+
+答え用覆いには必ず一つの問題IDがあり、問題は同じページの一つ以上の覆いを持つ。双方向参照を一致させる。一つの覆いを複数問題へ共有しない。補助の覆いは問題IDを持たず、出題数へ含めない。
+
+### 9.2 まとめてめくる
+
+同一ページの複数問題を選択して実行する。選択した各問題の全メンバーを対象とし、一部だけを誤って切り離さない。最も前の問題のIDを引き継ぎ、その問題の位置へ統合する。ほかの問題IDは削除し、残る問題のrevisionを進める。補助の覆いを含む選択やページをまたぐ選択は実行不可とし、理由を示す。
+
+任意入力の問題文・答えは、統合前の問題順で空文字を除き、完全一致の重複を一度にして改行で連結する。どちらかが2,000文字を超える場合は、統合を実行せず文章の見直しを求める。内容を黙って捨てない。解除時は元の問題文・答えを各新問題にコピーし、「分けた各問題の文章を確認してください」と通知する。いずれも対象問題の自己評価を未回答へ戻し、Undoで文章も戻せる。
+
+どれか一つの覆いをめくると全メンバーが同時に開き、問題数は一問。解除すると各覆いが一問になり、最初のメンバーだけ元問題IDを引き継ぐ。新規IDの問題は未回答。問題順の初期値は作成順。編集用一覧に前後移動ボタンを置き、明示的に変えられる。
+
+### 9.3 補助の覆い
+
+新規作成または答え用から変換する。グループの一メンバーを補助へ変える場合、そのメンバーだけを外し、残りがゼロなら問題も削除する。補助から答え用へ変えると新しい一問を作る。
+
+学習中は補助を常に不透明にし、「すべての答えを表示」でも開かない。編集画面では位置・役割を確認できる。ラベルは「学習中は隠したまま」。秘匿・暗号化・アクセス制御とは説明しない。
+
+### 9.4 重複
+
+覆い同士の重複は許可するが、別問題または補助と重なると編集時に警告する。学習中は閉じているすべての覆いと補助を重ね合わせ、他の問題を開いたことによって閉じた領域が抜けないようにする。補助は最前面。開いた覆いの輪郭やクリック対象が、別の閉じた覆いの表示を消さない。
+
+同じ画面位置を複数問題が占める場合は問題一覧から選べる。「答えを開いても一部が隠れています」と案内し、勝手に他の問題も開かない。
+
+## 10. 学習モード
+
+### 10.1 自由にめくる（初期値）
+
+問題の覆いを押すと、その問題全体を開閉する。問題一覧からも同じ操作ができる。「全部隠す」は現在教材の開いている答えをすべて閉じる。「すべての答えを表示」は現在ページの答えだけを明示操作で開き、補助は残す。ラベルに「このページ」を含める。
+
+確認件数はこの学習回で一度でも開いたユニーク問題数。閉じ直しても減らさず、開閉回数を足さない。「全部隠す」でも確認履歴を消さない。「最初から」は確認を伴い、確認件数と開閉状態を初期化する。確認件数を習得率・正答率と呼ばない。
+
+### 10.2 一問ずつ
+
+出題列はページ順×ページ内の明示的問題順。初版にシャッフルは入れない。開始時に「ほかの答えも隠す／ほかの答えは見せる」を選べ、初期値は隠す。
+
+現在問題は必ず閉じた状態で始まる。「答えを見る」は大きなボタンとキーボード操作で実行できる。答えを見てから「思い出せた／もう一度」を選ぶ。選択すると記録して次へ進む。重複イベントは同じ表示世代では一回しか受理せず、次の問題を二重押しで開いたり評価したりしない。
+
+「飛ばす」は答えを見る前後どちらでも可能。前の問題へ戻っても評価は維持するが、答えは閉じて表示する。評価し直すには再び答えを開く。評価を上書きしても件数を重複計上しない。
+
+現在問題以外の答えの表示は選んだ設定から計算し、自由モードの開閉状態を流用しない。モードや設定を変える際は新しい学習回を始める確認を行い、進行中の回を黙って変更しない。
+
+### 10.3 結果と「もう一度」
+
+対象問題数 = 思い出せた + もう一度 + 飛ばした + 未回答。一巡前に終了しても未回答を残す。「答えを見る」だけでは自己評価が付かない。集計は問題ID別の最新状態から算出し、覆い数を分母にしない。
+
+「もう一度だけ確認」はその時点のもう一度だけで新しい学習回を作る。前の回の結果とは別に表示し、元の分母を変更しない。対象ゼロならボタン自体を表示しない。飛ばした／未回答の再確認は別の「未確認を確認」で扱い、対象ゼロなら表示しない。
+
+一覧と見直しボタンから該当問題へ戻れる。「覚えた」「習得済み」「定着率」は表示しない。
+
+## 11. 表示位置と答えが見えるタイミング
+
+ページごとの表示状態をzoom, centerX, centerYとして持つ。zoomは全体表示を1とする0.5〜16、中心は画像基準の0〜1。パンで画像を完全に画面外へ逃がさない。画像の拡大とページ全体のブラウザ拡大を区別し、ブラウザのズームを禁止しない。
+
+答えの開閉、自己評価、同じページで次の問題へ進む、日英切替、編集から戻る際は位置と倍率を保つ。問題が画面外にある場合は「この問題へ」を表示し、明示操作で必要最小限の移動を行う。複数覆いが離れている問題ではグループ全体が入る範囲を示す。画面回転・リサイズ時は画像内の中心と相対倍率を維持し、安全な範囲だけ補正する。
+
+画像と覆いの検証・デコード・初回描画が揃うまで学習面は不透明な待機面の背後に置く。display:none／hiddenを初期マークアップで適用し、最初のJSが動くより前にも元画像を露出させない。再表示時は毎回初期化せず、現在の開閉状態で用意してから公開する。
+
+画像失敗時に「覆いなしの元画像」を代替表示しない。JS無効・未対応ビューアーでは操作不能の説明だけを出し、答え画像は出さない。これは意図しない答えの先見を避ける挙動であり、ソース解析やOSのプレビューに対する秘匿保証ではない。
+
+## 12. データモデル
+
+### 12.1 外部保存形式
+
+format: reveal-sheet、schemaVersion: 1を採用する。アプリのSemantic Versioningと保存形式の版を分ける。.reveal.jsonはkind: editable、教材HTML内はkind: lesson。
+
+JSON Schemaは構造上の契約。参照整合・画像デコード・合計容量などはJSON Schemaだけでは検査できず、次節の検証が別途必要。提供文書が参照するスキーマ・例の原本はこの四つの添付文書には含まれていないため、T04で実装とともに明示的に作成・検証する。存在や適合を未確認のまま断定しない。
+
+| エンティティ | 必須の主要フィールド |
+|---|---|
+| Envelope | format, schemaVersion, appVersion, kind, document |
+| Document | id, revision, title, defaults, pages, assets, questions, masks |
+| Page | id, title, description, imageId, questionOrder |
+| Asset | id, mime, width, height, byteLength, dataBase64。mimeはimage/pngのみ |
+| Question | id, pageId, revision, maskIds, prompt, answer |
+| Mask | id, pageId, kind, questionId, rect。kindはanswerまたはauxiliary |
+| Defaults | mode: free/guided, otherAnswers: hidden/visible |
+
+画像バイト列だけを一回Base64化する。文書JSON全体をさらにBase64で包まない。画像はすべて教材内へ含め、外部URL、相対パス、元ファイルへの参照を持たせない。ページのquestionOrderを問題順の唯一の正とし、別のorder数値を二重管理しない。
+
+promptとanswerは任意入力の平文。未入力でも学習可能。promptは問題を選んだ時に、answerはめくった後だけ読み上げ・表示する。答えをaccessible name、tooltip、閉じた覆いのDOMテキストへ事前に入れない。ページdescriptionに作成者が答えを記載する可能性は、入力欄の注意で説明する。
+
+### 12.2 参照と版の検証
+
+IDはASCII英数字と-／_、1〜64文字。各種類内で一意とし、IDをCSSセレクターやHTML文字列へ直接連結しない。Document／Question revisionは1以上の安全な整数。全編集でDocument revisionを進め、学習内容に影響する変更でQuestion revisionを進める。Undoでもrevisionを巻き戻さない。
+
+全ページは存在する画像一件を参照し、すべての画像は少なくとも一ページから参照される。問題・覆いは存在するページに所属し、相互所属とquestionOrderを完全一致させる。重複参照、空の問題、孤立画像・覆い、未知フィールド、未知kind、未知schemaVersionはインポート時に拒否する。
+
+版1を名乗る未知フィールドも黙って捨てない。将来の形式追加は版を上げ、明示的な移行関数と旧データfixtureを用意する。v0.2.0以降で保存した有効な版1データはv1.0.0で読み込めること。開発段階の未対応機能を含むデータを古いアプリで開く場合、必要な機能がないことを説明して拒否し、失った状態で上書きさせない。
+
+### 12.3 保存しないデータ
+
+教材・編集データには学習履歴、自己評価、未回答状態、表示位置、作成者のプレビュー、Undo／Redo、入力ファイル名、端末パス、編集用一時URL、保存先情報、端末ID、保存設定、ブラウザ情報を含めない。
+
+教材ファイルへ任意コード、CSS、SVGソース、イベントハンドラー、URL欄を持たせない。ページや問題の平文は文字列としてのみ表示する。
+
+## 13. アプリ内部の状態
+
+| 状態 | 内容・責務 |
+|---|---|
+| Document | 編集対象。外部保存に使用する唯一の教材データ |
+| EditorState | 選択、操作モード、未確定ジェスチャー、Undo履歴、表示位置。ファイルへ出さない |
+| StudySession | 出題列、位置、開閉、自己評価、確認済み集合。教材へ出さない |
+| LocalSaveState | 任意の自動保存設定、世代、競合、最後に確定した保存時刻 |
+| AsyncState | generation、loading／normalizing／importing／exportingなどの処理状態 |
+
+StudySessionの出題列はquestionId + questionRevisionのスナップショット。自由モードの開閉集合と確認済み集合を分ける。一問ずつの状態はunanswered, recalled, again, skippedのいずれか。結果をDOMやボタンの見た目から逆算しない。
+
+現在の一問の表示段階はhidden → revealed → assessed。再表示時はhiddenへ戻すが既存の評価を維持し、再度評価したら置換する。キーリピート・doubleclick・pointer/click重複は表示世代と一操作一確定のガードで無効化する。
+
+## 14. 学習中に編集した場合
+
+| 編集 | 保持するもの | 無効化するもの |
+|---|---|---|
+| 教材名・ページ名・ページ順・問題順・言語・倍率 | 生存問題の評価、現在位置。進行中の出題順も保持 | なし。次の学習回から新順序を使う |
+| 覆いの移動・サイズ変更、問題文・答えの変更 | 他の問題の評価・表示位置 | 当該問題の評価・確認済み・開状態 |
+| グループ化・解除、答え用メンバー増減 | 影響を受けない問題 | 変更・削除・新規問題の関連状態 |
+| 補助の追加・移動・削除・種類変更、ページdescription変更 | 他ページの状態 | そのページの全問題の評価・確認済み・開状態 |
+| 問題・ページの削除 | 生存する問題 | 削除した問題を出題列・分母から外す |
+| 問題の追加 | 既存問題の状態 | 新規問題を未回答で追加 |
+
+通常の一巡中に追加された問題は、現在の順序の末尾へページ順で追加する。「もう一度」「未確認」の再学習回は開始時の対象集合を保ち、新規問題を勝手に混ぜない。削除問題は除外し、変更された対象問題は未回答へ戻す。
+
+現在問題が残っていればその位置へ戻り、削除された場合は旧順序で次に残った問題、なければ最初の残存問題へ移る。対象ゼロなら空の学習結果にする。変更数・削除数・追加数を短い通知で伝える。影響のない問題まで全リセットしない。
+
+Undoで形が元に戻っても、無効化された自己評価は自動復活させない。安全側の未回答から続ける。
+
+## 15. ファイル保存・教材HTML
+
+### 15.1 二種類の出力
+
+| 出力 | 用途 | 条件 |
+|---|---|---|
+| 編集データ.reveal.json | 画像込みの保存・再編集・学習 | 有効なページ一枚以上。問題ゼロ可 |
+| 教材HTML.reveal.html | 学習画面を内包して持ち出す | 一問以上、すべての画像・参照が有効 |
+
+ファイル名のベースを編集可能にし、接尾辞は別表示する。初期値は教材タイトル（無題ならreveal-sheet）。区切り文字・制御文字・OS予約名・末尾の空白やドットを安全に処理し、空になったらreveal-sheetを使う。重複した.reveal.html等を付けない。ユーザーが変更した名前を、画面を開くたびに勝手に初期化しない。
+
+ファイル名の正規化順は、(1)前後の空白を除く、(2)入力済みの.reveal.html／.reveal.json／.html／.jsonを末尾から大文字小文字を区別せず取り除く、(3)<>:"/\|?*とU+0000〜U+001F／U+007Fを_へ置き換える、(4)末尾の空白とドットを除く、(5)80 Unicode code pointかつUTF-8 180 byte以内をともに満たす最大の先頭部分へ切り詰める、(6)切り詰め後も末尾の空白とドットを除き、空ならreveal-sheet、(7)Windows予約名CON, PRN, AUX, NUL, COM1〜9, LPT1〜9とそのドット付き名称には先頭_を付ける、(8)必要な接尾辞を一回だけ付ける。予約名の比較は大文字小文字を区別しない。切り詰めた場合は保存前表示へ反映し、隠して変更しない。
+
+期待値: 空入力→reveal-sheet.reveal.json、 a/b →a_b.reveal.json、CON→_CON.reveal.html。ファイル名は表示名であり、端末のフォルダパスを受け付けるものではない。
+
+保存前にページ数・問題数・補助の数・出力形式・画像を含むこと・生成後の容量を表示する。教材HTMLの開始画面をアプリ内でプレビューできる。プレビューは別Sessionで動き、元の個人学習記録を更新しない。
+
+Blob生成完了とOSへの保存完了を区別する。downloadで保存処理を開始した場合「保存を開始しました」とし、ブラウザが提供しない保存完了を断言しない。キャンセル・例外でも教材を残し、再度実行できる。
+
+### 15.2 出力HTMLの機能
+
+自由／一問ずつ、グループ、補助、答えの表示設定、結果、もう一度／未確認、表示位置保持、日英、ヘルプ、キーボード操作を含む。編集キャンバス・描画ツールは含めない。すべての画像と必要コード・CSS・SVGを内包し、追加の取得なしで学習する。
+
+出力HTML内には「編集データを保存」を置く。これも画像を含む教材だけを保存し、個人記録を含めない。実行時に確認ダイアログで保存内容を明示し、ファイル名を編集できる。HTML内で勝手にダウンロードを開始しない。
+
+外部ファイルのインポート機能は教材HTMLには入れず、本体アプリで行う。「この教材を直す」はアプリでファイルを選び直す手順を説明する。公開URLを未確認のまま埋め込まない。
+
+### 15.3 データ埋め込みと取り出し
+
+教材HTMLは固定の開始タグ`<script id="reveal-sheet-data" type="application/json">`と終了タグ`</script>`の間に一つだけEnvelopeを埋め込む。JSONの<, >, &, U+2028, U+2029はUnicode escapeに変換し、ユーザー文字列によるタグ終端を作らせない。画像バイト列以外を二重Base64化しない。
+
+本体アプリのHTMLインポートでは、ファイル長を先に制限し、文字列としてこの一組のタグを取り出す。タグがゼロ・重複・不完全なら拒否する。取り出したJSONだけを解析・検証し、HTML本文・script・styleを実行・挿入しない。DOMParserで文書全体を構築しない。スクリプトが不活性でも資源を取得し得るためである。
+
+iframe.srcdoc、innerHTML、document.write、BlobのHTMLを開く等の経路で受信HTMLを実行しない。検証に合格したデータを本体に内蔵した表示コードで再構築する。ファイル外側の見た目やスクリプトが違っていても採用しない。
+
+テンプレート自己展開ローダーが、ビルド時に作った信頼済み通常版を復元することは上記の受信HTML実行とは別の信頼境界。外部ファイルをそのローダーへ渡すことは禁止する。
+
+## 16. 自動保存と学習記録
+
+### 16.1 初期設定と保存先
+
+本体では「この端末に作業を残す」を初期OFF。ONにする際に画像・教材の文章が端末内に保存されること、共有端末ではOFFにすること、ブラウザのデータ削除で消えることを示す。設定は端末にだけ残し、配布教材へ引き継がない。
+
+IndexedDBが利用可能なら、教材スナップショットとPNG Blobを同一トランザクションで保存する。最後の確定から1000msのdebounceで保存。元画像のバイト列は保存せず、正規化済み画像を保持する。不要アセットは保存スナップショットとUndo参照の両方から不要になった時点で解放する。
+
+学習記録は別の「この端末に学習の続きだけを残す」で初期OFF。本体と教材HTMLの両方で扱う。ONの場合、画像のない小さいSessionだけを端末内へ保存する。学習記録だけでは教材を再現できないことを説明する。
+
+### 16.2 同一教材確認
+
+記録は文書ID・revision・教材内容のSHA-256とSessionを組にする。SHA-256は教材Documentの全オブジェクトのキーをASCIIコード昇順に並べたコンパクトJSON（空白・改行なし）をUTF-8にしたバイト列から計算する。配列は保存順を保ち、数値・文字列は検証済み値をJSON.stringifyの規則で表現する。Envelopeのkind／appVersion、学習結果、端末設定は含めない。これは本形式内の同一性規則であり、外部の署名形式への互換を名乗らない。Web CryptoのSHA-256 APIを使う。Web Cryptoが利用できない場合は、学習記録の永続化／自動再適用を無効にし、メモリ内学習と手動教材保存を残す。曖昧なファイル名一致で記録を適用しない。
+
+同一内容でも、教材を開いて過去記録が見つかった際は「続きから／最初から」を選ぶ。答えが開いた状態を自動表示せず、現在問題を閉じてから再開する。内容不一致時は古い記録を適用せず説明する。ハッシュは整合確認であり、配布者の本人証明ではない。
+
+### 16.3 保存失敗・競合
+
+容量不足、SecurityError、トランザクション中断、保存領域消去時は「この端末には保存できていません」と表示し、手動の編集データ保存を案内する。ON表示だけを残さない。最後に確定した保存だけを再開候補とし、中途半端な画像参照を採用しない。
+
+同一ブラウザの別タブ更新は、保存時に期待世代番号とDB内の世代番号を同一トランザクションで比較する。競合したタブは自動保存を停止し、「別タブの変更があります。編集データを保存する／最新を読み直す」を示す。最終書き込み優先で黙って上書きしない。進行中メモリの内容は保持する。
+
+### 16.4 削除とデータ喪失
+
+「この端末の作業を消す」と「学習記録を消す」を分ける。どちらも対象件数と範囲を確認し、Reveal Sheetの名前空間だけを削除する。localStorage.clear()などで他のアプリの保存を消さない。教材を新規にする操作と、端末内の全保存削除は別。
+
+保存領域やfile:での動作はブラウザに依存するため、永久保存・全環境復元は保証しない。beforeunloadや画面ロック時の最終保存は補助にとどめ、そこにだけ保存処理を置かない。手動保存を常に到達可能にする。
+
+## 17. 入力・資源の上限
+
+以下は本書で定める初期の安全上限であり、全端末で上限いっぱいまで動くという実測結果ではない。上限以内でもデコード・保存失敗は起こり得るため、回復経路を必須にする。変更時は仕様・UI・テストを同時更新する。
+
+| 対象 | 上限／規則 |
+|---|---|
+| 入力画像一枚 | 20 MiB（20 × 1024² byte） |
+| 画像寸法 | 各辺1〜8192px、総画素16,000,000以下。ヘッダーと実デコードの両方で検査 |
+| 正規化PNG一枚 | 32 MiB |
+| 教材内画像の総バイト数 | 64 MiB。重複するimageIdは一度だけ数える |
+| ページ | 30 |
+| 覆い | 全体1,000、一ページ200。補助も含む |
+| 問題 | 全体1,000。各問題のメンバー覆い50以下 |
+| JSONファイル | 入出力ともUTF-8で96 MiB以下 |
+| 教材HTMLファイル | 入出力とも100 MiB以下。JSON部分96 MiB以下 |
+| 文字列 | 教材名120、ページ名120、description／prompt／answerは各2,000 Unicode code point |
+| 文字列合計 | ユーザーが付けるタイトル・説明・問題文・答えのUTF-8合計1 MiB以下 |
+| JSONの深さ | Envelopeから数え最大16。解析前に文字列・escapeを考慮した深さ走査で確認 |
+| Undo | 最大100操作 |
+| 同時デコード | 1。表示用フル画像キャッシュは現在ページと直前ページまで |
+
+受信PNGのbyteLengthとBase64復号長、PNGシグネチャと寸法、参照総数を照合する。保存されたPNGでもAPNGのアニメーション指定を拒否し、静止画像として実デコードした寸法を照合する。空文字・不正Base64・非有限数・壊れたUTF-8・NULを持つ名前などを拒否する。部分的な教材を成功として書き出さない。入力原画の表示確認前に書き出しボタンを有効化しない。
+
+警告予算は、画像なし通常アプリ2 MiB、画像なし教材プレイヤー1 MiB。超過は自動的な不合格ではなく、理由と容量内訳を記録する。テンプレートの既存サイズ報告も残す。性能検証用の標準ケースは10ページ・各1600×1200・100問題とし、操作応答／メモリ／出力時間を実機名とともに測る。
+
+## 18. UI・アクセシビリティ・日英
+
+### 18.1 画面構成
+
+PCはページ一覧、中央画像、選択対象の操作を同時表示する。スマートフォンは「作る／学習／保存」の三画面へ分け、テンプレートの下部ページ切替コンポーネントを適用する。ヘルプは右上のボタンから開く。
+
+学習画面は画像と「答えを見る／自己評価」を近接させる。下部ナビと学習アクションの合計高さを一元管理し、コンテンツ用余白にsafe-areaを含める。別々の固定バーを同じ位置へ重ねない。
+
+320CSSpx以上を設計対象にし、320／360／390／768／1360pxで確認する。ソフトウェアキーボード表示時と高さの低い横画面も対象。本文の横スクロールを作らず、画像のパンは画像枠内へ閉じ込める。
+
+### 18.2 アクセシビリティ
+
+主要ボタンは48×48CSSpx以上を設計基準にする。小さい覆いをそのまま押せなくても、問題一覧と大きい答え表示ボタンで同じ機能へ到達できる。48pxはこのアプリの設計値であり、WCAGの最低値と取り違えない。
+
+ドラッグ、二本指ピンチ、長押しだけでしかできない必須操作を作らない。矢印・拡大縮小・二点指定・一覧からの選択／並べ替えで代替する。Tab、Enter／Space、Escape、フォーカス復帰、読み上げ用の状態通知を実装する。
+
+答え画像の文字を読み上げられると断言しない。任意のprompt／answer／descriptionを設け、未入力の画像教材の意味的アクセシビリティには限界があることをREADMEへ記載する。closed時に答えテキストをaria-labelやlive領域へ漏らさない。
+
+拡大率200%のブラウザ・大きな文字、強制色、reduced-motionも確認する。めくりに派手な3Dアニメーションは不要。WCAG完全準拠や認証取得の主張はしない。
+
+### 18.3 見た目と文言
+
+主色#16624F、ライトUIのみ、SVGアイコン。faviconとヘッダーアイコンはassets/favicon.svgの同一元から埋め込む。角丸アイコンは64×64、rx=16を設計案とする。操作アイコンを絵文字で代用しない。
+
+日本語・英語を同一HTMLへ含め、言語切替で教材や学習状態を失わない。データは翻訳せず、UIだけを切り替える。OSダーク設定でもアプリ自体はライトUIを維持し、ブラウザの強制色への操作可能性は別途確認する。
+
+| 日本語 | 英語 |
+|---|---|
+| 画像を追加 | Add images |
+| 教材を開く | Open a sheet |
+| 隠す | Cover |
+| 画像を動かす | Move image |
+| まとめてめくる | Reveal together |
+| 学習中は隠したまま | Keep covered while studying |
+| 自由にめくる | Reveal freely |
+| 一問ずつ | One at a time |
+| 答えを見る | Reveal answer |
+| 思い出せた | Recalled |
+| もう一度 | Review again |
+| 飛ばす | Skip |
+| 教材HTMLを保存 | Save study HTML |
+| 編集データを保存 | Save editable sheet |
+
+## 19. 状態とエラー
+
+| 状態 | 表示と操作 |
+|---|---|
+| 初期／ページゼロ | 画像追加・教材を開くを提示。学習・教材HTML保存は不可 |
+| ページあり／問題ゼロ | 「隠したいところを囲んでください」。編集データは保存可 |
+| 読み込み／正規化中 | 処理件数・中止。現在有効な教材は保持 |
+| 検証中／インポート中 | 置換対象の準備。元教材を削除しない |
+| 学習準備中 | 不透明な待機面。答えだけの表示をしない |
+| 一部失敗 | 成功ページと失敗ファイルを区別。失敗分を再選択できる |
+| 出力生成中 | 二重生成を防止。失敗しても編集内容を維持 |
+| 出力準備完了 | 形式・件数・実バイト数・ファイル名を表示 |
+| 保存を開始 | OS保存完了を断定しない。再保存に戻れる |
+| 自動保存失敗／競合 | 未保存を表示し、手動保存への操作を提示 |
+| 画像不正／形式非対応 | 日本語／英語の原因と次の行動。詳細コードは折りたたむ |
+| 学習対象ゼロ | ゼロ除算・空の次問題移動なし。戻る導線のみ |
+
+代表エラーコードはUNSUPPORTED_IMAGE、ANIMATED_IMAGE、IMAGE_TOO_LARGE、DECODE_FAILED、INVALID_SHEET、UNSUPPORTED_SCHEMA、LIMIT_EXCEEDED、INVALID_REFERENCE、STORAGE_UNAVAILABLE、SAVE_CONFLICT、EXPORT_FAILED。内部例外やスタックをそのまま一般UIへ出さない。
+
+## 20. セキュリティ・プライバシー
+
+### 20.1 覆いは削除・秘匿でない
+
+固定説明文:
+
+> 覆いは学習用です。元の答えや画像は教材ファイルに含まれます。個人情報や機密情報を消す機能ではありません。
+
+> Covers are for studying. The original answers and images remain in the sheet file. This tool does not redact personal or confidential information.
+
+初回の教材HTML出力とヘルプに表示する。補助の覆いを使った教材にも同じ説明をする。試験の不正防止・暗号化・パスワード保護として説明しない。配布する権限のある資料を使うという案内を入れるが、法的適否を本アプリが判断する機能は持たない。
+
+### 20.2 信頼境界
+
+受信する画像・JSON・教材HTML・タイトル・説明はすべて未信頼。構造／サイズ／ID／画像の検証後、許可フィールドだけから新規オブジェクトを組み立てる。任意オブジェクトのdeep mergeを使わず、定義されていない__proto__、constructor、prototypeなどの構造キーを拒否する。IDや平文の値として同じ文字列が現れる場合は、それだけで不正と見なさない。ID索引と評価集合にはMapまたはnull-prototypeの辞書を使い、own propertyで参照する。構造キーと文字列値を混同しない。
+
+平文の描画にtextContentを使う。HTMLコードやMarkdownのレンダリングは行わない。ユーザー入力をscript、style、URL、イベント属性へ挿入しない。受信データからCSSクラスやSVG要素名を決めない。画像はPNGシグネチャと実デコードの両方を確認したBlobだけを表示する。
+
+教材HTMLのプレビューは本体の信頼済み共通プレイヤーを別Sessionで使い、受信HTMLをiframeで実行して確認しない。「HTMLを検証した」と「任意HTMLを安全に実行できる」を混同しない。
+
+### 20.3 通信とCSP
+
+入力データを外部へ送信しない。CDN、外部フォント、遠隔画像、analytics、telemetry、広告、fetch／XHR／WebSocket、外部API、サービスワーカーの自動更新を初版のランタイムへ入れない。WebRTCも不要。
+
+基本方針はdefault-src 'none'、connect-src 'none'、img-src blob: data:、object-src 'none'、frame-src 'none'、base-uri 'none'、form-action 'none'、media-src 'none'、worker-src 'none'。通常アプリのインラインJS／CSSはテンプレート方式を維持しつつ許可範囲を明示する。eval系とインラインイベント属性を利用しない。
+
+教材プレイヤーは固定のコードをビルド時SHA-256で許可するscript-srcを採用し、データは非実行のJSONタグへ分離する。教材ごとにコードを書き換えない。CSPのhashと実際のインラインコードが一致することを検証する。self-extract版ローダーのCSPは別に確認する。metaでは効かないHTTP専用の制約まで効いていると説明しない。
+
+単なる静的文字列走査を通信検証の代わりにしない。本体通常版・自己展開版・出力教材HTML・公開アプリからのファイル読込のすべてで、正常系と不正入力後の通信を記録する。HTTPで最初のアプリ文書を取得する通信と、教材入力後の処理を分けて説明する。
+
+## 21. 技術構成
+
+ブラウザ標準のHTML／CSS／JavaScript、SVG、Canvas、File／Blob、必要な範囲のIndexedDBとWeb Crypto。ランタイムの第三者ライブラリ、AI、OCR、WASM、Workerは初版不要。
+
+編集本体と教材プレイヤーで、検証・グループ表示・Session・表示位置保持・自己評価のロジックを共有する。プレイヤーだけ別実装してルールを複製しない。開発ソースは責務ごとに小さいfactory関数へ分け、PowerShellのビルド時組立で同じコードを各HTMLへインライン化する。開発ソースの分割はテンプレートで許容されている。
+
+公開ランタイムへES moduleの外部import、別ファイルCSS、相対fetchを残さない。アプリ内に埋め込むプレイヤーテンプレートはビルド時に生成し、利用者データではない。教材出力時はその静的テンプレートのJSONデータ箇所だけを安全に置換する。
+
+Nodeの組込みテストランナーとPlaywrightは開発専用。利用者はNode・npm・サーバーをインストールする必要がない。開発依存は導入時の公式公開情報で採用版を確認しexact版とlockへ固定し、ランタイム依存のmanifestとは分ける。
+
+## 22. ブラウザ・端末・オフライン
+
+以下は正式版に向けた試験対象であり、動作確認済みの一覧ではない。
+
+| 環境／経路 | v1.0.0の判定 |
+|---|---|
+| Windows Chrome／Edge、通常版file:・自己展開版file:・HTTPS | 主経路必須 |
+| macOS Safari、Firefoxデスクトップ、通常版file:・HTTPS | 主経路必須。自己展開版も確認し、制約があれば別記 |
+| Android ChromeのHTTPS本体 → 画像・教材選択 → 学習 → 保存 | 実機必須 |
+| iPhone SafariのHTTPS本体 → 画像・教材選択 → 学習 → 保存 | 実機必須 |
+| 出力教材HTMLのPC直接起動 | 通信なしで学習・編集データ保存を完結させる |
+| Android／iPhoneで受け取ったHTMLの直接起動 | OS・ファイル管理アプリ・表示方法を実機で記録。全端末の直接起動を保証しない |
+| スマホで直接起動できない場合 | 公開本体から教材HTMLまたは編集データをファイル選択し、データとして学習する経路を必須にする |
+| 自動保存禁止／消去／プライベート | 記録なしでも主要操作と手動ファイル保存が成立する |
+
+公開アプリ自体の初回取得には通信が必要。公開ページを再度オフライン起動できることは保証しない。手元の通常アプリHTMLと教材HTMLは、実行可能なブラウザで開けた後に追加ネットワークなしで主用途を完結することが契約。Playwrightの端末エミュレーションを実機確認として報告しない。
+
+OSファイルプレビューがスクリプトを実行しない場合の説明を、出力HTMLの初期静的説明とREADMEへ入れる。具体的なiOSバージョンの未確認挙動を断定しない。
+
+## 23. 必須要件一覧
+
+次の要件はv1.0.0で全件満たす。担当タスクは開発計画と一致させる。
+
+| ID | 必須要件 | 担当タスク |
+|---|---|---|
+| RS-01 | 目的・非目標・単一HTMLの配布契約 | T01、T19、T20 |
+| RS-02 | JPEG／PNG／WebPの選択・向き固定・画像正規化 | T02 |
+| RS-03 | 入力上限・一部失敗・古い非同期処理の破棄 | T02、T13、T18 |
+| RS-04 | 複数ページ・並べ替え・ページ削除 | T05 |
+| RS-05 | 画像基準の不透明な四角い覆い | T03 |
+| RS-06 | 描画と移動の分離・ドラッグ不要の代替操作 | T03、T15、T16 |
+| RS-07 | 覆い編集・複製・Undo／Redo | T03、T05 |
+| RS-08 | 複数の覆いを一問としてまとめる・解除する | T06 |
+| RS-09 | 補助の覆い・重複範囲の扱い | T06 |
+| RS-10 | 自由にめくる・確認件数 | T03、T07 |
+| RS-11 | 一問ずつ・ほかの答えの表示設定・自己評価 | T07 |
+| RS-12 | もう一度だけの再学習・未回答・飛ばした問題 | T07、T08 |
+| RS-13 | 表示位置保持・初回表示の答え漏れ防止 | T03、T08、T11、T15 |
+| RS-14 | 編集後の学習継続と影響範囲だけの無効化 | T08 |
+| RS-15 | 保存前の内容表示・編集可能なファイル名 | T04、T12、T14 |
+| RS-16 | 画像を内包する編集データの保存・復元 | T04、T13 |
+| RS-17 | 共有する学習エンジン・教材HTMLの生成 | T11、T14 |
+| RS-18 | 教材HTMLを実行せずデータとして取り込む | T12、T13 |
+| RS-19 | 教材・編集状態・個人の学習記録の分離 | T04、T07、T10、T11 |
+| RS-20 | 任意の端末内自動保存と障害時の代替 | T09、T10 |
+| RS-21 | 保存競合・リセット・他アプリの保存を消さない | T09、T10 |
+| RS-22 | 保存スキーマ・参照整合・互換性・未知版拒否 | T04、T13、T19 |
+| RS-23 | 外部通信・CSP・ローカル起動 | T01、T11、T17 |
+| RS-24 | スマートフォンの画面分離・固定UI・タップ領域 | T01、T15 |
+| RS-25 | キーボード・読み上げ・ドラッグ代替 | T03、T16 |
+| RS-26 | 日英・ライトUI・ブランド・favicon | T01、T16、T20 |
+| RS-27 | 空・処理中・成功・一部失敗・失敗・プレビュー | T02、T04、T11、T14、T16 |
+| RS-28 | 覆いは秘匿処理でないこと・画像情報の持ち出し | T02、T11、T14、T20 |
+| RS-29 | 不正な文字列・偽装画像・悪意ある教材への耐性 | T04、T12、T13、T17 |
+| RS-30 | 資源解放・大容量・中断復帰・性能測定 | T02、T09、T18 |
+| RS-31 | 自動試験・実機試験・リリース判定 | T01、T17、T18、T19、T20 |
+| RS-32 | README・ヘルプ・スクリーンショット・将来機能の分離 | T16、T18、T20 |
+
+## 24. 受入試験
+
+ユーザー提供ACCEPTANCE_MATRIX.mdのAC-01〜AC-48を正式な受入項目とする。自動化、目視、実機、容量・性能の観測を区別する。合格根拠にはアプリcommit、OS／ブラウザ版、起動方式、使用fixture、結果とログ・画像への参照を残す。
+
+不合格・未実施を「対象外」に書き換えない。明示的な対象外は本仕様の4章・22章に合致する場合だけ。実機を用意できなければその項目は未実施のままとし、正式リリースの合格とはしない。
+
+## 25. 固定の検証例
+
+以下は実際の教材・学習結果ではなく、実装の数え方を確認する人工ケース。
+
+### F1: 覆いと問題の分離
+
+一ページに答え用覆い4個、補助1個。q1={m1,m2}、q2={m3}、q3={m4}、a1=補助。期待値は覆い5個・問題3問・補助1個。
+
+自由モードでm1を開くとm2も開く。確認件数は1／3。m2から閉じ直しても1／3。「全部隠す」も1／3を維持する。補助を押しても開かず問題数も変わらない。
+
+### F2: 自己評価
+
+F1でq1=思い出せた、q2=もう一度、q3=飛ばした。期待値は対象3、思い出せた1、もう一度1、飛ばした1、未回答0。「もう一度だけ」はq2の一問で新しい回。そこで思い出せても元の回の集計を書き換えない。
+
+### F3: 未回答と変更
+
+q1の答えを見るだけで終了した場合、全問未回答のまま。F2のq1の矩形を1画像px動かしたらq1は未回答、q2／q3は元の評価を維持し、合計3問。補助を動かしたら同じページの全3問が未回答へ戻る。
+
+### F4: 表示・再描画
+
+1000×500画像で矩形{x:0.1,y:0.2,w:0.3,h:0.1}は画像上の{100,100,300,50}に対応する。表示幅500pxなら{50,50,150,25}（余白・パンなし）。倍率・位置・画面回転後も同じ画像箇所を覆う。答えの開閉前後で保存済みの倍率と中心は一致する。
+
+### F5: 削除・グループ
+
+F1でq2とq3をまとめると問題2問となり、先にあるq2を残す。q2の評価は未回答、q1の評価は維持。解除するとq2と新しい問題の各一問になり、両方未回答。Undoで同じ形へ戻っても古い評価を復活させない。
+
+### F6: 保存と安全なHTML読込
+
+タイトルに`</script><img src=x onerror=alert(1)>`を入れた教材をJSON・HTMLに保存し、再読込で文字列が同じまま表示されること。コードは実行されず、xへの通信も発生しない。外側に外部imgやscriptを持つHTMLを受け取っても、読込アプリはデータ以外を構築・実行しない。データタグ重複や画像偽装は拒否する。
+
+## 26. リリースと資料
+
+Semantic Versioningを採用する。v0.n.0の段階を機能単位の区切りにし、同段階の修正はPATCHにする。各段階でREADME日英、ヘルプ、CHANGELOG、テストを実装と同期させる。
+
+v0.9.0で新機能追加を凍結する。v1.0.0は機能追加回ではなく、全回帰・保存互換・出力・通信・実機・資料の整合を確認する回とする。PDF等の将来機能が未実装であることを理由に、主要用途が完成したリリースを際限なく延期しない。
+
+READMEは概要、実画面、機能、使い方、プライバシー、対応環境、制約、単一HTML／オフライン、開発・ビルド、ライセンスを含む。日英デスクトップとスマートフォンのスクリーンショットは実アプリ・権利の明確な人工教材で撮り、生成画像でUIを偽装しない。
+
+Browser Kitty本体への登録、紹介ページ、公開URL、サイト更新履歴の追記は別作業。対象アプリの現在リポジトリ確認後、ユーザーの追加指示で行う。
+
+## 27. 文書の読み方と未検証事項
+
+本書は動作契約であり、実装済み機能一覧ではない。特に、PNG化の最大メモリ、iPhoneの受け渡し、保存UI、自己展開版、CSP、復元、アクセシビリティの合格は実際の試験で判断する。
+
+文書用のスキーマ・サンプル検査は、アプリの画像処理・学習・通信試験ではない。実装開始位置は計画T01〜T02、v0.1.0「基盤・画像読み込み」。原文の実装チェックボックスを実行なしで合格へ変更しない。
