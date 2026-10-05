@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.0 - 2026-10-06 (development)
+
+T05–T06: page management, grouped answers, auxiliary covers and overlap handling. This is still a development milestone, not the v1.0 release.
+
+- Added page rename, earlier/later movement, deletion with confirmation, true empty state after deleting the last page, and Undo restoration.
+- Added an editing list for covers with explicit multi-selection. Selected answer questions can be grouped into one question or ungrouped again.
+- Added auxiliary covers that stay opaque during study and do not enter the question count. An auxiliary cover can be changed back into an independent answer question.
+- Added overlap warnings for separate questions or auxiliary covers while keeping grouped members exempt from that warning. Closed overlapping covers remain visible when another answer is revealed.
+- Added grouped/auxiliary editable-JSON round trips and selection duplication that preserves group structure and auxiliary kind.
+- Kept the same image-coordinate rendering and free-study engine for grouped answers rather than introducing a separate player path.
+
+### Development fixes during this stage
+
+- Fixed the T06 browser test so grouping requires two explicitly selected questions, matching the product specification instead of assuming a one-click implicit grouping rule.
+- Added the missing T06 editing panel after the core grouping/auxiliary logic had already been covered by unit tests.
+
 ## 0.2.0 - 2026-10-06 (development)
 
 T03–T04: rectangular covers, free reveal study, and editable image-embedded JSON save/reopen. This is still a development milestone, not the v1.0 release.

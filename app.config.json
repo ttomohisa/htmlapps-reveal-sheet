@@ -3,15 +3,24 @@
   "name": "Reveal Sheet",
   "nameJa": "めくる暗記シート",
   "slug": "reveal-sheet",
-  "version": "0.2.0",
-  "description": "Create study sheets from images with rectangular covers, free reveal study, and editable JSON save/reopen.",
-  "descriptionJa": "画像に四角い覆いを作って学習し、画像込み編集データを保存・再読込できる暗記シート。",
+  "version": "0.3.0",
+  "description": "Create study sheets from images with page management, grouped answers, auxiliary covers, free reveal study, and editable JSON save/reopen.",
+  "descriptionJa": "画像に覆いを作り、ページ整理・まとめてめくる・補助の覆い・自由学習・画像込み編集データ保存に対応する暗記シート。",
   "defaultLanguage": "auto",
-  "repository": { "owner": "ttomohisa", "name": "htmlapps-reveal-sheet" },
+  "repository": {
+    "owner": "ttomohisa",
+    "name": "htmlapps-reveal-sheet"
+  },
   "build": {
     "output": "dist/index.html",
     "blockRuntimeNetwork": true,
-    "selfExtract": { "enabled": true, "output": "dist/index.self-extract.html" },
-    "sizeBudget": { "readableWarningMb": 2, "selfExtractWarningMb": 1 }
+    "selfExtract": {
+      "enabled": true,
+      "output": "dist/index.self-extract.html"
+    },
+    "sizeBudget": {
+      "readableWarningMb": 2,
+      "selfExtractWarningMb": 1
+    }
   }
 }
