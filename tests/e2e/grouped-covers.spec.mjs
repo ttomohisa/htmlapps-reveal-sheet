@@ -13,6 +13,7 @@ test('T06: group two covers as one question and keep an auxiliary cover closed',
   await expect(page.locator('#coverList button')).toHaveCount(3);
 
   await page.locator('#coverList button').nth(0).click();
+  await page.locator('#coverList button').nth(1).click();
   await expect(page.locator('#groupButton')).toBeEnabled();
   await page.locator('#groupButton').click();
   await expect(page.locator('#questionCountEdit')).toHaveText('2');
