@@ -91,3 +91,13 @@ test('T06 grouped and auxiliary covers round-trip through editable JSON',async()
   assert.deepEqual(toPlain(core.counts(loaded.document)),{pages:1,masks:3,questions:1,auxiliary:1});
   assert.equal(loaded.document.questions[0].maskIds.length,2);
 });
+test('T06 duplicate selection preserves grouped questions and auxiliary kind',()=>{
+  const {doc:initial,ctx,pageId}=base();let doc=initial;
+  doc=add(doc,ctx,pageId,{x:.05,y:.55,w:.12,h:.2});doc=add(doc,ctx,pageId,{x:.25,y:.55,w:.12,h:.2});doc=add(doc,ctx,pageId,{x:.55,y:.55,w:.12,h:.2});
+  doc=core.applyCommand(doc,{type:'GROUP_QUESTIONS',questionIds:doc.questions.slice(0,2).map(q=>q.id)},ctx).document;
+  doc=core.applyCommand(doc,{type:'CONVERT_MASK_KIND',maskId:doc.masks[2].id,kind:'auxiliary'},ctx).document;
+  const grouped=doc.questions[0],aux=doc.masks.find(mask=>mask.kind==='auxiliary');
+  const duplicated=core.applyCommand(doc,{type:'DUPLICATE_SELECTION',maskIds:[grouped.maskIds[0],aux.id]},ctx).document;
+  assert.deepEqual(toPlain(core.counts(duplicated)),{pages:1,masks:6,questions:2,auxiliary:2});
+  assert.equal(duplicated.questions.filter(question=>question.maskIds.length===2).length,2);
+});
