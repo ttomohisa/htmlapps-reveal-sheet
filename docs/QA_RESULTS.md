@@ -2,7 +2,35 @@
 
 ## Scope and status
 
-This record covers automated evidence through v0.2.0 / T01–T04. It does not mark all 48 formal acceptance items complete. Rectangular covers, free reveal study and editable JSON save/reopen are implemented; grouped/auxiliary covers, guided study, automatic local persistence and portable lesson HTML are not implemented. Physical phones, Safari, Firefox, assistive technology and resource-limit stress tests remain untested.
+This record contains verified CI evidence through v0.2.0 / T01–T04 and the current v0.3.0 / T05–T06 candidate evidence. It does not mark all 48 formal acceptance items complete. Page management, grouped answers, auxiliary covers and overlap handling are now implemented, but the current-head Windows application workflow is still queued because GitHub Actions is experiencing hosted-runner assignment delays. Guided study, automatic local persistence and portable lesson HTML are not implemented. Physical phones, Safari, Firefox, assistive technology and resource-limit stress tests remain untested.
+
+## v0.3.0 milestone candidate — 2026-10-06
+
+Current source commit: **b7ad1d5054492cbc79795e2d48413a7ee440d140**.
+
+Current-head remote evidence:
+
+- Standalone validation workflow **37368668862**: success.
+- PR preview workflow **37368668838**: success.
+- Application workflow **37368668841**: queued at the time of this record. Do not report the current head as a complete Windows readable/self-extract application-suite pass until that workflow finishes successfully.
+
+Fresh diagnostics from the exact current-head source snapshot and generated readable artifact:
+
+| Verification | Result |
+|---|---|
+| Pure unit tests | 56 passed, 0 failed, 0 skipped |
+| T06 group + auxiliary main flow in system Chromium | Passed via page-content diagnostic |
+| T06 separate-overlap warning / remaining closed cover | Passed via page-content diagnostic |
+| v0.3.0 editable JSON save → reopen with embedded image | Passed via page-content diagnostic |
+| Saved envelope versioning | `appVersion: 0.3.0`, `schemaVersion: 1` |
+| Page errors in the above diagnostics | 0 |
+
+The local container blocks the repository's normal direct `file:` browser route, so these page-content diagnostics are **not** counted as direct-file acceptance. The queued Windows workflow remains the required current-head evidence for readable and self-extracting direct-file operation.
+
+The immediately preceding v0.3.0 candidate commit **31d76a44d51323bcbccd5d72dcddb969efcaf292** ran the Windows suite far enough to show both T06 Chromium tests passing: explicit multi-selection → grouped question → auxiliary conversion, and separate overlapping questions with the unrevealed cover remaining visible. That run failed later because the T04 export regression test still hard-coded `appVersion: 0.2.0`. Commit **b7ad1d5** changed only that expectation to read the current app version from `app.config.json`; the v0.2.0 import fixture remains to exercise format-1 compatibility.
+
+T05 diagnostics and tests cover page rename, earlier/later movement, deletion, final-page empty state and Undo restoration. T06 unit tests cover group/ungroup ID behavior, prompt/answer preservation, 2,000-character rejection without partial mutation, auxiliary denominator behavior, overlap warnings, grouped/auxiliary JSON round trips, cross-page rejection and selection duplication preserving group/auxiliary structure.
+
 
 ## Verified v0.2.0 milestone — 2026-10-06
 
@@ -70,10 +98,10 @@ Feature tests were first observed failing for missing core/input functionality, 
 
 ## Acceptance mapping at this stage
 
-Automated paths now cover AC-01 through AC-07, the T03/T04 portions of AC-09, AC-10, AC-11, AC-17, AC-24, AC-27, AC-28 and AC-31, plus the T01 portion of AC-45. Several of these acceptance items intentionally span later tasks, manual observation or real-device checks; automated coverage of one path is not full acceptance. No v1.0 release judgment is made.
+Verified CI paths through v0.2.0 cover AC-01 through AC-07, the T03/T04 portions of AC-09, AC-10, AC-11, AC-17, AC-24, AC-27, AC-28 and AC-31, plus the T01 portion of AC-45. The v0.3.0 candidate adds automated coverage for the T05/T06 portions of AC-08, AC-11, AC-12, AC-13, AC-14, AC-15, AC-16 and editable-format compatibility. Current-head Windows direct-file completion remains pending until workflow 37368668841 finishes. Several acceptance items intentionally span later tasks, manual observation or real-device checks; automated coverage of one path is not full acceptance. No v1.0 release judgment is made.
 
 ## Not yet verified / not implemented
 
-Physical Android Chrome and iPhone Safari; macOS Safari; Firefox; Edge-specific behavior; HTTPS-hosted file input; no-JavaScript self-extractor fallback; maximum-size memory stress; OS-level save/reopen outside CI; real screen-reader and software-keyboard behavior. Grouped answers, auxiliary covers, guided study, automatic local save/resume and portable lesson HTML are also not implemented yet.
+Physical Android Chrome and iPhone Safari; macOS Safari; Firefox; Edge-specific behavior; HTTPS-hosted file input; no-JavaScript self-extractor fallback; maximum-size memory stress; OS-level save/reopen outside CI; real screen-reader and software-keyboard behavior. The current-head Windows application run is also pending as recorded above. Guided one-at-a-time study, edit-return session reconciliation, automatic local save/resume and portable lesson HTML are not implemented yet.
 
-Next planned work is T05–T06 / v0.3.0: page-management completion, grouped answers, auxiliary covers and overlap behavior. Continue using the owner-provided full specification, development plan and acceptance matrix. Do not infer later behavior from this milestone's UI.
+The next planned development stage is T07–T08 / v0.4.0, but it should not begin until the v0.3.0 review gate is cleared by the repository owner. Continue using the owner-provided full specification, development plan and acceptance matrix. Do not infer later behavior from this milestone's UI.
