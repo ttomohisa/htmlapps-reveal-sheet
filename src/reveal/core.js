@@ -133,9 +133,7 @@ function createRevealCore() {
   }
   function validateEnvelope(value){
     const errors=[];const fail=(path,code='INVALID_SHEET')=>{errors.push({code,path});return {ok:false,errors};};
-    if(!exactKeys(value,['format','schemaVersion','appVersion','kind','document']))return fail('
-}
-);
+    if(!exactKeys(value,['format','schemaVersion','appVersion','kind','document']))return fail('$.envelope');
     if(value.format!=='reveal-sheet')return fail('$.format');
     if(value.schemaVersion!==1)return fail('$.schemaVersion','UNSUPPORTED_SCHEMA');
     if(typeof value.appVersion!=='string'||!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(value.appVersion))return fail('$.appVersion');
