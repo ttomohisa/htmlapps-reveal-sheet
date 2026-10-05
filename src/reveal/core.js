@@ -81,6 +81,28 @@ function createRevealCore() {
       } else affected=doc.questions.filter(q=>q.pageId===mask.pageId).map(q=>q.id);
       return mutation({...doc,revision:doc.revision+1,pages,questions,masks:doc.masks.filter(item=>item.id!==mask.id)},{affectedQuestionIds:affected,deletedQuestionIds:deleted});
     }
+    if(command.type==='RENAME_PAGE') {
+      const page=doc.pages.find(item=>item.id===command.pageId);if(!page||!validText(command.title,120))throw error('INVALID_SHEET');
+      const pages=doc.pages.map(item=>item.id===page.id?{...item,title:command.title}:item);
+      return mutation({...doc,revision:doc.revision+1,pages});
+    }
+    if(command.type==='MOVE_PAGE') {
+      const index=doc.pages.findIndex(item=>item.id===command.pageId),delta=Number(command.delta);
+      if(index<0||!Number.isInteger(delta)||![-1,1].includes(delta))throw error('INVALID_SHEET');
+      const target=index+delta;if(target<0||target>=doc.pages.length)return mutation(doc);
+      const pages=[...doc.pages],[page]=pages.splice(index,1);pages.splice(target,0,page);
+      return mutation({...doc,revision:doc.revision+1,pages});
+    }
+    if(command.type==='DELETE_PAGE') {
+      const page=doc.pages.find(item=>item.id===command.pageId);if(!page)throw error('INVALID_SHEET');
+      const deletedQuestionIds=doc.questions.filter(question=>question.pageId===page.id).map(question=>question.id);
+      const pages=doc.pages.filter(item=>item.id!==page.id);
+      const questions=doc.questions.filter(question=>question.pageId!==page.id);
+      const masks=doc.masks.filter(mask=>mask.pageId!==page.id);
+      const stillReferenced=new Set(pages.map(item=>item.imageId));
+      const assets=doc.assets.filter(asset=>asset.id!==page.imageId||stillReferenced.has(asset.id));
+      return mutation({...doc,revision:doc.revision+1,pages,assets,questions,masks},{deletedQuestionIds});
+    }
     if(command.type==='DUPLICATE_MASK') {
       const source=doc.masks.find(item=>item.id===command.maskId); if(!source || source.kind!=='answer')throw error('INVALID_SHEET');
       const {asset}=pageAsset(doc,source.pageId),px=1/asset.width,py=1/asset.height;
@@ -208,5 +230,30 @@ function createRevealCore() {
     return {ok:true};
   }
 
-  return Object.freeze({limits,error,newDocument,appendAsset,normalizeRect,rectToPixels,applyCommand,startSession,toggleFree,hideAllFree,revealPageFree,summaryFree,visibilityFor,validateEnvelope});
+  function createHistory(limit=limits.maxUndo){
+    const normalized=Number.isSafeInteger(limit)&&limit>0?Math.min(limit,limits.maxUndo):limits.maxUndo;
+    return {limit:normalized,undo:[],redo:[]};
+  }
+  function boundedPush(list,value,limit){const next=[...list,value];if(next.length>limit)next.splice(0,next.length-limit);return next;}
+  function monotonicRestore(target,current){
+    const revisions=new Map(current.questions.map(question=>[question.id,question.revision]));
+    return {...target,revision:current.revision+1,questions:target.questions.map(question=>({...question,revision:Math.max(question.revision,revisions.get(question.id)||question.revision)}))};
+  }
+  function execute(history,doc,command,ctx){
+    const mutationResult=applyCommand(doc,command,ctx);
+    if(mutationResult.document===doc)return {history,mutation:mutationResult};
+    return {history:{limit:history.limit,undo:boundedPush(history.undo,doc,history.limit),redo:[]},mutation:mutationResult};
+  }
+  function undo(history,doc){
+    if(!history.undo.length)return {history,mutation:mutation(doc)};
+    const target=history.undo[history.undo.length-1],restored=monotonicRestore(target,doc);
+    return {history:{limit:history.limit,undo:history.undo.slice(0,-1),redo:boundedPush(history.redo,doc,history.limit)},mutation:mutation(restored)};
+  }
+  function redo(history,doc){
+    if(!history.redo.length)return {history,mutation:mutation(doc)};
+    const target=history.redo[history.redo.length-1],restored=monotonicRestore(target,doc);
+    return {history:{limit:history.limit,undo:boundedPush(history.undo,doc,history.limit),redo:history.redo.slice(0,-1)},mutation:mutation(restored)};
+  }
+
+  return Object.freeze({limits,error,newDocument,appendAsset,normalizeRect,rectToPixels,applyCommand,createHistory,execute,undo,redo,startSession,toggleFree,hideAllFree,revealPageFree,summaryFree,visibilityFor,validateEnvelope});
 }
