@@ -112,7 +112,7 @@ function createRevealCore() {
     return result;
   }
 
-  function isPlainObject(value){return Boolean(value)&&typeof value==='object'&&!Array.isArray(value)&&(Object.getPrototypeOf(value)===Object.prototype||Object.getPrototypeOf(value)===null);}
+  function isPlainObject(value){return Boolean(value)&&typeof value==='object'&&!Array.isArray(value)&&Object.prototype.toString.call(value)==='[object Object]';}
   function exactKeys(value,keys){if(!isPlainObject(value))return false;const actual=Object.keys(value).sort(),expected=[...keys].sort();return actual.length===expected.length&&actual.every((key,index)=>key===expected[index]);}
   function validId(value){return typeof value==='string'&&/^[A-Za-z0-9_-]{1,64}$/.test(value);}
   function codePoints(value){return [...value].length;}
