@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
 import {openApp,imagePath} from '../helpers/app.mjs';
+const currentAppVersion=JSON.parse(readFileSync('app.config.json','utf8')).version;
 
 async function imagePoint(page,x,y){
   return page.locator('#maskSvg').evaluate((svg,point)=>{
@@ -32,7 +33,7 @@ test('T04: save image-embedded editable JSON and reopen without choosing the ima
   expect(download.suggestedFilename()).toBe('study_test.reveal.json');
   const downloadedPath=await download.path();
   const saved=JSON.parse(readFileSync(downloadedPath,'utf8'));
-  expect(saved).toMatchObject({format:'reveal-sheet',schemaVersion:1,appVersion:'0.2.0',kind:'editable'});
+  expect(saved).toMatchObject({format:'reveal-sheet',schemaVersion:1,appVersion:currentAppVersion,kind:'editable'});
   expect(saved.document.pages).toHaveLength(1);
   expect(saved.document.assets).toHaveLength(1);
   expect(saved.document.masks).toHaveLength(1);
