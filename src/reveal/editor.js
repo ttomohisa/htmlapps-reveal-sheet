@@ -5,7 +5,7 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
   const $ = id => env.document.getElementById(id);
   const ctx={newId:kind=>kind+'_'+Array.from(env.crypto.getRandomValues(new Uint8Array(16)),x=>x.toString(16).padStart(2,'0')).join('')};
   let doc=core.newDocument(ctx,translate('untitled'));
-  let selectedId=null, selectedMaskId=null, generation=0, batchId=0, displayGeneration=0;
+  let selectedId=null, selectedMaskId=null, selectedMaskIds=new Set(), generation=0, batchId=0, displayGeneration=0;
   let controller=null, busy=false, failures=[], progress=null;
   let undo=[],redo=[],viewKey='',lastStatus='emptyStatus',mode='create',tool='move',studySession=null;
   let filenameBase='reveal-sheet';
@@ -19,6 +19,31 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
   function currentPage(){return doc.pages.find(p=>p.id===selectedId)||null;}
   function currentAsset(){const page=currentPage();return page&&doc.assets.find(a=>a.id===page.imageId)||null;}
   function currentMask(){return doc.masks.find(m=>m.id===selectedMaskId)||null;}
+  function refreshCoverPanel(){
+    const page=currentPage(),panel=$('coverPanel'),list=$('coverList');
+    if(!page){panel.hidden=true;list.replaceChildren();selectedMaskIds.clear();return;}
+    const pageMasks=doc.masks.filter(mask=>mask.pageId===page.id);
+    selectedMaskIds=new Set([...selectedMaskIds].filter(id=>pageMasks.some(mask=>mask.id===id)));
+    panel.hidden=mode!=='create';
+    $('questionCountEdit').textContent=String(doc.questions.filter(question=>question.pageId===page.id).length);
+    list.replaceChildren();
+    pageMasks.forEach((mask,index)=>{
+      const button=env.document.createElement('button');button.type='button';button.className='cover-list-item';button.dataset.maskId=mask.id;
+      button.setAttribute('aria-pressed',String(selectedMaskIds.has(mask.id)));
+      button.textContent=t(mask.kind==='auxiliary'?'coverAuxItem':'coverAnswerItem',{number:index+1});
+      button.addEventListener('click',()=>{if(selectedMaskIds.has(mask.id))selectedMaskIds.delete(mask.id);else selectedMaskIds.add(mask.id);selectedMaskId=mask.id;refreshCopy();});
+      list.append(button);
+    });
+    const chosen=pageMasks.filter(mask=>selectedMaskIds.has(mask.id));
+    const answerQuestions=[...new Set(chosen.filter(mask=>mask.kind==='answer').map(mask=>mask.questionId))];
+    $('groupButton').disabled=busy||chosen.some(mask=>mask.kind!=='answer')||answerQuestions.length<2;
+    const groupedQuestion=chosen.length===1&&chosen[0].kind==='answer'?doc.questions.find(question=>question.id===chosen[0].questionId&&question.maskIds.length>1):null;
+    $('ungroupButton').disabled=busy||!groupedQuestion;
+    $('makeAuxiliaryButton').disabled=busy||chosen.length!==1||chosen[0].kind!=='answer';
+    $('makeAnswerButton').disabled=busy||chosen.length!==1||chosen[0].kind!=='auxiliary';
+    $('duplicateSelectionButton').disabled=busy||chosen.length===0;
+    const warnings=core.overlapWarnings(doc,page.id);$('overlapWarning').hidden=warnings.length===0;$('overlapWarning').textContent=warnings.length?t('overlapWarning',{count:warnings.length}):'';
+  }
   function renderOverlay(){const page=currentPage(),asset=currentAsset();if(!page||!asset||image.hidden){setSvgHidden(true);return;}studyView.mount({document:doc,pageId:page.id,session:studySession,mode:mode==='study'?'study':'edit',selectedMaskId});setSvgHidden(false);}
   function updateToolButtons(){$('coverButton').setAttribute('aria-pressed',String(tool==='cover'));$('twoPointButton').setAttribute('aria-pressed',String(tool==='two-point'));$('moveImageButton').setAttribute('aria-pressed',String(tool==='move'));$('maskControls').hidden=!(currentMask()&&mode==='create');}
   function refreshStudy(){
@@ -50,6 +75,7 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
     const activePage=currentPage(),activePageIndex=activePage?doc.pages.findIndex(page=>page.id===activePage.id):-1;
     $('pageControls').hidden=!activePage||mode!=='create';
     if(activePage&&env.document.activeElement!==$('pageTitleInput'))$('pageTitleInput').value=activePage.title;
+    refreshCoverPanel();
     $('pagePrevButton').disabled=busy||activePageIndex<=0;$('pageNextButton').disabled=busy||activePageIndex<0||activePageIndex>=doc.pages.length-1;$('pageDeleteButton').disabled=busy||!activePage;
     $('coverButton').disabled=busy||!selectedId||mode==='study';$('twoPointButton').disabled=busy||!selectedId||mode==='study';$('moveImageButton').disabled=busy||!selectedId||mode==='study';
     $('pageList').replaceChildren();
@@ -59,7 +85,7 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
       button.setAttribute('aria-pressed',String(p.id===selectedId));
       const name=env.document.createElement('span');name.className='page-name';name.textContent=p.title;
       const details=env.document.createElement('span');details.className='page-details';details.textContent=`${a.width} × ${a.height} · ${formatBytes(a.byteLength)}`;
-      button.append(name,details);button.addEventListener('click',()=>{selectedId=p.id;selectedMaskId=null;twoPointStart=null;refreshCopy();showPreview();});$('pageList').append(button);
+      button.append(name,details);button.addEventListener('click',()=>{selectedId=p.id;selectedMaskId=null;selectedMaskIds.clear();twoPointStart=null;refreshCopy();showPreview();});$('pageList').append(button);
     }
     $('failureSection').hidden=failures.length===0;
     $('failureList').replaceChildren();
@@ -101,7 +127,7 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
     to.push(doc);const snapshot=from.pop(),revisionMap=new Map(doc.questions.map(question=>[question.id,question.revision]));
     doc={...snapshot,revision:doc.revision+1,questions:snapshot.questions.map(question=>({...question,revision:Math.max(question.revision,revisionMap.get(question.id)||question.revision)}))};
     if(!doc.pages.some(p=>p.id===selectedId))selectedId=doc.pages.at(-1)?.id||null;
-    if(!doc.masks.some(m=>m.id===selectedMaskId))selectedMaskId=null;studySession=null;
+    if(!doc.masks.some(m=>m.id===selectedMaskId))selectedMaskId=null;selectedMaskIds=new Set([...selectedMaskIds].filter(id=>doc.masks.some(mask=>mask.id===id)));studySession=null;
     status(direction==='undo'?'undone':'redone');refreshCopy();showPreview();
   }
   async function addImages(input) {
@@ -145,7 +171,7 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
     if(!doc.pages.length&&!busy)return;
     const yes=await env.AppConfirm.ask({title:t('newTitle'),message:t('newMessage',{count:doc.pages.length}),confirmLabel:t('newAction'),cancelLabel:t('cancel'),tone:'danger'});
     if(!yes)return;
-    generation++;controller?.abort();doc=core.newDocument(ctx,t('untitled'));selectedId=null;selectedMaskId=null;
+    generation++;controller?.abort();doc=core.newDocument(ctx,t('untitled'));selectedId=null;selectedMaskId=null;selectedMaskIds.clear();
     undo=[];redo=[];failures=[];studySession=null;mode='create';tool='move';twoPointStart=null;filenameBase='reveal-sheet';$('outputFilename').value=filenameBase;imageIO.releaseAll();status('emptyStatus');refreshCopy();showPreview();
   }
   function filesFromTransfer(data) {
@@ -174,10 +200,29 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
   function pointerUp(event){if(!gesture||event.pointerId!==gesture.pointerId)return;const start=gesture.start,point=imagePoint(event)||gesture.current;svg.releasePointerCapture(event.pointerId);clearDraft();const rect=rectFromPoints(start,point);if(rect)addCover(rect);else{tool='move';updateToolButtons();}}
   function pointerCancel(){if(!gesture)return;clearDraft();tool='move';updateToolButtons();}
   function twoPoint(event){if(mode!=='create'||tool!=='two-point'||event.target!==svg)return;const point=imagePoint(event);if(!point)return;if(!twoPointStart){twoPointStart=point;status('chooseSecondPoint');return;}const rect=rectFromPoints(twoPointStart,point);twoPointStart=null;if(rect)addCover(rect);else status('coverTooSmall');}
-  function handleViewAction(action){if(action.type==='SELECT_MASK'){selectedMaskId=action.maskId;refreshCopy();return;}if(action.type==='TOGGLE_QUESTION'&&mode==='study'){studySession=core.toggleFree(studySession,action.questionId);refreshCopy();}}
+  function handleViewAction(action){if(action.type==='SELECT_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);refreshCopy();return;}if(action.type==='TOGGLE_QUESTION'&&mode==='study'){studySession=core.toggleFree(studySession,action.questionId);refreshCopy();}}
   function editSelected(kind,amount=1){const mask=currentMask(),asset=currentAsset();if(!mask||!asset||mode!=='create')return;const dx=amount/asset.width,dy=amount/asset.height;let r={...mask.rect};if(kind==='left')r.x-=dx;if(kind==='right')r.x+=dx;if(kind==='up')r.y-=dy;if(kind==='down')r.y+=dy;if(kind==='wider')r.w+=dx;if(kind==='narrower')r.w-=dx;if(kind==='taller')r.h+=dy;if(kind==='shorter')r.h-=dy;try{const next=core.applyCommand(doc,{type:'SET_MASK_RECT',maskId:mask.id,rect:r},ctx).document;commit(next,mask.id);status('coverChanged');refreshCopy();}catch(error){if(error.code!=='INVALID_SHEET')throw error;}}
   function deleteSelected(){const mask=currentMask();if(!mask)return;const next=core.applyCommand(doc,{type:'DELETE_MASK',maskId:mask.id},ctx).document;commit(next,null);status('coverDeleted');refreshCopy();}
   function duplicateSelected(){const mask=currentMask();if(!mask)return;const before=new Set(doc.masks.map(m=>m.id)),next=core.applyCommand(doc,{type:'DUPLICATE_MASK',maskId:mask.id},ctx).document,added=next.masks.find(m=>!before.has(m.id));commit(next,added?.id||null);status('coverAdded');refreshCopy();}
+  function groupSelected(){
+    const page=currentPage();if(!page||busy)return;const chosen=doc.masks.filter(mask=>mask.pageId===page.id&&selectedMaskIds.has(mask.id));
+    const questionIds=[...new Set(chosen.filter(mask=>mask.kind==='answer').map(mask=>mask.questionId))];if(chosen.some(mask=>mask.kind!=='answer')||questionIds.length<2)return;
+    const next=core.applyCommand(doc,{type:'GROUP_QUESTIONS',questionIds},ctx).document;commit(next,null);selectedMaskIds.clear();status('groupedCovers');refreshCopy();
+  }
+  function ungroupSelected(){
+    const page=currentPage();if(!page||busy)return;const chosen=doc.masks.filter(mask=>mask.pageId===page.id&&selectedMaskIds.has(mask.id));if(chosen.length!==1||chosen[0].kind!=='answer')return;
+    const question=doc.questions.find(item=>item.id===chosen[0].questionId);if(!question||question.maskIds.length<2)return;
+    const next=core.applyCommand(doc,{type:'UNGROUP_QUESTION',questionId:question.id},ctx).document;commit(next,chosen[0].id);selectedMaskIds=new Set([chosen[0].id]);status('ungroupedCovers');refreshCopy();
+  }
+  function convertSelected(kind){
+    const page=currentPage();if(!page||busy)return;const chosen=doc.masks.filter(mask=>mask.pageId===page.id&&selectedMaskIds.has(mask.id));if(chosen.length!==1||chosen[0].kind===kind)return;
+    const next=core.applyCommand(doc,{type:'CONVERT_MASK_KIND',maskId:chosen[0].id,kind},ctx).document;commit(next,chosen[0].id);selectedMaskIds=new Set([chosen[0].id]);status(kind==='auxiliary'?'madeAuxiliary':'madeAnswer');refreshCopy();
+  }
+  function duplicateSelection(){
+    const page=currentPage();if(!page||busy)return;const ids=doc.masks.filter(mask=>mask.pageId===page.id&&selectedMaskIds.has(mask.id)).map(mask=>mask.id);if(!ids.length)return;
+    const before=new Set(doc.masks.map(mask=>mask.id)),next=core.applyCommand(doc,{type:'DUPLICATE_SELECTION',maskIds:ids},ctx).document,newIds=next.masks.filter(mask=>!before.has(mask.id)).map(mask=>mask.id);
+    commit(next,newIds[0]||null);selectedMaskIds=new Set(newIds);status('duplicatedSelection');refreshCopy();
+  }
   function renamePage(){
     const page=currentPage();if(!page||busy)return;const title=$('pageTitleInput').value;
     try{const next=core.applyCommand(doc,{type:'RENAME_PAGE',pageId:page.id,title},ctx).document;if(next!==doc){commit(next,selectedMaskId);status('pageRenamed');refreshCopy();}}
@@ -195,7 +240,7 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
   function beginCreate(){mode='create';studySession=null;refreshCopy();$('addButton').focus({preventScroll:true});}
   function beginSave(){if(!doc.pages.length||busy)return;mode='save';studySession=null;selectedMaskId=null;refreshCopy();$('outputFilename').focus({preventScroll:true});}
   function applyImported(envelope){
-    generation++;controller?.abort();imageIO.releaseAll();doc=envelope.document;selectedId=doc.pages[0]?.id||null;selectedMaskId=null;undo=[];redo=[];failures=[];studySession=null;mode='create';tool='move';twoPointStart=null;viewKey='';
+    generation++;controller?.abort();imageIO.releaseAll();doc=envelope.document;selectedId=doc.pages[0]?.id||null;selectedMaskId=null;selectedMaskIds.clear();undo=[];redo=[];failures=[];studySession=null;mode='create';tool='move';twoPointStart=null;viewKey='';
     filenameBase=doc.title&&doc.title!==t('untitled')?doc.title:'reveal-sheet';$('outputFilename').value=filenameBase;status('sheetOpened');refreshCopy();showPreview(true);
   }
   async function openSheet(file){
@@ -238,6 +283,7 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
   $('maskWider').addEventListener('click',()=>editSelected('wider'));$('maskNarrower').addEventListener('click',()=>editSelected('narrower'));$('maskTaller').addEventListener('click',()=>editSelected('taller'));$('maskShorter').addEventListener('click',()=>editSelected('shorter'));$('maskDelete').addEventListener('click',deleteSelected);$('maskDuplicate').addEventListener('click',duplicateSelected);
   $('pageTitleInput').addEventListener('change',renamePage);$('pageTitleInput').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();event.currentTarget.blur();}});
   $('pagePrevButton').addEventListener('click',()=>movePage(-1));$('pageNextButton').addEventListener('click',()=>movePage(1));$('pageDeleteButton').addEventListener('click',deletePage);
+  $('groupButton').addEventListener('click',groupSelected);$('ungroupButton').addEventListener('click',ungroupSelected);$('makeAuxiliaryButton').addEventListener('click',()=>convertSelected('auxiliary'));$('makeAnswerButton').addEventListener('click',()=>convertSelected('answer'));$('duplicateSelectionButton').addEventListener('click',duplicateSelection);
   $('studyButton').addEventListener('click',beginStudy);$('createButton').addEventListener('click',beginCreate);$('saveButton').addEventListener('click',beginSave);$('downloadJsonButton').addEventListener('click',downloadJson);$('openButton').addEventListener('click',()=>$('sheetInput').click());$('sheetInput').addEventListener('change',event=>{const file=event.target.files?.[0]||null;event.target.value='';openSheet(file);});$('hideAllButton').addEventListener('click',()=>{studySession=core.hideAllFree(studySession);refreshCopy();});$('revealPageButton').addEventListener('click',()=>{studySession=core.revealPageFree(doc,studySession,selectedId);refreshCopy();});
   svg.addEventListener('pointerdown',pointerDown);svg.addEventListener('pointermove',pointerMove);svg.addEventListener('pointerup',pointerUp);svg.addEventListener('pointercancel',pointerCancel);svg.addEventListener('click',twoPoint);
   env.document.addEventListener('keydown',keydown);
