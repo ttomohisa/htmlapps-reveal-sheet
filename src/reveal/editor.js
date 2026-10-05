@@ -65,7 +65,8 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
     }
     const page=doc.pages.find(p=>p.id===selectedId),asset=page&&doc.assets.find(a=>a.id===page.imageId);
     if(asset){$('imageDimensions').textContent=`${asset.width} × ${asset.height} px`;$('imageBytes').textContent=formatBytes(asset.byteLength);}
-    $('totalBytes').textContent=formatBytes(doc.assets.reduce((sum,a)=>sum+a.byteLength,0));
+    const totalAssetBytes=doc.assets.reduce((sum,a)=>sum+a.byteLength,0);
+    $('totalBytes').textContent=formatBytes(totalAssetBytes);$('savePageCount').textContent=String(doc.pages.length);$('saveQuestionCount').textContent=String(doc.questions.length);$('saveImageBytes').textContent=formatBytes(totalAssetBytes);
     if(!$('outputFilename').value)$('outputFilename').value=filenameBase;
     refreshStudy();updateToolButtons();renderOverlay();
   }
