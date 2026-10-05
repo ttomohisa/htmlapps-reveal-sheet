@@ -100,3 +100,33 @@ button:disabled,input:disabled { cursor:not-allowed; }
  .has-pages .page-intro,.has-pages .input-note,.has-pages #openButton { display:none; }
  .has-pages .release-note { margin-top:14px;margin-bottom:12px;font-size:12px; }
 }
+
+/* T03: one image coordinate system for editing and free reveal. */
+.cover-tools,.mask-controls,.mask-control-group,.study-actions { display:flex;flex-wrap:wrap;gap:8px;align-items:center; }
+.cover-tools { flex:1 1 auto; }
+.tool-button[aria-pressed="true"] { border-color:#16624f;background:#edf4f0;color:#16624f; }
+.mask-controls { margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fafbf8;justify-content:space-between; }
+.mask-control-group { min-width:0; }
+.mask-control-group .button { min-height:44px;padding:8px 11px;font-size:12px; }
+.mask-layer { position:absolute;inset:0;width:100%;height:100%;z-index:4;touch-action:none;overflow:visible; }
+.mask-layer:focus-visible { outline:3px solid #16624f;outline-offset:-3px; }
+.mask-rect { fill:#16624f;stroke:#fff;stroke-width:1.5;vector-effect:non-scaling-stroke;cursor:pointer; }
+.mask-rect.selected { stroke:#20211f;stroke-width:3; }
+.mask-rect:focus { stroke:#20211f;stroke-width:3; }
+.mask-draft { fill:#16624fbb;stroke:#fff;stroke-width:2;stroke-dasharray:7 5;vector-effect:non-scaling-stroke;pointer-events:none; }
+.study-panel { margin:12px 0 16px;padding:14px;border:1px solid var(--line);border-radius:14px;background:#f8faf7; }
+.study-summary { display:flex;justify-content:space-between;align-items:center;gap:14px; }
+.study-summary h3 { margin:0 0 4px;font-size:16px; }
+.study-summary p { margin:0;color:var(--muted);font-size:13px; }
+.question-list { display:flex;flex-wrap:wrap;gap:8px;margin-top:12px; }
+.question-item { min-height:48px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:8px 12px;font:inherit;font-size:13px; }
+.question-item:hover { background:var(--surface-hover); }
+.study-mode .input-note,.study-mode .input-status-row,.study-mode .failure-section,.study-mode .data-notice,.study-mode .future-section { display:none; }
+@media(max-width:767px) {
+ .cover-tools { order:3;width:100%; }
+ .cover-tools .button { flex:1 1 30%;min-width:0;padding-inline:8px; }
+ .mask-controls,.study-summary { align-items:stretch;flex-direction:column; }
+ .mask-control-group,.study-actions { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%; }
+ .mask-control-group .button,.study-actions .button { width:100%; }
+ .question-list { display:grid;grid-template-columns:1fr; }
+}
