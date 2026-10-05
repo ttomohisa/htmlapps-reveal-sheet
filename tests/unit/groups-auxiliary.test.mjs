@@ -77,3 +77,17 @@ test('T06 grouping rejects questions from different pages',()=>{
   doc=add(doc,ctx,doc.pages[1].id,{x:.1,y:.1,w:.2,h:.2});
   assert.throws(()=>core.applyCommand(doc,{type:'GROUP_QUESTIONS',questionIds:doc.questions.map(q=>q.id)},ctx),{code:'INVALID_SHEET'});
 });
+
+test('T06 grouped and auxiliary covers round-trip through editable JSON',async()=>{
+  const createProjectIO=loadFactory('src/reveal/project-io.js','createProjectIO');
+  const {doc:initial,ctx,pageId}=base();let doc=initial;
+  doc=add(doc,ctx,pageId,{x:.1,y:.1,w:.15,h:.2});doc=add(doc,ctx,pageId,{x:.4,y:.1,w:.15,h:.2});doc=add(doc,ctx,pageId,{x:.7,y:.1,w:.15,h:.2});
+  doc=core.applyCommand(doc,{type:'GROUP_QUESTIONS',questionIds:doc.questions.slice(0,2).map(q=>q.id)},ctx).document;
+  doc=core.applyCommand(doc,{type:'CONVERT_MASK_KIND',maskId:doc.masks[2].id,kind:'auxiliary'},ctx).document;
+  let verified=0;const io=createProjectIO({core,imageIO:{verifyStoredAsset:async()=>{verified++;}},env:{Blob,TextDecoder,TextEncoder}});
+  const text=io.serialize(doc,'editable','0.3.0');
+  const loaded=await io.readJson(new Blob([text],{type:'application/json'}));
+  assert.equal(verified,1);
+  assert.deepEqual(toPlain(core.counts(loaded.document)),{pages:1,masks:3,questions:1,auxiliary:1});
+  assert.equal(loaded.document.questions[0].maskIds.length,2);
+});
