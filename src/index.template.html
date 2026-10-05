@@ -160,10 +160,6 @@ dialog { color:var(--text);background:var(--surface); }
       <p class="input-note" data-i18n="inputHint"></p>
       <div class="input-status-row"><p id="inputStatus" role="status" aria-live="polite"></p><button class="button" id="cancelButton" type="button" hidden data-i18n="stop"></button></div>
       <div id="loadedSection" hidden class="sheet-header"><h2 id="sheetTitle"></h2><span id="sheetCount"></span></div>
-      <div id="pageControls" class="page-controls" hidden>
-        <label class="page-name-field" for="pageTitleInput"><span data-i18n="pageNameLabel"></span><input id="pageTitleInput" type="text" maxlength="120" autocomplete="off" spellcheck="false"></label>
-        <div class="page-order-actions"><button class="button" id="pagePrevButton" type="button" data-i18n="pageEarlier"></button><button class="button" id="pageNextButton" type="button" data-i18n="pageLater"></button><button class="button" id="pageDeleteButton" type="button" data-i18n="deletePage"></button></div>
-      </div>
       <div class="reveal-grid">
         <aside class="page-panel"><h3 data-i18n="pages"></h3><div id="pageList" class="page-list" aria-label="Pages" data-i18n-aria-label="pages"></div></aside>
         <div class="preview-column">
@@ -174,6 +170,10 @@ dialog { color:var(--text);background:var(--surface); }
             <svg id="maskSvg" class="mask-layer" tabindex="0" aria-label="Image covers" hidden></svg>
           </div>
           <div class="image-meta" id="imageMeta" hidden><span><strong id="imageDimensions"></strong> · PNG · <span id="imageBytes"></span></span><span data-i18n="unchangedSize"></span></div>
+          <div id="pageControls" class="page-controls" hidden>
+            <label class="page-name-field" for="pageTitleInput"><span data-i18n="pageNameLabel"></span><input id="pageTitleInput" type="text" maxlength="120" autocomplete="off" spellcheck="false"></label>
+            <div class="page-order-actions"><button class="button" id="pagePrevButton" type="button" data-i18n="pageEarlier"></button><button class="button" id="pageNextButton" type="button" data-i18n="pageLater"></button><button class="button" id="pageDeleteButton" type="button" data-i18n="deletePage"></button></div>
+          </div>
         </div>
       </div>
       <section id="failureSection" class="failure-section" hidden aria-labelledby="failuresTitle"><h3 id="failuresTitle" data-i18n="failures"></h3><ul class="failure-list" id="failureList"></ul><button class="button" id="retryButton" type="button" data-i18n="chooseAgain"></button></section>
