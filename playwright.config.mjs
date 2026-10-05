@@ -1,3 +1,4 @@
+import './scripts/prepare-test-fixtures.mjs';
 import { defineConfig } from '@playwright/test';
 const variant=process.env.APP_VARIANT||'readable';
 export default defineConfig({
