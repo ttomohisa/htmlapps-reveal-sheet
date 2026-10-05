@@ -47,6 +47,10 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
     $('emptyPreview').hidden=doc.pages.length!==0;
     $('imageMeta').hidden=!selectedId;
     $('loadedSection').hidden=doc.pages.length===0;
+    const activePage=currentPage(),activePageIndex=activePage?doc.pages.findIndex(page=>page.id===activePage.id):-1;
+    $('pageControls').hidden=!activePage||mode!=='create';
+    if(activePage&&env.document.activeElement!==$('pageTitleInput'))$('pageTitleInput').value=activePage.title;
+    $('pagePrevButton').disabled=busy||activePageIndex<=0;$('pageNextButton').disabled=busy||activePageIndex<0||activePageIndex>=doc.pages.length-1;$('pageDeleteButton').disabled=busy||!activePage;
     $('coverButton').disabled=busy||!selectedId||mode==='study';$('twoPointButton').disabled=busy||!selectedId||mode==='study';$('moveImageButton').disabled=busy||!selectedId||mode==='study';
     $('pageList').replaceChildren();
     for(const p of doc.pages){
@@ -94,7 +98,8 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
     if(busy||mode==='study')return;
     const from=direction==='undo'?undo:redo,to=direction==='undo'?redo:undo;
     if(!from.length)return;
-    to.push(doc);doc={...from.pop(),revision:doc.revision+1};
+    to.push(doc);const snapshot=from.pop(),revisionMap=new Map(doc.questions.map(question=>[question.id,question.revision]));
+    doc={...snapshot,revision:doc.revision+1,questions:snapshot.questions.map(question=>({...question,revision:Math.max(question.revision,revisionMap.get(question.id)||question.revision)}))};
     if(!doc.pages.some(p=>p.id===selectedId))selectedId=doc.pages.at(-1)?.id||null;
     if(!doc.masks.some(m=>m.id===selectedMaskId))selectedMaskId=null;studySession=null;
     status(direction==='undo'?'undone':'redone');refreshCopy();showPreview();
@@ -173,6 +178,19 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
   function editSelected(kind,amount=1){const mask=currentMask(),asset=currentAsset();if(!mask||!asset||mode!=='create')return;const dx=amount/asset.width,dy=amount/asset.height;let r={...mask.rect};if(kind==='left')r.x-=dx;if(kind==='right')r.x+=dx;if(kind==='up')r.y-=dy;if(kind==='down')r.y+=dy;if(kind==='wider')r.w+=dx;if(kind==='narrower')r.w-=dx;if(kind==='taller')r.h+=dy;if(kind==='shorter')r.h-=dy;try{const next=core.applyCommand(doc,{type:'SET_MASK_RECT',maskId:mask.id,rect:r},ctx).document;commit(next,mask.id);status('coverChanged');refreshCopy();}catch(error){if(error.code!=='INVALID_SHEET')throw error;}}
   function deleteSelected(){const mask=currentMask();if(!mask)return;const next=core.applyCommand(doc,{type:'DELETE_MASK',maskId:mask.id},ctx).document;commit(next,null);status('coverDeleted');refreshCopy();}
   function duplicateSelected(){const mask=currentMask();if(!mask)return;const before=new Set(doc.masks.map(m=>m.id)),next=core.applyCommand(doc,{type:'DUPLICATE_MASK',maskId:mask.id},ctx).document,added=next.masks.find(m=>!before.has(m.id));commit(next,added?.id||null);status('coverAdded');refreshCopy();}
+  function renamePage(){
+    const page=currentPage();if(!page||busy)return;const title=$('pageTitleInput').value;
+    try{const next=core.applyCommand(doc,{type:'RENAME_PAGE',pageId:page.id,title},ctx).document;if(next!==doc){commit(next,selectedMaskId);status('pageRenamed');refreshCopy();}}
+    catch(error){$('pageTitleInput').value=page.title;}
+  }
+  function movePage(delta){const page=currentPage();if(!page||busy)return;const next=core.applyCommand(doc,{type:'MOVE_PAGE',pageId:page.id,delta},ctx).document;if(next!==doc){commit(next,selectedMaskId);status('pageMoved');refreshCopy();}}
+  async function deletePage(){
+    const page=currentPage();if(!page||busy)return;const index=doc.pages.findIndex(item=>item.id===page.id),count=doc.questions.filter(question=>question.pageId===page.id).length;
+    const yes=await env.AppConfirm.ask({title:t('pageDeleteTitle'),message:t('pageDeleteMessage',{name:page.title,count}),confirmLabel:t('pageDeleteAction'),cancelLabel:t('cancel'),tone:'danger'});if(!yes)return;
+    const imageId=page.imageId,next=core.applyCommand(doc,{type:'DELETE_PAGE',pageId:page.id},ctx).document;commit(next,null);
+    if(!next.assets.some(asset=>asset.id===imageId))imageIO.release(imageId);
+    selectedId=next.pages[Math.min(index,next.pages.length-1)]?.id||null;viewKey='';status('pageDeleted');refreshCopy();showPreview(true);
+  }
   function beginStudy(){if(!doc.questions.length||busy)return;mode='study';tool='move';selectedMaskId=null;studySession=core.startSession(doc,{mode:'free'},ctx);refreshCopy();}
   function beginCreate(){mode='create';studySession=null;refreshCopy();$('addButton').focus({preventScroll:true});}
   function beginSave(){if(!doc.pages.length||busy)return;mode='save';studySession=null;selectedMaskId=null;refreshCopy();$('outputFilename').focus({preventScroll:true});}
@@ -218,6 +236,8 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
   $('coverButton').addEventListener('click',()=>setTool('cover'));$('twoPointButton').addEventListener('click',()=>setTool('two-point'));$('moveImageButton').addEventListener('click',()=>setTool('move'));
   $('maskMoveLeft').addEventListener('click',()=>editSelected('left'));$('maskMoveRight').addEventListener('click',()=>editSelected('right'));$('maskMoveUp').addEventListener('click',()=>editSelected('up'));$('maskMoveDown').addEventListener('click',()=>editSelected('down'));
   $('maskWider').addEventListener('click',()=>editSelected('wider'));$('maskNarrower').addEventListener('click',()=>editSelected('narrower'));$('maskTaller').addEventListener('click',()=>editSelected('taller'));$('maskShorter').addEventListener('click',()=>editSelected('shorter'));$('maskDelete').addEventListener('click',deleteSelected);$('maskDuplicate').addEventListener('click',duplicateSelected);
+  $('pageTitleInput').addEventListener('change',renamePage);$('pageTitleInput').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();event.currentTarget.blur();}});
+  $('pagePrevButton').addEventListener('click',()=>movePage(-1));$('pageNextButton').addEventListener('click',()=>movePage(1));$('pageDeleteButton').addEventListener('click',deletePage);
   $('studyButton').addEventListener('click',beginStudy);$('createButton').addEventListener('click',beginCreate);$('saveButton').addEventListener('click',beginSave);$('downloadJsonButton').addEventListener('click',downloadJson);$('openButton').addEventListener('click',()=>$('sheetInput').click());$('sheetInput').addEventListener('change',event=>{const file=event.target.files?.[0]||null;event.target.value='';openSheet(file);});$('hideAllButton').addEventListener('click',()=>{studySession=core.hideAllFree(studySession);refreshCopy();});$('revealPageButton').addEventListener('click',()=>{studySession=core.revealPageFree(doc,studySession,selectedId);refreshCopy();});
   svg.addEventListener('pointerdown',pointerDown);svg.addEventListener('pointermove',pointerMove);svg.addEventListener('pointerup',pointerUp);svg.addEventListener('pointercancel',pointerCancel);svg.addEventListener('click',twoPoint);
   env.document.addEventListener('keydown',keydown);
