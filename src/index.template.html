@@ -133,16 +133,19 @@ dialog { color:var(--text);background:var(--surface); }
       <button id="saveButton" type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 15v6h16v-6"/></svg><span data-i18n="save"></span></button>
     </nav>
     <section class="shell reveal-shell" aria-label="Create a sheet" data-i18n-aria-label="create">
-      <div class="reveal-tools">
+      <div class="reveal-tools" id="editControls">
         <button class="button primary" id="addButton" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m4 17 5-5 4 4 3-3 5 5M15 8h3m-1.5-1.5v3"/></svg><span data-i18n="addImages"></span></button>
         <button class="button" id="openButton" type="button" disabled aria-describedby="notAvailable"><span data-i18n="openSheet"></span></button>
         <input id="imageInput" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple hidden>
+        <div class="cover-tools" aria-label="Cover tools"><button class="button tool-button" id="moveImageButton" type="button" aria-pressed="true" disabled><span data-i18n="moveImage"></span></button><button class="button tool-button" id="coverButton" type="button" aria-pressed="false" disabled><span data-i18n="cover"></span></button><button class="button tool-button" id="twoPointButton" type="button" aria-pressed="false" disabled><span data-i18n="twoPoint"></span></button></div>
         <div class="secondary-tools">
           <button class="button" id="undoButton" type="button" disabled data-i18n-aria-label="undo" data-i18n-title="undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m9 5-5 5 5 5M5 10h9a5 5 0 0 1 0 10"/></svg></button>
           <button class="button" id="redoButton" type="button" disabled data-i18n-aria-label="redo" data-i18n-title="redo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m15 5 5 5-5 5M19 10h-9a5 5 0 0 0 0 10"/></svg></button>
           <button class="button" id="newButton" type="button" disabled data-i18n="newSheet"></button>
         </div>
       </div>
+      <div id="maskControls" class="mask-controls" hidden aria-label="Selected cover controls"><div class="mask-control-group"><button class="button" id="maskMoveLeft" type="button" data-i18n="moveLeft"></button><button class="button" id="maskMoveRight" type="button" data-i18n="moveRight"></button><button class="button" id="maskMoveUp" type="button" data-i18n="moveUp"></button><button class="button" id="maskMoveDown" type="button" data-i18n="moveDown"></button></div><div class="mask-control-group"><button class="button" id="maskWider" type="button" data-i18n="wider"></button><button class="button" id="maskNarrower" type="button" data-i18n="narrower"></button><button class="button" id="maskTaller" type="button" data-i18n="taller"></button><button class="button" id="maskShorter" type="button" data-i18n="shorter"></button><button class="button" id="maskDuplicate" type="button" data-i18n="duplicateCover"></button><button class="button" id="maskDelete" type="button" data-i18n="deleteCover"></button></div></div>
+      <section id="studyPanel" class="study-panel" hidden aria-labelledby="freeStudyTitle"><div class="study-summary"><div><h3 id="freeStudyTitle" data-i18n="freeStudy"></h3><p><span data-i18n="confirmedLabel"></span> <strong id="confirmedCount">0</strong> / <strong id="studyQuestionCount">0</strong></p></div><div class="study-actions"><button class="button" id="hideAllButton" type="button" data-i18n="hideAll"></button><button class="button" id="revealPageButton" type="button" data-i18n="revealPage"></button></div></div><div id="questionList" class="question-list" aria-label="Questions"></div></section>
       <p class="input-note" data-i18n="inputHint"></p>
       <div class="input-status-row"><p id="inputStatus" role="status" aria-live="polite"></p><button class="button" id="cancelButton" type="button" hidden data-i18n="stop"></button></div>
       <div id="loadedSection" hidden class="sheet-header"><h2 id="sheetTitle"></h2><span id="sheetCount"></span></div>
@@ -153,6 +156,7 @@ dialog { color:var(--text);background:var(--surface); }
             <div class="empty-preview" id="emptyPreview"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="12" y="8" width="40" height="48" rx="5"/><path d="M21 20h22M21 30h22M21 40h12"/><rect x="30" y="26" width="17" height="8" rx="2" fill="currentColor"/></svg><h2 data-i18n="emptyTitle"></h2><p data-i18n="emptyBody"></p></div>
             <p class="preview-wait" id="previewWait" hidden></p>
             <img id="previewImage" alt="" hidden decoding="async">
+            <svg id="maskSvg" class="mask-layer" tabindex="0" aria-label="Image covers" hidden></svg>
           </div>
           <div class="image-meta" id="imageMeta" hidden><span><strong id="imageDimensions"></strong> · PNG · <span id="imageBytes"></span></span><span data-i18n="unchangedSize"></span></div>
         </div>
@@ -258,19 +262,19 @@ dialog { color:var(--text);background:var(--surface); }
       const translations = {
         ja: {
           brandMeta:'画像から作る暗記シート',introTitle:'図やノートを、めくる教材に。',lead:'答えが書かれた画像を、そのまま教材に。まずは画像を追加してください。',localBadge:'端末内で画像を処理',
-          developmentNote:'v0.1.0 開発版：画像の読み込み・確認に対応しています。覆いの編集・学習・教材ファイルの保存と読込は、まだ利用できません。',
-          loadedDevelopmentNote:'画像確認の開発版です。学習・教材保存はまだ利用できません。',
-          addImages:'画像を追加',openSheet:'教材を開く',workflow:'作業画面',create:'作る',study:'学習',save:'保存',newSheet:'新しい教材',undo:'元に戻す',redo:'やり直す',pages:'ページ',pageName:'ページ{number}',pageCount:'{count}ページ',untitled:'無題の教材',
+          developmentNote:'開発版：画像の読み込み、四角い覆いの作成・編集、自由にめくる学習に対応しています。編集データの保存・再読込はまだ利用できません。',
+          loadedDevelopmentNote:'覆いを作って自由にめくれます。編集データの保存・再読込はまだ利用できません。',
+          addImages:'画像を追加',openSheet:'教材を開く',workflow:'作業画面',create:'作る',study:'学習',save:'保存',newSheet:'新しい教材',undo:'元に戻す',redo:'やり直す',pages:'ページ',pageName:'ページ{number}',pageCount:'{count}ページ',untitled:'無題の教材',moveImage:'画像を動かす',cover:'隠す',twoPoint:'二点で囲む',moveLeft:'左へ',moveRight:'右へ',moveUp:'上へ',moveDown:'下へ',wider:'幅を広げる',narrower:'幅を狭める',taller:'高さを広げる',shorter:'高さを狭める',duplicateCover:'複製',deleteCover:'削除',coverAdded:'覆いを追加しました。',coverChanged:'覆いを調整しました。',coverDeleted:'覆いを削除しました。',chooseSecondPoint:'反対側の角を選んでください。',coverTooSmall:'覆いが小さすぎます。1画像px以上の範囲を選んでください。',freeStudy:'自由にめくる',confirmedLabel:'確認済み',revealQuestion:'問題{number}の答えを見る',hideQuestion:'問題{number}を隠す',hideAll:'全部隠す',revealPage:'このページの答えをすべて表示',
           inputHint:'JPEG・静止PNG・静止WebP。ここにドロップ、または画像ファイルを貼り付けできます。1枚20 MiBまで。',
           emptyTitle:'画像を追加してください',emptyBody:'図、写真、ノートなど、答えが書かれた画像を選びます。複数枚をまとめて追加できます。',emptyStatus:'画像はまだありません。',
           processing:'画像を確認しています：{done} / {total}',addedStatus:'{added}枚を追加しました。',partialStatus:'{added}枚を追加しました。{failed}枚は読み込めませんでした。',cancelledStatus:'追加を中止しました。処理済みの{added}枚は残っています。',cancelling:'追加を中止しています。',stop:'中止',preparing:'画像を準備しています。',imageAlt:'{name}の編集用画像',unchangedSize:'向きを固定・縮小なし',
           failures:'読み込めなかった画像',chooseAgain:'画像を選び直す',unnamedImage:'名前のない画像',totalImageSize:'教材内の画像容量：',
           memoryNotice:'この開発版では、画像は画面を開いている間だけ保持されます。閉じると作業内容は失われます。',nextStage:'この開発版の範囲と次の段階',
-          notAvailable:'今回は画像読み込みの確認段階です。覆いを作る・自由にめくる・画像入り編集データを保存して開く機能は、v0.2.0で追加する予定です。',outputFilename:'編集データのファイル名（次の段階で利用可能）',
+          notAvailable:'四角い覆いと自由にめくる学習は利用できます。画像入り編集データの保存・再読込は次の実装段階です。',outputFilename:'編集データのファイル名（保存機能はまだ準備中）',
           undone:'直前のページ追加を元に戻しました。',redone:'ページ追加をやり直しました。',newTitle:'新しい教材にしますか？',newMessage:'現在の{count}ページと追加中の画像を閉じます。この開発版には保存機能がないため、あとから復元できません。',newAction:'新しい教材にする',confirmTitle:'確認',confirmAction:'実行する',cancel:'キャンセル',helpTitle:'使い方と注意事項',close:'閉じる',helpBasicsTitle:'基本操作',
           helpStep1:'「画像を追加」でJPEG・静止PNG・静止WebPを選びます。パソコンではファイルのドロップや画像ファイルの貼り付けも利用できます。',
           helpStep2:'読み込めた画像は選択順に追加されます。ページを押して表示を切り替えます。読み込めなかった画像は別欄に表示します。',
-          helpStep3:'「中止」は処理済みのページを残して追加を止めます。「元に戻す／やり直す」でページ追加を取り消せます。覆い・学習・保存はまだ利用できません。',
+          helpStep3:'「隠す」で画像上をドラッグするか、「二点で囲む」で二隅を選びます。選んだ覆いは方向・サイズボタンでも調整できます。覆いが一つあれば「学習」で自由にめくれます。編集データの保存・再読込はまだ利用できません。',
           helpPrivacyTitle:'プライバシーと作業内容',helpPrivacyBody:'画像はこのブラウザ内で処理され、外部へ送信されません。元ファイル名は読み込み失敗の一時表示だけに使用します。この開発版は端末内の自動保存も行いません。閉じると作業内容は失われます。',helpNotesTitle:'対応形式と制限',
           limitsNote:'最大30ページ。入力1枚20 MiB、各辺8192px、1600万画素まで。向き固定後のPNGは1枚32 MiB、教材全体64 MiBまでです。これらは入力上限であり、すべての端末での動作保証ではありません。',
           unsupportedNote:'GIF、アニメーションPNG・WebP、SVG、HEIC・HEIF、AVIF、PDFは非対応です。外部のURLやHTMLを貼り付けても画像は取得しません。',
@@ -282,14 +286,14 @@ dialog { color:var(--text);background:var(--surface); }
         },
         en: {
           brandMeta:'Study sheets from your images',introTitle:'Turn a diagram into a study sheet.',lead:'Start with an image that already contains the answers. Add your diagram, photo or notes.',localBadge:'Images processed on this device',
-          developmentNote:'v0.1.0 development build: image import and preview are available. Cover editing, studying, and saving or reopening sheets are not available yet.',loadedDevelopmentNote:'Image-preview development build. Studying and saving sheets are not available yet.',
-          addImages:'Add images',openSheet:'Open a sheet',workflow:'Workflow',create:'Create',study:'Study',save:'Save',newSheet:'New sheet',undo:'Undo',redo:'Redo',pages:'Pages',pageName:'Page {number}',pageCount:'{count} pages',untitled:'Untitled sheet',
+          developmentNote:'Development build: image import, rectangular cover editing, and free reveal study are available. Saving and reopening editable sheets are not available yet.',loadedDevelopmentNote:'Create covers and reveal them freely. Saving and reopening editable sheets are not available yet.',
+          addImages:'Add images',openSheet:'Open a sheet',workflow:'Workflow',create:'Create',study:'Study',save:'Save',newSheet:'New sheet',undo:'Undo',redo:'Redo',pages:'Pages',pageName:'Page {number}',pageCount:'{count} pages',untitled:'Untitled sheet',moveImage:'Move image',cover:'Cover',twoPoint:'Two points',moveLeft:'Move left',moveRight:'Move right',moveUp:'Move up',moveDown:'Move down',wider:'Make wider',narrower:'Make narrower',taller:'Make taller',shorter:'Make shorter',duplicateCover:'Duplicate',deleteCover:'Delete',coverAdded:'Added a cover.',coverChanged:'Adjusted the cover.',coverDeleted:'Deleted the cover.',chooseSecondPoint:'Choose the opposite corner.',coverTooSmall:'The cover is too small. Select at least one image pixel.',freeStudy:'Reveal freely',confirmedLabel:'Checked',revealQuestion:'Reveal answer {number}',hideQuestion:'Hide answer {number}',hideAll:'Hide all',revealPage:'Reveal all answers on this page',
           inputHint:'JPEG, static PNG or static WebP. Drop files here or paste an image file. Up to 20 MiB per image.',emptyTitle:'Add your first image',emptyBody:'Choose a diagram, photo or page of notes with answers already on it. You can add several images at once.',emptyStatus:'No images yet.',
           processing:'Checking images: {done} / {total}',addedStatus:'Added {added} images.',partialStatus:'Added {added} images. Could not open {failed} images.',cancelledStatus:'Stopped adding images. Kept the {added} completed images.',cancelling:'Stopping image import.',stop:'Stop',preparing:'Preparing the image.',imageAlt:'Editing image for {name}',unchangedSize:'Orientation fixed · Not resized',
           failures:'Images that could not be opened',chooseAgain:'Choose images again',unnamedImage:'Unnamed image',totalImageSize:'Image data in this sheet:',memoryNotice:'In this development build, images are only kept while this page is open. Closing it loses your work.',nextStage:'This build and the next stage',
-          notAvailable:'This build verifies image input. Creating covers, revealing answers freely, and saving or reopening editable image-embedded sheets are planned for v0.2.0.',outputFilename:'Editable sheet filename (available in the next stage)',undone:'Undid the previous page addition.',redone:'Redid the page addition.',
+          notAvailable:'Rectangular covers and free reveal study are available. Saving and reopening image-embedded editable sheets is the next implementation stage.',outputFilename:'Editable sheet filename (saving is still in progress)',undone:'Undid the previous page addition.',redone:'Redid the page addition.',
           newTitle:'Start a new sheet?',newMessage:'Close the current {count} pages and stop any import. This development build cannot save sheets, so this work cannot be recovered.',newAction:'Start new sheet',confirmTitle:'Confirm',confirmAction:'Continue',cancel:'Cancel',helpTitle:'How to use & notes',close:'Close',helpBasicsTitle:'Basics',
-          helpStep1:'Choose JPEG, static PNG or static WebP files with Add images. On a desktop, you can also drop files or paste an image file.',helpStep2:'Accepted images are added in selection order. Select a page to preview it. Failed images appear in a separate list.',helpStep3:'Stop keeps the pages already added. Undo / Redo reverses page additions. Cover editing, studying and saving are not available yet.',
+          helpStep1:'Choose JPEG, static PNG or static WebP files with Add images. On a desktop, you can also drop files or paste an image file.',helpStep2:'Accepted images are added in selection order. Select a page to preview it. Failed images appear in a separate list.',helpStep3:'Use Cover and drag on the image, or Two points and choose opposite corners. Direction and size buttons adjust a selected cover without dragging. Once a cover exists, Study lets you reveal answers freely. Saving and reopening editable sheets are not available yet.',
           helpPrivacyTitle:'Privacy and your work',helpPrivacyBody:'Images are processed inside this browser and are not sent outside. Original filenames are only used temporarily to identify failed imports. This build does not save your work in browser storage. Closing the page loses the work.',helpNotesTitle:'Formats and limits',
           limitsNote:'Up to 30 pages. Input: 20 MiB per image, 8192 px per side and 16 million pixels. Normalized PNG: 32 MiB each, 64 MiB total. These are safety limits, not a guarantee of device capacity.',unsupportedNote:'GIF, animated PNG / WebP, SVG, HEIC / HEIF, AVIF and PDF are not supported. Pasting a URL or HTML does not fetch images.',
           normalizationNote:'Images are converted into orientation-fixed PNGs without resizing. PNG files can be larger. Original EXIF data and filenames are not copied into the sheet, but names or places visible in the pixels are not removed.',redactionNote:'Covers are for studying. The original answers and images remain in the sheet file. This tool does not redact personal or confidential information.',rightsNote:'Use materials you have permission to distribute when sharing a sheet.',
@@ -357,7 +361,6 @@ dialog { color:var(--text);background:var(--surface); }
       $('#languageButton').addEventListener('click',()=>{language=language==='ja'?'en':'ja';applyLanguage();});
       const helpDialog=$('#helpDialog');$('#helpButton').addEventListener('click',()=>helpDialog.showModal());$('#closeHelpButton').addEventListener('click',()=>helpDialog.close());
       helpDialog.addEventListener('click',event=>{const rect=helpDialog.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)helpDialog.close();});
-      $('#createButton').addEventListener('click',()=>$('#addButton').focus({preventScroll:true}));
     })();
   </script>
 </body>
