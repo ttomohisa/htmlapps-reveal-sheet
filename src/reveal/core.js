@@ -182,9 +182,17 @@ function createRevealCore() {
     throw error('INVALID_SHEET');
   }
   function orderedQuestionIds(doc) { return doc.pages.flatMap(page=>page.questionOrder.filter(id=>doc.questions.some(q=>q.id===id))); }
+  function questionSnapshot(doc,qid){const question=doc.questions.find(item=>item.id===qid);if(!question)throw error('INVALID_SHEET');return {questionId:question.id,questionRevision:question.revision};}
+  function makeGuidedSession(doc,questionIds,options={}){
+    const queue=questionIds.map(id=>questionSnapshot(doc,id)),ratings=Object.fromEntries(queue.map(item=>[item.questionId,'unanswered']));
+    const otherAnswers=options.otherAnswers||doc.defaults.otherAnswers||'hidden';if(!['hidden','visible'].includes(otherAnswers))throw error('INVALID_SHEET');
+    return {mode:'guided',kind:options.kind||'normal',queue,index:0,stage:queue.length?'hidden':'assessed',ratings,otherAnswers,epoch:1,ended:queue.length===0};
+  }
   function startSession(doc,options={}) {
-    if((options.mode||'free')!=='free')throw error('INVALID_SHEET');
-    return {mode:'free',queue:orderedQuestionIds(doc),openQuestionIds:[],confirmedQuestionIds:[]};
+    const mode=options.mode||'free';
+    if(mode==='free')return {mode:'free',queue:orderedQuestionIds(doc),openQuestionIds:[],confirmedQuestionIds:[]};
+    if(mode==='guided')return makeGuidedSession(doc,orderedQuestionIds(doc),options);
+    throw error('INVALID_SHEET');
   }
   function toggleFree(session,qid) {
     if(session.mode!=='free'||!session.queue.includes(qid))throw error('INVALID_SHEET');
@@ -198,10 +206,49 @@ function createRevealCore() {
     let next=session;for(const qid of page.questionOrder)if(!next.openQuestionIds.includes(qid))next=toggleFree(next,qid);return next;
   }
   function summaryFree(session){const valid=new Set(session.queue);return {total:session.queue.length,confirmed:session.confirmedQuestionIds.filter(id=>valid.has(id)).length};}
+  function currentGuided(session){return session.mode==='guided'&&!session.ended?session.queue[session.index]||null:null;}
+  function revealCurrent(session,epoch){
+    if(session.mode!=='guided')throw error('INVALID_STUDY_ACTION');if(epoch!==session.epoch)return session;
+    if(session.ended||session.stage!=='hidden')return session;return {...session,stage:'revealed'};
+  }
+  function advanceGuided(session,ratings){
+    const index=session.index+1,ended=index>=session.queue.length;
+    return {...session,index,ratings,stage:ended?'assessed':'hidden',ended,epoch:session.epoch+1};
+  }
+  function rate(session,qid,rating,epoch){
+    if(session.mode!=='guided'||!['recalled','again'].includes(rating))throw error('INVALID_STUDY_ACTION');if(epoch!==session.epoch)return session;
+    const current=currentGuided(session);if(!current||current.questionId!==qid||session.stage!=='revealed')throw error('INVALID_STUDY_ACTION');
+    return advanceGuided(session,{...session.ratings,[qid]:rating});
+  }
+  function skip(session,epoch){
+    if(session.mode!=='guided')throw error('INVALID_STUDY_ACTION');if(epoch!==session.epoch)return session;const current=currentGuided(session);if(!current)throw error('INVALID_STUDY_ACTION');
+    return advanceGuided(session,{...session.ratings,[current.questionId]:'skipped'});
+  }
+  function finishSession(session,epoch){if(session.mode!=='guided')throw error('INVALID_STUDY_ACTION');if(epoch!==session.epoch)return session;return {...session,index:session.queue.length,stage:'assessed',ended:true,epoch:session.epoch+1};}
+  function goToQuestion(session,qid){
+    if(session.mode!=='guided')throw error('INVALID_STUDY_ACTION');const index=session.queue.findIndex(item=>item.questionId===qid);if(index<0)throw error('INVALID_STUDY_ACTION');
+    return {...session,index,stage:'hidden',ended:false,epoch:session.epoch+1};
+  }
+  function summary(session){
+    if(session.mode!=='guided')throw error('INVALID_STUDY_ACTION');const counts={total:session.queue.length,recalled:0,again:0,skipped:0,unanswered:0};
+    for(const item of session.queue){const rating=session.ratings[item.questionId]||'unanswered';if(Object.hasOwn(counts,rating))counts[rating]++;else counts.unanswered++;}return counts;
+  }
+  function makeReviewSession(doc,session,kind,ctx){
+    if(session.mode!=='guided'||!['again','unchecked'].includes(kind))throw error('INVALID_STUDY_ACTION');
+    const selected=session.queue.map(item=>item.questionId).filter(id=>kind==='again'?session.ratings[id]==='again':['skipped','unanswered'].includes(session.ratings[id]||'unanswered')).filter(id=>doc.questions.some(question=>question.id===id));
+    if(!selected.length)return null;return makeGuidedSession(doc,selected,{kind:kind==='again'?'review-again':'review-unchecked',otherAnswers:session.otherAnswers});
+  }
   function visibilityFor(doc,session){
-    const open=new Set(session?.openQuestionIds||[]), result=new Map();
-    for(const mask of doc.masks)result.set(mask.id,mask.kind==='auxiliary'||!open.has(mask.questionId));
-    return result;
+    const result=new Map();
+    if(session?.mode==='guided'){
+      const current=currentGuided(session)?.questionId||null,revealed=current&&session.stage==='revealed';
+      for(const mask of doc.masks){
+        if(mask.kind==='auxiliary'){result.set(mask.id,true);continue;}
+        if(mask.questionId===current)result.set(mask.id,!revealed);else result.set(mask.id,session.otherAnswers!=='visible');
+      }
+      return result;
+    }
+    const open=new Set(session?.openQuestionIds||[]);for(const mask of doc.masks)result.set(mask.id,mask.kind==='auxiliary'||!open.has(mask.questionId));return result;
   }
 
   function isPlainObject(value){return Boolean(value)&&typeof value==='object'&&!Array.isArray(value)&&Object.prototype.toString.call(value)==='[object Object]';}
@@ -338,5 +385,5 @@ function createRevealCore() {
     return warnings;
   }
 
-  return Object.freeze({limits,error,newDocument,appendAsset,normalizeRect,rectToPixels,applyCommand,createHistory,execute,undo,redo,counts,overlapWarnings,startSession,toggleFree,hideAllFree,revealPageFree,summaryFree,visibilityFor,validateEnvelope});
+  return Object.freeze({limits,error,newDocument,appendAsset,normalizeRect,rectToPixels,applyCommand,createHistory,execute,undo,redo,counts,overlapWarnings,startSession,toggleFree,hideAllFree,revealPageFree,summaryFree,revealCurrent,rate,skip,finishSession,goToQuestion,summary,makeReviewSession,visibilityFor,validateEnvelope});
 }
