@@ -1,15 +1,15 @@
-# Third-Party Notices
+# Third-party notices
 
-The default generated starter application contains no bundled third-party library code.
+## Runtime
 
-Browser APIs and system fonts are used directly. The GitHub Actions workflows reference their respective GitHub-maintained actions under the terms published by those projects.
+No third-party JavaScript, CSS, model, font or WASM package is embedded at runtime. `dependencies.json` and `dependencies.lock.json` retain the template's empty lock contract.
 
-When adding a package to `dependencies.json`:
+## Template
 
-1. Add its name, exact version, license, and homepage to this file.
-2. Sync and commit the corresponding `dependencies.lock.json` entry.
-3. Include every copyright notice and license text required for redistribution.
-4. Update both README files when the dependency materially affects privacy, size, or capability.
-5. Commit the regenerated `dist/dependency-manifest.json` only if the repository policy chooses to track generated artifacts.
+Derived from ttomohisa/htmlapps-template, MIT License. The original LICENSE is retained. At implementation start, template main was cb908779682fa315ccd0f1eb58549f6c208f36f0 and the target repository shared its source tree. Future updates must be verified live, not inferred from this historical record.
 
-Do not assume that a package being available from npm makes it compatible with MIT redistribution.
+## Development-only software
+
+`@playwright/test`, `playwright` and `playwright-core` 1.63.0 are Apache-2.0 licensed development dependencies, pinned by package-lock.json. Browser binaries downloaded for tests are not embedded in the distributed app. Runtime dependency manifests deliberately exclude development tools.
+
+Synthetic fixture pixels and the capture worksheet were created for this project, contain no user files or third-party artwork, and are dedicated to CC0. JPEG/WebP fixture bytes were prepared offline with Pillow; production users and the CI fixture generator do not need Pillow.

@@ -1,56 +1,11 @@
-# Security Policy
+# Security and privacy
 
-## Supported version
+Reveal Sheet v0.1.0 accepts local JPEG, static PNG and static WebP only. Extension and browser MIME are not treated as sufficient validation. Size/dimension limits and format/animation headers are checked before browser decoding; input is normalized to PNG without resizing. Failed imports do not replace the current document.
 
-Security fixes target the latest version on the default branch.
+The runtime has no network dependency, telemetry, external fonts or API calls. Its CSP blocks connections, frames, objects, media and workers, and allows only local data/Blob images. The normal app keeps the template's inline script/style approach; a future lesson player will use a separate fixed-code hash policy. Do not claim the future player is implemented now.
 
-## Reporting a vulnerability
+No image, draft or session is persisted by this version. Original filenames are transient error-list text, not document metadata. Images can still visibly contain private details; normalization is not anonymity or redaction. Future covers are study aids, not confidentiality controls.
 
-Do not publish sensitive vulnerability details in a public issue. Use the repository owner's private security reporting channel when available.
+Only use files and materials you are authorized to use. Browser decoding can still fail under memory pressure or for unsupported/corrupt files. Do not interpret configured upper bounds as guarantees for all devices.
 
-Include:
-
-- Affected commit or version.
-- Reproduction steps.
-- Expected and actual behavior.
-- Security impact.
-- A minimal test file when file parsing is involved.
-
-## Trust model
-
-The default template is a static browser application with no backend. Its primary protections are:
-
-- No ordinary runtime CDN/API connection (`connect-src 'none'`). Optional peer-to-peer WebRTC must be explicit in the product specification and must not introduce hidden signaling/STUN/TURN services.
-- Explicitly pinned and embedded third-party files.
-- Committed `dependencies.lock.json` tarball SHA-256 values verified before embedding.
-- SHA-256 records in the generated dependency manifest.
-- No analytics, telemetry, remote fonts, or silent update checks.
-- User-initiated downloads rather than automatic uploads.
-
-A generated HTML file is executable code. Distribute it through a trusted channel and verify hashes for high-trust workflows.
-
-If an app uses `components/webrtc-qr-pairing.html`, treat the paired browser as an explicit data recipient. “No server upload” does not mean “data never leaves this device.” Keep the manual signaling and `iceServers: []` boundary visible in the UI/help text, and do not silently add STUN/TURN later.
-
-## Input files
-
-Applications created from this template may parse untrusted local files. Implementations should:
-
-- Validate type, size, and structure before expensive processing.
-- Avoid unbounded allocation or recursion.
-- Handle malformed data without exposing stack traces to users.
-- Release Blob URLs, workers, canvas resources, and large buffers.
-- Make destructive transformations reversible where practical.
-- Never upload a selected file unless the product explicitly requires it and the user is clearly informed.
-
-## Dependency review
-
-Before adding or upgrading a package:
-
-- Confirm the package identity and exact version.
-- Review the scheduled dependency Issue; never treat an available update as an automatic approval to upgrade.
-- Review its license and required notices.
-- Inspect the browser bundle and package scripts.
-- Confirm every runtime support asset is embedded.
-- Refresh the selected lock entry with the dependency scripts; never hand-edit a lock hash to bypass a mismatch.
-- Rebuild with a clean cache.
-- Test with the network disabled.
+If reporting a vulnerability, do not put private source images, credentials or personal information into a public issue. Use a minimal synthetic reproduction where possible. No unverified security contact address is asserted here.
