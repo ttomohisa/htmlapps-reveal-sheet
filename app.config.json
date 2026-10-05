@@ -3,9 +3,9 @@
   "name": "Reveal Sheet",
   "nameJa": "めくる暗記シート",
   "slug": "reveal-sheet",
-  "version": "0.1.0",
-  "description": "Create study sheets from images. Development build: local image import and preview.",
-  "descriptionJa": "画像から作る暗記シート。開発版は端末内の画像読み込み・確認に対応。",
+  "version": "0.2.0",
+  "description": "Create study sheets from images with rectangular covers, free reveal study, and editable JSON save/reopen.",
+  "descriptionJa": "画像に四角い覆いを作って学習し、画像込み編集データを保存・再読込できる暗記シート。",
   "defaultLanguage": "auto",
   "repository": { "owner": "ttomohisa", "name": "htmlapps-reveal-sheet" },
   "build": {
