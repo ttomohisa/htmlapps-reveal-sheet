@@ -17,10 +17,11 @@ function createStudyView({core,dom,onAction}) {
       const x=Math.max(0,px.x-.5),y=Math.max(0,px.y-.5),w=Math.min(asset.width-x,px.w+1),h=Math.min(asset.height-y,px.h+1);
       rect.setAttribute('x',String(x));rect.setAttribute('y',String(y));rect.setAttribute('width',String(w));rect.setAttribute('height',String(h));
       rect.dataset.maskId=mask.id;rect.classList.add('mask-rect');if(mask.kind==='auxiliary')rect.classList.add('auxiliary');if(state.mode==='edit'&&(mask.id===state.selectedMaskId||state.selectedMaskIds?.includes(mask.id)))rect.classList.add('selected');
-      const interactive=state.mode==='edit'||mask.kind==='answer';
+      const guided=state.mode==='study'&&state.session?.mode==='guided',currentGuided=guided&&!state.session.ended?state.session.queue[state.session.index]?.questionId:null;
+      const interactive=state.mode==='edit'||(mask.kind==='answer'&&(!guided||mask.questionId===currentGuided));
       if(interactive){rect.setAttribute('tabindex','0');rect.setAttribute('role','button');rect.setAttribute('aria-label',state.mode==='study'?'Covered answer':'Cover');}
       else{rect.setAttribute('aria-hidden','true');}
-      const activate=()=>{if(state.mode==='study'&&mask.kind==='answer')onAction({type:'TOGGLE_QUESTION',questionId:mask.questionId});else if(state.mode==='edit')onAction({type:'SELECT_MASK',maskId:mask.id});};
+      const activate=()=>{if(state.mode==='study'&&mask.kind==='answer'){if(guided)onAction({type:'REVEAL_CURRENT',questionId:mask.questionId});else onAction({type:'TOGGLE_QUESTION',questionId:mask.questionId});}else if(state.mode==='edit')onAction({type:'SELECT_MASK',maskId:mask.id});};
       if(interactive){rect.addEventListener('click',event=>{event.stopPropagation();activate();});rect.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}});}svg.append(rect);
     }
   }
