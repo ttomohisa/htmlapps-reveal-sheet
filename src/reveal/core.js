@@ -81,6 +81,49 @@ function createRevealCore() {
       } else affected=doc.questions.filter(q=>q.pageId===mask.pageId).map(q=>q.id);
       return mutation({...doc,revision:doc.revision+1,pages,questions,masks:doc.masks.filter(item=>item.id!==mask.id)},{affectedQuestionIds:affected,deletedQuestionIds:deleted});
     }
+    if(command.type==='GROUP_QUESTIONS') {
+      const ids=[...new Set(Array.isArray(command.questionIds)?command.questionIds:[])];if(ids.length<2)throw error('INVALID_SHEET');
+      const selected=ids.map(id=>doc.questions.find(question=>question.id===id));if(selected.some(question=>!question))throw error('INVALID_SHEET');
+      const pageId=selected[0].pageId;if(selected.some(question=>question.pageId!==pageId))throw error('INVALID_SHEET');
+      const page=doc.pages.find(item=>item.id===pageId);if(!page)throw error('INVALID_SHEET');
+      const selectedSet=new Set(ids),ordered=page.questionOrder.filter(id=>selectedSet.has(id)).map(id=>doc.questions.find(question=>question.id===id));
+      if(ordered.length!==ids.length)throw error('INVALID_SHEET');
+      const maskIds=ordered.flatMap(question=>question.maskIds);if(maskIds.length>limits.maxQuestionMasks)throw error('LIMIT_EXCEEDED');
+      function mergedText(key){const values=[];for(const question of ordered){const value=question[key];if(value&&!values.includes(value))values.push(value);}const text=values.join('\n');if(codePoints(text)>2000)throw error('LIMIT_EXCEEDED');return text;}
+      const survivor=ordered[0],removed=new Set(ordered.slice(1).map(question=>question.id));
+      const merged={...survivor,revision:survivor.revision+1,maskIds,prompt:mergedText('prompt'),answer:mergedText('answer')};
+      const questions=doc.questions.filter(question=>!removed.has(question.id)).map(question=>question.id===survivor.id?merged:question);
+      const masks=doc.masks.map(mask=>maskIds.includes(mask.id)?{...mask,questionId:survivor.id}:mask);
+      const pages=doc.pages.map(item=>item.id===pageId?{...item,questionOrder:item.questionOrder.filter(id=>!removed.has(id))}:item);
+      return mutation({...doc,revision:doc.revision+1,pages,questions,masks},{affectedQuestionIds:[survivor.id],deletedQuestionIds:[...removed]});
+    }
+    if(command.type==='UNGROUP_QUESTION') {
+      const question=doc.questions.find(item=>item.id===command.questionId);if(!question||question.maskIds.length<2)throw error('INVALID_SHEET');
+      const page=doc.pages.find(item=>item.id===question.pageId);if(!page)throw error('INVALID_SHEET');
+      const newQuestions=[],addedIds=[];
+      question.maskIds.forEach((maskId,index)=>{if(index===0)newQuestions.push({...question,revision:question.revision+1,maskIds:[maskId]});else{const id=ctx.newId('question');addedIds.push(id);newQuestions.push({id,pageId:question.pageId,revision:1,maskIds:[maskId],prompt:question.prompt,answer:question.answer});}});
+      const replacementIds=newQuestions.map(item=>item.id),questions=doc.questions.flatMap(item=>item.id===question.id?newQuestions:[item]);
+      const masks=doc.masks.map(mask=>{const index=question.maskIds.indexOf(mask.id);return index>=0?{...mask,questionId:replacementIds[index]}:mask;});
+      const pages=doc.pages.map(item=>item.id===page.id?{...item,questionOrder:item.questionOrder.flatMap(id=>id===question.id?replacementIds:[id])}:item);
+      return mutation({...doc,revision:doc.revision+1,pages,questions,masks},{affectedQuestionIds:replacementIds,addedQuestionIds:addedIds});
+    }
+    if(command.type==='CONVERT_MASK_KIND') {
+      const mask=doc.masks.find(item=>item.id===command.maskId);if(!mask||!['answer','auxiliary'].includes(command.kind))throw error('INVALID_SHEET');
+      if(mask.kind===command.kind)return mutation(doc);
+      if(command.kind==='auxiliary'){
+        const question=doc.questions.find(item=>item.id===mask.questionId);if(!question)throw error('INVALID_SHEET');
+        const remaining=question.maskIds.filter(id=>id!==mask.id);let questions,pages=doc.pages,deleted=[];
+        if(remaining.length){questions=doc.questions.map(item=>item.id===question.id?{...item,revision:item.revision+1,maskIds:remaining}:item);}
+        else{questions=doc.questions.filter(item=>item.id!==question.id);pages=doc.pages.map(page=>page.id===question.pageId?{...page,questionOrder:page.questionOrder.filter(id=>id!==question.id)}:page);deleted=[question.id];}
+        const masks=doc.masks.map(item=>item.id===mask.id?{...item,kind:'auxiliary',questionId:null}:item);
+        return mutation({...doc,revision:doc.revision+1,pages,questions,masks},{affectedQuestionIds:remaining.length?[question.id]:[],deletedQuestionIds:deleted});
+      }
+      if(doc.questions.length>=limits.maxQuestions)throw error('LIMIT_EXCEEDED');
+      const qid=ctx.newId('question'),question={id:qid,pageId:mask.pageId,revision:1,maskIds:[mask.id],prompt:'',answer:''};
+      const masks=doc.masks.map(item=>item.id===mask.id?{...item,kind:'answer',questionId:qid}:item);
+      const pages=doc.pages.map(page=>page.id===mask.pageId?{...page,questionOrder:[...page.questionOrder,qid]}:page);
+      return mutation({...doc,revision:doc.revision+1,pages,questions:[...doc.questions,question],masks},{affectedQuestionIds:[qid],addedQuestionIds:[qid]});
+    }
     if(command.type==='RENAME_PAGE') {
       const page=doc.pages.find(item=>item.id===command.pageId);if(!page||!validText(command.title,120))throw error('INVALID_SHEET');
       const pages=doc.pages.map(item=>item.id===page.id?{...item,title:command.title}:item);
@@ -255,5 +298,18 @@ function createRevealCore() {
     return {history:{limit:history.limit,undo:boundedPush(history.undo,doc,history.limit),redo:history.redo.slice(0,-1)},mutation:mutation(restored)};
   }
 
-  return Object.freeze({limits,error,newDocument,appendAsset,normalizeRect,rectToPixels,applyCommand,createHistory,execute,undo,redo,startSession,toggleFree,hideAllFree,revealPageFree,summaryFree,visibilityFor,validateEnvelope});
+  function counts(doc){return {pages:doc.pages.length,masks:doc.masks.length,questions:doc.questions.length,auxiliary:doc.masks.filter(mask=>mask.kind==='auxiliary').length};}
+  function overlapWarnings(doc,pageId){
+    const pageMasks=doc.masks.filter(mask=>mask.pageId===pageId),warnings=[];
+    const overlaps=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+    for(let left=0;left<pageMasks.length;left++)for(let right=left+1;right<pageMasks.length;right++){
+      const a=pageMasks[left],b=pageMasks[right];
+      if(!overlaps(a.rect,b.rect))continue;
+      if(a.kind==='answer'&&b.kind==='answer'&&a.questionId===b.questionId)continue;
+      warnings.push({code:'OVERLAP',maskIds:[a.id,b.id]});
+    }
+    return warnings;
+  }
+
+  return Object.freeze({limits,error,newDocument,appendAsset,normalizeRect,rectToPixels,applyCommand,createHistory,execute,undo,redo,counts,overlapWarnings,startSession,toggleFree,hideAllFree,revealPageFree,summaryFree,visibilityFor,validateEnvelope});
 }
