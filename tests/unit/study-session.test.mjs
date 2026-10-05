@@ -17,7 +17,7 @@ test('T07 guided queue snapshots question revisions and starts hidden',()=>{
   const {doc,ctx,qids}=fixture();
   const session=core.startSession(doc,{mode:'guided',otherAnswers:'hidden'},ctx);
   assert.equal(session.mode,'guided');
-  assert.deepEqual(toPlain(session.queue),qids.map(id=>({questionId:id,questionRevision:1})));
+  assert.deepEqual(toPlain(session.queue),toPlain(qids.map(id=>({questionId:id,questionRevision:1}))));
   assert.equal(session.index,0);assert.equal(session.stage,'hidden');assert.equal(session.epoch,1);
   assert.deepEqual(toPlain(core.summary(session)),{total:3,recalled:0,again:0,skipped:0,unanswered:3});
 });
