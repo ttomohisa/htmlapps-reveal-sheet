@@ -69,16 +69,10 @@ test('T04 readJson verifies every embedded PNG before returning a new document',
   assert.equal(verified,value.document.assets.length);
 });
 
-test('T04 rejects invalid, future, or currently unsupported editable data atomically',async()=>{
+test('T04 rejects invalid or future editable data atomically',async()=>{
   const io=project();
   const future=envelope();future.schemaVersion=2;
   await assert.rejects(io.readJson(new Blob([JSON.stringify(future)])),{code:'UNSUPPORTED_SCHEMA'});
-
-  const grouped=envelope();const original=grouped.document.masks[0];
-  grouped.document.masks.push({...original,id:'mask_2'});
-  grouped.document.questions[0].maskIds.push('mask_2');
-  assert.equal(core.validateEnvelope(grouped).ok,true);
-  await assert.rejects(io.readJson(new Blob([JSON.stringify(grouped)])),{code:'INVALID_SHEET'});
 
   await assert.rejects(io.readJson(new Blob(['{"format":'])),{code:'INVALID_SHEET'});
 });
