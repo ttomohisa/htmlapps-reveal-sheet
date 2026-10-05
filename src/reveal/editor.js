@@ -10,12 +10,15 @@ function createEditor({core,imageIO,env,translate,getLanguage}) {
   let undo=[],redo=[],viewKey='',lastStatus='emptyStatus',mode='create',tool='move',studySession=null;
   let gesture=null,twoPointStart=null,draftRect=null;
   const image=$('previewImage'),svg=$('maskSvg');
+  // SVGElement does not reliably reflect the HTML hidden IDL property.
+  // Toggle the attribute explicitly because shared CSS hides [hidden].
+  function setSvgHidden(hidden){if(hidden)svg.setAttribute('hidden','');else svg.removeAttribute('hidden');}
   const t=translate;
   const studyView=createStudyView({core,dom:env.document,onAction:action=>handleViewAction(action)});
   function currentPage(){return doc.pages.find(p=>p.id===selectedId)||null;}
   function currentAsset(){const page=currentPage();return page&&doc.assets.find(a=>a.id===page.imageId)||null;}
   function currentMask(){return doc.masks.find(m=>m.id===selectedMaskId)||null;}
-  function renderOverlay(){const page=currentPage(),asset=currentAsset();if(!page||!asset||image.hidden){svg.hidden=true;return;}studyView.mount({document:doc,pageId:page.id,session:studySession,mode:mode==='study'?'study':'edit',selectedMaskId});svg.hidden=false;}
+  function renderOverlay(){const page=currentPage(),asset=currentAsset();if(!page||!asset||image.hidden){setSvgHidden(true);return;}studyView.mount({document:doc,pageId:page.id,session:studySession,mode:mode==='study'?'study':'edit',selectedMaskId});setSvgHidden(false);}
   function updateToolButtons(){$('coverButton').setAttribute('aria-pressed',String(tool==='cover'));$('twoPointButton').setAttribute('aria-pressed',String(tool==='two-point'));$('moveImageButton').setAttribute('aria-pressed',String(tool==='move'));$('maskControls').hidden=!(currentMask()&&mode==='create');}
   function refreshStudy(){
     $('studyButton').disabled=busy||doc.questions.length===0;$('studyPanel').hidden=mode!=='study';$('editControls').hidden=mode==='study';
@@ -68,10 +71,10 @@ function createEditor({core,imageIO,env,translate,getLanguage}) {
   function formatBytes(bytes){return bytes<1024?`${bytes} B`:bytes<1024**2?`${(bytes/1024).toFixed(1)} KiB`:`${(bytes/1024**2).toFixed(1)} MiB`;}
   async function showPreview(force=false) {
     const page=doc.pages.find(p=>p.id===selectedId),asset=page&&doc.assets.find(a=>a.id===page.imageId);
-    if(!asset){viewKey='';displayGeneration++;image.hidden=true;svg.hidden=true;image.removeAttribute('src');$('previewWait').hidden=true;return;}
+    if(!asset){viewKey='';displayGeneration++;image.hidden=true;setSvgHidden(true);image.removeAttribute('src');$('previewWait').hidden=true;return;}
     if(!force&&viewKey===asset.id){renderOverlay();return;}
     viewKey=asset.id;const token=++displayGeneration,sourceGeneration=generation;
-    image.hidden=true;svg.hidden=true;$('previewWait').hidden=false;$('previewWait').textContent=t('preparing');
+    image.hidden=true;setSvgHidden(true);$('previewWait').hidden=false;$('previewWait').textContent=t('preparing');
     try {
       image.src=imageIO.urlFor(asset);
       await image.decode();
@@ -79,7 +82,7 @@ function createEditor({core,imageIO,env,translate,getLanguage}) {
       image.alt=t('imageAlt',{name:page.title});image.hidden=false;$('previewWait').hidden=true;renderOverlay();
     }catch{
       if(token!==displayGeneration||sourceGeneration!==generation)return;
-      image.hidden=true;svg.hidden=true;image.removeAttribute('src');viewKey='';$('previewWait').textContent=t('error_DECODE_FAILED');
+      image.hidden=true;setSvgHidden(true);image.removeAttribute('src');viewKey='';$('previewWait').textContent=t('error_DECODE_FAILED');
     }
   }
   function commit(next,maskId=selectedMaskId) {
@@ -171,7 +174,7 @@ function createEditor({core,imageIO,env,translate,getLanguage}) {
   function beginStudy(){if(!doc.questions.length||busy)return;mode='study';tool='move';selectedMaskId=null;studySession=core.startSession(doc,{mode:'free'},ctx);refreshCopy();}
   function beginCreate(){mode='create';studySession=null;refreshCopy();$('addButton').focus({preventScroll:true});}
   function keydown(event){if(editableTarget(event.target)||env.document.querySelector('dialog[open]')||mode!=='create'||!currentMask())return;const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};if(map[event.key]){event.preventDefault();editSelected(map[event.key],event.shiftKey?10:1);}else if(event.key==='Delete'||event.key==='Backspace'){event.preventDefault();deleteSelected();}else if(event.key==='Escape'){selectedMaskId=null;tool='move';twoPointStart=null;pointerCancel();refreshCopy();}}
-  function destroy(){generation++;controller?.abort();imageIO.releaseAll();studyView.destroy();image.hidden=true;svg.hidden=true;image.removeAttribute('src');}
+  function destroy(){generation++;controller?.abort();imageIO.releaseAll();studyView.destroy();image.hidden=true;setSvgHidden(true);image.removeAttribute('src');}
   $('addButton').addEventListener('click',()=>$('imageInput').click());
   $('retryButton').addEventListener('click',()=>$('imageInput').click());
   $('imageInput').addEventListener('change',event=>{const files=Array.from(event.target.files||[]);event.target.value='';addImages(files);});
@@ -190,7 +193,7 @@ function createEditor({core,imageIO,env,translate,getLanguage}) {
   $('dropZone').addEventListener('dragover',event=>{event.preventDefault();if(!busy)$('dropZone').classList.add('drag-over');});
   $('dropZone').addEventListener('dragleave',()=>$('dropZone').classList.remove('drag-over'));
   env.document.addEventListener('drop',drop);
-  env.addEventListener('pagehide',()=>{controller?.abort();imageIO.releaseAll();viewKey='';image.hidden=true;svg.hidden=true;});
+  env.addEventListener('pagehide',()=>{controller?.abort();imageIO.releaseAll();viewKey='';image.hidden=true;setSvgHidden(true);});
   env.addEventListener('pageshow',()=>{if(doc.pages.length)showPreview(true);});
   env.addEventListener('beforeunload',event=>{if(doc.pages.length){event.preventDefault();event.returnValue='';}});
   function localize(){refreshCopy();const page=doc.pages.find(p=>p.id===selectedId);if(page)image.alt=t('imageAlt',{name:page.title});}
