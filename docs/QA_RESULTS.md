@@ -2,9 +2,35 @@
 
 ## Scope and status
 
-This record covers the initial v0.1.0 / T01–T02 implementation. It does not mark all 48 formal acceptance items complete. Covers, study sessions, JSON/HTML sheet IO and persistence are not implemented. Physical phones, Safari, Firefox, assistive technology and resource-limit stress tests remain untested.
+This record covers automated evidence through v0.2.0 / T01–T04. It does not mark all 48 formal acceptance items complete. Rectangular covers, free reveal study and editable JSON save/reopen are implemented; grouped/auxiliary covers, guided study, automatic local persistence and portable lesson HTML are not implemented. Physical phones, Safari, Firefox, assistive technology and resource-limit stress tests remain untested.
 
-## Verified milestone — 2026-10-05
+## Verified v0.2.0 milestone — 2026-10-06
+
+Tested source commit: **29a60fd6ed668957e1554a0da43106304777c6d8**.
+
+- Application workflow **37349933583**: success.
+- Standalone validation workflow **37349933674**: success.
+- PR preview workflow **37349933582** completed for the same commit. Preview deployment is not a substitute for application tests or production publication.
+
+Environment: GitHub-hosted Windows Server 2025, Node 24.21.0 and the repository-pinned Playwright 1.63.0 / Chromium development browser. This remains hosted CI, not a physical Android/iPhone test or a user-PC Edge test.
+
+| Verification | Result |
+|---|---|
+| Pure unit tests | 43 passed, 0 failed |
+| Normal HTML opened via file URL | 27 passed |
+| Self-extracting HTML opened via file URL | 27 passed |
+| PowerShell syntax / assembly-negative fixtures | Passed |
+| Repository build and standalone contracts | Passed |
+| Normal/root-copy bytes and self-extract restoration | Passed |
+| QA capture step | Passed |
+
+T03 automated checks include normalized rectangle-to-image coordinates, one answer cover = one question, geometry edits, deletion, free reveal counting, drag creation, two-point creation, non-drag adjustment, Undo/Redo, and a regression that activates covers through image-coordinate geometry. A failure at commit `b7493ae` showed the SVG overlay remained hidden because SVG did not reflect the HTML `hidden` property as assumed; commit `3c94680` changed this to explicit attribute handling.
+
+T04 automated checks include strict format-1 structure/reference validation, safe hostile-looking plain text, filename normalization, whitelist serialization, embedded PNG verification, future/unsupported-data rejection, editable JSON download, save/open without reselecting the image, invalid-file preservation, and validation-before-replacement confirmation. The saved file includes normalized PNG data and excludes study state, Undo history and original filenames.
+
+The v0.2.0 tests do **not** demonstrate grouped questions, auxiliary covers, guided study, automatic persistence, lesson HTML, or cross-device file flows. They also do not turn Playwright viewport emulation into phone verification.
+
+## Verified v0.1.0 milestone — 2026-10-05
 
 Tested source commit: **2d3a5acc5ef53c3764778ea241a540fd90c61340**.
 
@@ -44,10 +70,10 @@ Feature tests were first observed failing for missing core/input functionality, 
 
 ## Acceptance mapping at this stage
 
-AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07 and the T01 part of AC-45 have automated coverage. Some criteria span later tasks or device/performance observations, so coverage of one path is not full acceptance. Remaining formal acceptance entries are not executed for this milestone. No v1.0 release judgment is made.
+Automated paths now cover AC-01 through AC-07, the T03/T04 portions of AC-09, AC-10, AC-11, AC-17, AC-24, AC-27, AC-28 and AC-31, plus the T01 portion of AC-45. Several of these acceptance items intentionally span later tasks, manual observation or real-device checks; automated coverage of one path is not full acceptance. No v1.0 release judgment is made.
 
 ## Not yet verified / not implemented
 
-Physical Android Chrome and iPhone Safari; macOS Safari; Firefox; Edge-specific behavior; HTTPS-hosted file input; no-JavaScript self-extractor fallback; maximum-size memory stress; OS download/save/reopen; real screen-reader and software-keyboard behavior. File export and study-dependent tests cannot run until those features exist.
+Physical Android Chrome and iPhone Safari; macOS Safari; Firefox; Edge-specific behavior; HTTPS-hosted file input; no-JavaScript self-extractor fallback; maximum-size memory stress; OS-level save/reopen outside CI; real screen-reader and software-keyboard behavior. Grouped answers, auxiliary covers, guided study, automatic local save/resume and portable lesson HTML are also not implemented yet.
 
-Next planned work is T03–T04: rectangular covers, free reveal, and image-embedded editable JSON save/reopen. Continue using the owner-provided full specification, development plan and acceptance matrix. Do not infer unspecified later behavior from this milestone's UI.
+Next planned work is T05–T06 / v0.3.0: page-management completion, grouped answers, auxiliary covers and overlap behavior. Continue using the owner-provided full specification, development plan and acceptance matrix. Do not infer later behavior from this milestone's UI.
