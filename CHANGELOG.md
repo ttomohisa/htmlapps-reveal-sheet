@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.0 - 2026-10-06 (development)
+
+T03–T04: rectangular covers, free reveal study, and editable image-embedded JSON save/reopen. This is still a development milestone, not the v1.0 release.
+
+- Added normalized image-coordinate covers with drag creation, two-point creation, move/resize controls, duplication, deletion, Undo/Redo, and keyboard adjustments.
+- Added free reveal study, per-question open/close, hide-all, reveal-this-page, and a unique checked-question count that is not presented as a score.
+- Added strict Reveal Sheet format 1 validation and an image-embedded editable JSON round trip. Unknown structural fields, bad references, invalid rectangles, unsupported schema versions and invalid PNG payloads are rejected before replacing the current sheet.
+- Added safe filename normalization and explicit manual save UI. Exported editable data excludes study results, Undo history and original filenames.
+- Added `schemas/reveal-sheet-v1.schema.json` and a fixed v0.2.0 editable fixture for future compatibility tests.
+- Kept runtime dependencies at zero and continued using `connect-src 'none'`; both readable and self-extracting variants exercise the same save/reopen flow.
+
+### Development fixes during this stage
+
+- Fixed an SVG `hidden`-attribute mismatch that left the cover overlay non-rendered even after the image was ready.
+- Added a browser regression that clicks cover geometry in image coordinates, rather than assuming CSS box coordinates.
+- Made the format validator realm-independent so VM-based unit tests and browser JSON objects are validated by the same rules.
+
 ## 0.1.0 - 2026-10-05 (development)
 
 First Reveal Sheet implementation stage: T01–T02. This is not the full product or a v1.0 release.
