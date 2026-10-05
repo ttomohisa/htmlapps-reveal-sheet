@@ -1,7 +1,7 @@
 # Pure assembly step called by the canonical template builder. ASCII / PS5.1.
 function Expand-RevealTemplate {
   param([string]$Template, [string]$Root)
-  $sourceNames = @("core.js", "image-io.js", "study-view.js", "editor.js")
+  $sourceNames = @("core.js", "image-io.js", "project-io.js", "study-view.js", "editor.js")
   $sources = @()
   foreach ($name in $sourceNames) {
     $path = Join-Path $Root ("src/reveal/" + $name)
