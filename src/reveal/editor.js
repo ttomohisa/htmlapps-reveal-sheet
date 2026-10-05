@@ -1,13 +1,14 @@
 /** The foundation editor owns transient document and asynchronous input state.
  * No draft/session storage is used in v0.1.0. Files never leave this page.
  */
-function createEditor({core,imageIO,env,translate,getLanguage}) {
+function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLanguage}) {
   const $ = id => env.document.getElementById(id);
   const ctx={newId:kind=>kind+'_'+Array.from(env.crypto.getRandomValues(new Uint8Array(16)),x=>x.toString(16).padStart(2,'0')).join('')};
   let doc=core.newDocument(ctx,translate('untitled'));
   let selectedId=null, selectedMaskId=null, generation=0, batchId=0, displayGeneration=0;
   let controller=null, busy=false, failures=[], progress=null;
   let undo=[],redo=[],viewKey='',lastStatus='emptyStatus',mode='create',tool='move',studySession=null;
+  let filenameBase='reveal-sheet';
   let gesture=null,twoPointStart=null,draftRect=null;
   const image=$('previewImage'),svg=$('maskSvg');
   // SVGElement does not reliably reflect the HTML hidden IDL property.
@@ -21,8 +22,8 @@ function createEditor({core,imageIO,env,translate,getLanguage}) {
   function renderOverlay(){const page=currentPage(),asset=currentAsset();if(!page||!asset||image.hidden){setSvgHidden(true);return;}studyView.mount({document:doc,pageId:page.id,session:studySession,mode:mode==='study'?'study':'edit',selectedMaskId});setSvgHidden(false);}
   function updateToolButtons(){$('coverButton').setAttribute('aria-pressed',String(tool==='cover'));$('twoPointButton').setAttribute('aria-pressed',String(tool==='two-point'));$('moveImageButton').setAttribute('aria-pressed',String(tool==='move'));$('maskControls').hidden=!(currentMask()&&mode==='create');}
   function refreshStudy(){
-    $('studyButton').disabled=busy||doc.questions.length===0;$('studyPanel').hidden=mode!=='study';$('editControls').hidden=mode==='study';
-    $('createButton').setAttribute('aria-current',mode==='create'?'page':'false');$('studyButton').setAttribute('aria-current',mode==='study'?'page':'false');
+    $('studyButton').disabled=busy||doc.questions.length===0;$('saveButton').disabled=busy||doc.pages.length===0;$('openButton').disabled=busy;$('sheetInput').disabled=busy;$('studyPanel').hidden=mode!=='study';$('savePanel').hidden=mode!=='save';$('editControls').hidden=mode!=='create';
+    $('createButton').setAttribute('aria-current',mode==='create'?'page':'false');$('studyButton').setAttribute('aria-current',mode==='study'?'page':'false');$('saveButton').setAttribute('aria-current',mode==='save'?'page':'false');
     if(mode!=='study')return;if(!studySession)studySession=core.startSession(doc,{mode:'free'},ctx);
     const summary=core.summaryFree(studySession);$('confirmedCount').textContent=String(summary.confirmed);$('studyQuestionCount').textContent=String(summary.total);$('questionList').replaceChildren();
     const open=new Set(studySession.openQuestionIds);studySession.queue.forEach((qid,index)=>{if(!doc.questions.some(item=>item.id===qid))return;const button=env.document.createElement('button');button.type='button';button.className='question-item';button.dataset.questionId=qid;button.textContent=t(open.has(qid)?'hideQuestion':'revealQuestion',{number:index+1});button.addEventListener('click',()=>handleViewAction({type:'TOGGLE_QUESTION',questionId:qid}));$('questionList').append(button);});
@@ -65,7 +66,7 @@ function createEditor({core,imageIO,env,translate,getLanguage}) {
     const page=doc.pages.find(p=>p.id===selectedId),asset=page&&doc.assets.find(a=>a.id===page.imageId);
     if(asset){$('imageDimensions').textContent=`${asset.width} × ${asset.height} px`;$('imageBytes').textContent=formatBytes(asset.byteLength);}
     $('totalBytes').textContent=formatBytes(doc.assets.reduce((sum,a)=>sum+a.byteLength,0));
-    $('outputFilename').value=doc.title===t('untitled')?'reveal-sheet':doc.title;
+    if(!$('outputFilename').value)$('outputFilename').value=filenameBase;
     refreshStudy();updateToolButtons();renderOverlay();
   }
   function formatBytes(bytes){return bytes<1024?`${bytes} B`:bytes<1024**2?`${(bytes/1024).toFixed(1)} KiB`:`${(bytes/1024**2).toFixed(1)} MiB`;}
@@ -139,7 +140,7 @@ function createEditor({core,imageIO,env,translate,getLanguage}) {
     const yes=await env.AppConfirm.ask({title:t('newTitle'),message:t('newMessage',{count:doc.pages.length}),confirmLabel:t('newAction'),cancelLabel:t('cancel'),tone:'danger'});
     if(!yes)return;
     generation++;controller?.abort();doc=core.newDocument(ctx,t('untitled'));selectedId=null;selectedMaskId=null;
-    undo=[];redo=[];failures=[];studySession=null;mode='create';tool='move';twoPointStart=null;imageIO.releaseAll();status('emptyStatus');refreshCopy();showPreview();
+    undo=[];redo=[];failures=[];studySession=null;mode='create';tool='move';twoPointStart=null;filenameBase='reveal-sheet';$('outputFilename').value=filenameBase;imageIO.releaseAll();status('emptyStatus');refreshCopy();showPreview();
   }
   function filesFromTransfer(data) {
     if(!data)return [];
@@ -173,6 +174,37 @@ function createEditor({core,imageIO,env,translate,getLanguage}) {
   function duplicateSelected(){const mask=currentMask();if(!mask)return;const before=new Set(doc.masks.map(m=>m.id)),next=core.applyCommand(doc,{type:'DUPLICATE_MASK',maskId:mask.id},ctx).document,added=next.masks.find(m=>!before.has(m.id));commit(next,added?.id||null);status('coverAdded');refreshCopy();}
   function beginStudy(){if(!doc.questions.length||busy)return;mode='study';tool='move';selectedMaskId=null;studySession=core.startSession(doc,{mode:'free'},ctx);refreshCopy();}
   function beginCreate(){mode='create';studySession=null;refreshCopy();$('addButton').focus({preventScroll:true});}
+  function beginSave(){if(!doc.pages.length||busy)return;mode='save';studySession=null;selectedMaskId=null;refreshCopy();$('outputFilename').focus({preventScroll:true});}
+  function applyImported(envelope){
+    generation++;controller?.abort();imageIO.releaseAll();doc=envelope.document;selectedId=doc.pages[0]?.id||null;selectedMaskId=null;undo=[];redo=[];failures=[];studySession=null;mode='create';tool='move';twoPointStart=null;viewKey='';
+    filenameBase=doc.title&&doc.title!==t('untitled')?doc.title:'reveal-sheet';$('outputFilename').value=filenameBase;status('sheetOpened');refreshCopy();showPreview(true);
+  }
+  async function openSheet(file){
+    if(busy||!file)return;busy=true;status('openingSheet');refreshCopy();const localController=new env.AbortController();controller=localController;
+    try{
+      const loaded=await projectIO.readJson(file,{signal:localController.signal});
+      if(localController.signal.aborted)return;
+      busy=false;controller=null;refreshCopy();
+      if(doc.pages.length){
+        const yes=await env.AppConfirm.ask({title:t('replaceSheetTitle'),message:t('replaceSheetMessage'),confirmLabel:t('replaceSheetAction'),cancelLabel:t('cancel'),tone:'danger'});
+        if(!yes){status('sheetOpenCancelled');refreshCopy();return;}
+      }
+      applyImported(loaded);
+    }catch(error){
+      if(controller===localController)controller=null;busy=false;
+      const code=['UNSUPPORTED_SCHEMA','LIMIT_EXCEEDED','INVALID_SHEET'].includes(error?.code)?error.code:'INVALID_SHEET';
+      status('error_'+code);refreshCopy();
+    }
+  }
+  function downloadJson(){
+    if(!doc.pages.length||busy)return;
+    try{
+      const blob=projectIO.prepareJson(doc,appVersion),name=projectIO.sanitizeFilename($('outputFilename').value,'json'),url=env.URL.createObjectURL(blob);
+      filenameBase=name.replace(/\.reveal\.json$/i,'');$('outputFilename').value=filenameBase;
+      const anchor=env.document.createElement('a');anchor.href=url;anchor.download=name;anchor.hidden=true;env.document.body.append(anchor);anchor.click();anchor.remove();env.setTimeout(()=>env.URL.revokeObjectURL(url),0);
+      status('saveStarted');refreshCopy();
+    }catch(error){status('error_'+(error?.code||'INVALID_SHEET'));refreshCopy();}
+  }
   function keydown(event){if(editableTarget(event.target)||env.document.querySelector('dialog[open]')||mode!=='create'||!currentMask())return;const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};if(map[event.key]){event.preventDefault();editSelected(map[event.key],event.shiftKey?10:1);}else if(event.key==='Delete'||event.key==='Backspace'){event.preventDefault();deleteSelected();}else if(event.key==='Escape'){selectedMaskId=null;tool='move';twoPointStart=null;pointerCancel();refreshCopy();}}
   function destroy(){generation++;controller?.abort();imageIO.releaseAll();studyView.destroy();image.hidden=true;setSvgHidden(true);image.removeAttribute('src');}
   $('addButton').addEventListener('click',()=>$('imageInput').click());
@@ -185,7 +217,7 @@ function createEditor({core,imageIO,env,translate,getLanguage}) {
   $('coverButton').addEventListener('click',()=>setTool('cover'));$('twoPointButton').addEventListener('click',()=>setTool('two-point'));$('moveImageButton').addEventListener('click',()=>setTool('move'));
   $('maskMoveLeft').addEventListener('click',()=>editSelected('left'));$('maskMoveRight').addEventListener('click',()=>editSelected('right'));$('maskMoveUp').addEventListener('click',()=>editSelected('up'));$('maskMoveDown').addEventListener('click',()=>editSelected('down'));
   $('maskWider').addEventListener('click',()=>editSelected('wider'));$('maskNarrower').addEventListener('click',()=>editSelected('narrower'));$('maskTaller').addEventListener('click',()=>editSelected('taller'));$('maskShorter').addEventListener('click',()=>editSelected('shorter'));$('maskDelete').addEventListener('click',deleteSelected);$('maskDuplicate').addEventListener('click',duplicateSelected);
-  $('studyButton').addEventListener('click',beginStudy);$('createButton').addEventListener('click',beginCreate);$('hideAllButton').addEventListener('click',()=>{studySession=core.hideAllFree(studySession);refreshCopy();});$('revealPageButton').addEventListener('click',()=>{studySession=core.revealPageFree(doc,studySession,selectedId);refreshCopy();});
+  $('studyButton').addEventListener('click',beginStudy);$('createButton').addEventListener('click',beginCreate);$('saveButton').addEventListener('click',beginSave);$('downloadJsonButton').addEventListener('click',downloadJson);$('openButton').addEventListener('click',()=>$('sheetInput').click());$('sheetInput').addEventListener('change',event=>{const file=event.target.files?.[0]||null;event.target.value='';openSheet(file);});$('hideAllButton').addEventListener('click',()=>{studySession=core.hideAllFree(studySession);refreshCopy();});$('revealPageButton').addEventListener('click',()=>{studySession=core.revealPageFree(doc,studySession,selectedId);refreshCopy();});
   svg.addEventListener('pointerdown',pointerDown);svg.addEventListener('pointermove',pointerMove);svg.addEventListener('pointerup',pointerUp);svg.addEventListener('pointercancel',pointerCancel);svg.addEventListener('click',twoPoint);
   env.document.addEventListener('keydown',keydown);
   env.document.addEventListener('paste',paste);
