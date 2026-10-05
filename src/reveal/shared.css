@@ -155,3 +155,17 @@ button:disabled,input:disabled { cursor:not-allowed; }
  .page-order-actions { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%; }
  .page-order-actions .button { min-width:0;padding-inline:6px; }
 }
+
+
+/* T06: grouped questions, auxiliary covers and overlap warnings. */
+.cover-panel{margin:10px 0 14px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fafbf8}
+.cover-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cover-panel-head h3{margin:0;font-size:14px}
+.cover-panel-head span{color:var(--muted);font-size:12px}
+.cover-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.cover-list-item{min-height:44px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:8px 11px;font:inherit;font-size:12px;text-align:left}
+.cover-list-item[aria-pressed="true"]{border-color:#16624f;background:#edf4f0;color:#16624f}
+.cover-list-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.cover-list-actions .button{min-height:44px;padding:8px 11px;font-size:12px}
+.overlap-warning{margin:10px 0 0;padding:9px 11px;border:1px solid #d0a14b;border-radius:9px;background:#fff9e9;font-size:12px;line-height:1.6}
+@media(max-width:767px){.cover-list{display:grid;grid-template-columns:1fr}.cover-list-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.cover-list-actions .button{min-width:0}}
