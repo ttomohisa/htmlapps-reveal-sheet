@@ -30,6 +30,7 @@ function createPlayer({core,projectIO,persistence,env,envelope}) {
   }
   function summaryGuided(){return core.summary(session);}
   function render(){
+    const activePage=page();$('lessonPageDescription').hidden=!activePage?.description;$('lessonPageDescription').textContent=activePage?.description||'';
     $('lessonFreeMode').setAttribute('aria-pressed',String(mode==='free'));$('lessonGuidedMode').setAttribute('aria-pressed',String(mode==='guided'));$('lessonFreePanel').hidden=mode!=='free';$('lessonGuidedPanel').hidden=mode!=='guided';
     if(mode==='free'){
       const sum=core.summaryFree(session);$('lessonConfirmedCount').textContent=String(sum.confirmed);$('lessonQuestionCount').textContent=String(sum.total);const open=new Set(session.openQuestionIds),list=$('lessonQuestionList');list.replaceChildren();
