@@ -47,7 +47,8 @@ function Expand-RevealTemplate {
   }
   if (([regex]::Matches($playerTemplate, [regex]::Escape("__REVEAL_LESSON_JSON__"))).Count -ne 1) { throw "Reveal player template must contain exactly one lesson JSON marker" }
   $playerTemplateJson = $playerTemplate | ConvertTo-Json -Compress
-  $playerTemplateJson = $playerTemplateJson.Replace("<", '\u003C').Replace(">", '\u003E').Replace("&", '\u0026').Replace([char]0x2028, '\u2028').Replace([char]0x2029, '\u2029')
+  $playerTemplateJson = $playerTemplateJson.Replace("<", '\u003C').Replace(">", '\u003E').Replace("&", '\u0026')
+  $playerTemplateJson = $playerTemplateJson.Replace(([string][char]0x2028), '\u2028').Replace(([string][char]0x2029), '\u2029')
 
   $replacements = @{
     "/* REVEAL:APP_JS */" = ($sources -join "`n")
