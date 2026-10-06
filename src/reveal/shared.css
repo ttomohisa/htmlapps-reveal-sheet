@@ -98,7 +98,7 @@ button:disabled,input:disabled { cursor:not-allowed; }
 .button:disabled { color:#707a74;background:#edf0ed;border-color:#d5dbd6;box-shadow:none; }
 @media(max-width:767px) {
  .has-pages .page-intro,.has-pages .input-note,.has-pages #openButton { display:none; }
- .has-pages .release-note { margin-top:14px;margin-bottom:12px;font-size:12px; }
+ .has-pages .release-note { display:none; }
 }
 
 /* T03: one image coordinate system for editing and free reveal. */
