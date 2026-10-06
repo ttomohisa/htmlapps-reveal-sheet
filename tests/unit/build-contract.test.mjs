@@ -32,8 +32,16 @@ test('T01: exact declared assembly markers and no runtime dependencies', () => {
 });
 
 test('T01: all assembled Reveal JavaScript sources parse', () => {
-  for (const name of ['core.js','image-io.js','project-io.js','persistence.js','study-view.js','editor.js']) {
+  for (const name of ['core.js','image-io.js','project-io.js','persistence.js','study-view.js','player.js','editor.js']) {
     const source=fs.readFileSync('src/reveal/'+name,'utf8');
     assert.doesNotThrow(()=>new vm.Script(source,{filename:name}),name);
   }
+});
+
+test('T01: lesson player template keeps one fixed non-executing data tag',()=>{
+  const source=fs.readFileSync('src/player.template.html','utf8');
+  assert.equal(source.split('<script id="reveal-sheet-data" type="application/json">').length-1,1);
+  assert.equal(source.split('__REVEAL_LESSON_JSON__').length-1,1);
+  assert.equal(source.split('/* REVEAL:PLAYER_JS */').length-1,1);
+  assert.equal(source.split('__APP_ICON_DATA_URI__').length-1,2);
 });
