@@ -6,25 +6,25 @@ This record contains verified CI evidence through v0.5.0 / T01–T10. It does no
 
 ## Verified v0.5.0 milestone — 2026-10-06
 
-Tested application source commit: **0663aa23d025b171cd6a347bdd409ed58ad2a348**.
+Tested application source commit: **8c87a1636db16f1734bde317aea9c5283c3c33d7**.
 
-- Application workflow **37407766738**: success.
-- Standalone validation workflow **37407766776**: success.
-- PR preview workflow **37407766803**: success.
+- Application workflow **37408271613**: success.
+- Standalone validation workflow **37408271593**: success.
+- PR preview workflow **37408271562**: success.
 
 Environment: GitHub-hosted Windows runner, Node 24 and the repository-pinned Playwright / Chromium development browser. These are hosted automated checks, not physical Android/iPhone, user-PC Edge, Safari or Firefox tests.
 
 | Verification | Result |
 |---|---|
 | Pure unit tests | 84 passed, 0 failed |
-| Normal HTML opened via file URL | 48 passed |
-| Self-extracting HTML opened via file URL | 48 passed |
+| Normal HTML opened via file URL | 49 passed |
+| Self-extracting HTML opened via file URL | 49 passed |
 | PowerShell syntax / assembly-negative fixtures | Passed |
 | Repository build and standalone contracts | Passed |
 | Normal/root-copy bytes and self-extract restoration | Passed |
 | QA capture step | Passed |
 | Readable HTML size | 0.20 MB |
-| Readable HTML SHA-256 in application workflow | `d9fd7ba459609c24ba4fe16bbd08c2c425e01c5d7a76b90cd8fb23bc79356e65` |
+| Readable HTML SHA-256 in application workflow | `61721b6e1943b85a867a31de537596bb20cf2b4394bd587dc2d7fc2f61c682dc` |
 
 T09 automated checks cover OFF-by-default work persistence, no draft write before consent, normalized-PNG Blob separation and document reconstruction, atomic draft generation, one-second debounce behavior, reload recovery, quota/abort preservation of the previous committed snapshot, SecurityError fallback, and two-tab generation conflicts that stop automatic saving rather than overwriting a newer committed copy. Manual editable-sheet export remains available when persistence is disabled or conflicted.
 
@@ -40,6 +40,7 @@ The approved Reveal Sheet SVG supplied for this milestone is now the canonical `
 - The first draft-resume wording assertion matched only “resume”; the actual English copy used “resuming”. The test was changed to check the localized resume meaning instead of a single inflection.
 - Study-session storage originally keyed only by document ID. A failing regression showed that edited content sharing the same document ID would conflict with the old study record. Session keys now include document ID, revision and fingerprint, while true same-identity concurrent writers still use generation conflict detection.
 - A later regression fixed study-generation continuity across same-document mode/session changes and added corrupt-record / tab-conflict coverage before the final green suite.
+- A final RED regression showed that toggling study persistence OFF and back ON could reset the in-memory expected generation and report a false self-conflict. Re-enable now reloads the matching saved record generation before continuing; the new direct-file browser regression passes on the final head.
 
 ## Verified v0.4.0 milestone — 2026-10-06
 
@@ -169,7 +170,7 @@ Feature tests were first observed failing for missing core/input functionality, 
 
 ## Acceptance mapping at this stage
 
-Verified CI paths through v0.5.0 cover the earlier T01–T08 mappings plus the T09/T10 portions of AC-37, AC-38, AC-39 and AC-40: opt-in defaults, atomic/recoverable local saving, failure handling, generation conflicts, content-identity study resume and namespace-limited clearing. The current 84-unit / 48-readable / 48-self-extract suite reruns all earlier browser regressions on the v0.5.0 source. Several formal acceptance items intentionally span later lesson-HTML tasks, manual observation or real-device checks; automated coverage of one path is not full acceptance. No v1.0 release judgment is made.
+Verified CI paths through v0.5.0 cover the earlier T01–T08 mappings plus the T09/T10 portions of AC-37, AC-38, AC-39 and AC-40: opt-in defaults, atomic/recoverable local saving, failure handling, generation conflicts, content-identity study resume and namespace-limited clearing. The current 84-unit / 49-readable / 49-self-extract suite reruns all earlier browser regressions on the v0.5.0 source. Several formal acceptance items intentionally span later lesson-HTML tasks, manual observation or real-device checks; automated coverage of one path is not full acceptance. No v1.0 release judgment is made.
 
 ## Not yet verified / not implemented
 
