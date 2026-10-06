@@ -1,7 +1,7 @@
 /** The foundation editor owns transient document and asynchronous input state.
  * No draft/session storage is used in v0.1.0. Files never leave this page.
  */
-function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLanguage}) {
+function createEditor({core,imageIO,projectIO,persistence,appVersion,env,translate,getLanguage}) {
   const $ = id => env.document.getElementById(id);
   const ctx={newId:kind=>kind+'_'+Array.from(env.crypto.getRandomValues(new Uint8Array(16)),x=>x.toString(16).padStart(2,'0')).join('')};
   let doc=core.newDocument(ctx,translate('untitled'));
@@ -10,12 +10,44 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
   let undo=[],redo=[],viewKey='',lastStatus='emptyStatus',mode='create',tool='move',studySession=null,studyMode='free',previousStudySummary=null,studyEditActive=false,studyEditImpact=null;
   let filenameBase='reveal-sheet';
   let gesture=null,twoPointStart=null,draftRect=null;
+  let draftSaveTimer=0,draftSaveChain=Promise.resolve(),localDraftGeneration=0,draftConflict=false,localAvailable=false,lastDraftSavedAt='';
   const image=$('previewImage'),svg=$('maskSvg');
   // SVGElement does not reliably reflect the HTML hidden IDL property.
   // Toggle the attribute explicitly because shared CSS hides [hidden].
   function setSvgHidden(hidden){if(hidden)svg.setAttribute('hidden','');else svg.removeAttribute('hidden');}
   const t=translate;
   const studyView=createStudyView({core,dom:env.document,onAction:action=>handleViewAction(action)});
+  function setDraftStatus(key,values={}){const node=$('draftSaveStatus');if(node)node.textContent=t(key,values);}
+  function refreshLocalDraft(){
+    const toggle=$('draftOptIn');if(!toggle)return;toggle.checked=Boolean(persistence.settings.draftOptIn);toggle.disabled=!localAvailable;
+    $('draftConflict').hidden=!draftConflict;$('resolveConflictSaveButton').hidden=!draftConflict;$('resolveConflictReloadButton').hidden=!draftConflict;
+  }
+  function cancelDraftTimer(){if(draftSaveTimer){env.clearTimeout(draftSaveTimer);draftSaveTimer=0;}}
+  function scheduleDraftSave(){
+    cancelDraftTimer();if(!localAvailable||!persistence.settings.draftOptIn||draftConflict||!doc.pages.length)return;
+    setDraftStatus('draftSaveWaiting');const scheduledGeneration=generation;
+    draftSaveTimer=env.setTimeout(()=>{draftSaveTimer=0;const snapshot=doc;draftSaveChain=draftSaveChain.then(async()=>{
+      if(!localAvailable||!persistence.settings.draftOptIn||draftConflict||!snapshot.pages.length)return;if(scheduledGeneration!==generation&&snapshot.id!==doc.id){scheduleDraftSave();return;}
+      setDraftStatus('draftSaving');try{const receipt=await persistence.saveSnapshot(snapshot,localDraftGeneration);if(receipt){localDraftGeneration=receipt.generation;lastDraftSavedAt=receipt.savedAt;setDraftStatus('draftSaved',{time:new Date(receipt.savedAt).toLocaleTimeString(getLanguage()==='ja'?'ja-JP':'en-US',{hour:'2-digit',minute:'2-digit'})});}}
+      catch(error){if(error?.code==='SAVE_CONFLICT'){draftConflict=true;setDraftStatus('draftConflictStatus');refreshLocalDraft();}else setDraftStatus('draftSaveFailed');}
+      if(!draftConflict&&persistence.settings.draftOptIn&&(doc.id!==snapshot.id||doc.revision!==snapshot.revision))scheduleDraftSave();
+    });},1000);
+  }
+  async function changeDraftOptIn(event){
+    const wanted=event.currentTarget.checked;if(wanted){event.currentTarget.checked=false;const yes=await env.AppConfirm.ask({title:t('draftOptInTitle'),message:t('draftOptInMessage'),confirmLabel:t('draftOptInAction'),cancelLabel:t('cancel')});if(!yes){refreshLocalDraft();return;}
+      try{await persistence.setDraftOptIn(true);draftConflict=false;setDraftStatus(doc.pages.length?'draftSaveWaiting':'draftEnabled');refreshLocalDraft();scheduleDraftSave();}catch{setDraftStatus('draftUnavailable');refreshLocalDraft();}
+    }else{cancelDraftTimer();try{await persistence.setDraftOptIn(false);setDraftStatus('draftDisabled');}catch{setDraftStatus('draftUnavailable');}refreshLocalDraft();}
+  }
+  async function reloadConflictDraft(){
+    const yes=await env.AppConfirm.ask({title:t('reloadLocalTitle'),message:t('reloadLocalMessage'),confirmLabel:t('reloadLocalAction'),cancelLabel:t('cancel'),tone:'danger'});if(!yes)return;
+    try{const saved=await persistence.loadSnapshot();if(!saved)return;localDraftGeneration=saved.generation;draftConflict=false;applyImported({document:saved.document},{fromLocal:true});lastDraftSavedAt=saved.savedAt;setDraftStatus('draftRestored');refreshLocalDraft();}catch{setDraftStatus('draftSaveFailed');}
+  }
+  async function initPersistence(){
+    const capability=await persistence.probe();localAvailable=capability.available;refreshLocalDraft();if(!localAvailable){setDraftStatus('draftUnavailable');return;}
+    let saved=null;try{saved=await persistence.loadSnapshot();}catch{setDraftStatus('draftSaveFailed');return;}if(!saved){setDraftStatus(persistence.settings.draftOptIn?'draftEnabled':'draftDisabled');return;}
+    localDraftGeneration=saved.generation;lastDraftSavedAt=saved.savedAt;const yes=await env.AppConfirm.ask({title:t('resumeLocalTitle'),message:t('resumeLocalMessage'),confirmLabel:t('resumeLocalAction'),cancelLabel:t('startFreshAction')});
+    if(yes){applyImported({document:saved.document},{fromLocal:true});setDraftStatus('draftRestored');}else setDraftStatus(persistence.settings.draftOptIn?'draftEnabled':'draftDisabled');refreshLocalDraft();
+  }
   function currentPage(){return doc.pages.find(p=>p.id===selectedId)||null;}
   function currentAsset(){const page=currentPage();return page&&doc.assets.find(a=>a.id===page.imageId)||null;}
   function currentMask(){return doc.masks.find(m=>m.id===selectedMaskId)||null;}
@@ -167,7 +199,7 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
   }
   function commit(nextOrMutation,maskId=selectedMaskId) {
     const oldDoc=doc,mutationResult=nextOrMutation?.document?nextOrMutation:derivedMutation(oldDoc,nextOrMutation),next=mutationResult.document;
-    undo.push(doc);if(undo.length>core.limits.maxUndo)undo.shift();redo=[];doc=next;selectedMaskId=maskId;reconcileStudyEdit(oldDoc,mutationResult);
+    undo.push(doc);if(undo.length>core.limits.maxUndo)undo.shift();redo=[];doc=next;selectedMaskId=maskId;reconcileStudyEdit(oldDoc,mutationResult);scheduleDraftSave();
   }
   function history(direction) {
     if(busy||mode==='study')return;
@@ -177,7 +209,7 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
     const mutationResult=derivedMutation(oldDoc,next);doc=next;reconcileStudyEdit(oldDoc,mutationResult);
     if(!doc.pages.some(p=>p.id===selectedId))selectedId=doc.pages.at(-1)?.id||null;
     if(!doc.masks.some(m=>m.id===selectedMaskId))selectedMaskId=null;selectedMaskIds=new Set([...selectedMaskIds].filter(id=>doc.masks.some(mask=>mask.id===id)));
-    status(direction==='undo'?'undone':'redone');refreshCopy();showPreview();
+    status(direction==='undo'?'undone':'redone');scheduleDraftSave();refreshCopy();showPreview();
   }
   async function addImages(input) {
     if(busy)return;
@@ -305,9 +337,9 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
   function beginStudy(){if(!doc.questions.length||busy)return;studyEditActive=false;studyEditImpact=null;mode='study';tool='move';selectedMaskId=null;studyMode=doc.defaults.mode||'free';studySession=core.startSession(doc,{mode:studyMode,...(studyMode==='guided'?{otherAnswers:doc.defaults.otherAnswers}:{})},ctx);previousStudySummary=null;const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);}
   function beginCreate(){studyEditActive=false;studyEditImpact=null;mode='create';studySession=null;previousStudySummary=null;refreshCopy();$('addButton').focus({preventScroll:true});}
   function beginSave(){if(!doc.pages.length||busy)return;studyEditActive=false;studyEditImpact=null;mode='save';studySession=null;selectedMaskId=null;refreshCopy();$('outputFilename').focus({preventScroll:true});}
-  function applyImported(envelope){
+  function applyImported(envelope,{fromLocal=false}={}){
     generation++;controller?.abort();imageIO.releaseAll();doc=envelope.document;selectedId=doc.pages[0]?.id||null;selectedMaskId=null;selectedMaskIds.clear();undo=[];redo=[];failures=[];studySession=null;studyEditActive=false;studyEditImpact=null;mode='create';tool='move';twoPointStart=null;viewKey='';
-    filenameBase=doc.title&&doc.title!==t('untitled')?doc.title:'reveal-sheet';$('outputFilename').value=filenameBase;status('sheetOpened');refreshCopy();showPreview(true);
+    filenameBase=doc.title&&doc.title!==t('untitled')?doc.title:'reveal-sheet';$('outputFilename').value=filenameBase;status(fromLocal?'draftRestored':'sheetOpened');refreshCopy();showPreview(true);if(!fromLocal)scheduleDraftSave();
   }
   async function openSheet(file){
     if(busy||!file)return;busy=true;status('openingSheet');refreshCopy();const localController=new env.AbortController();controller=localController;
@@ -336,7 +368,7 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
     }catch(error){status('error_'+(error?.code||'INVALID_SHEET'));refreshCopy();}
   }
   function keydown(event){if(editableTarget(event.target)||env.document.querySelector('dialog[open]'))return;if(mode==='study'&&studySession?.mode==='guided'){if(event.key===' '){event.preventDefault();revealGuided();}else if(event.key==='1'){event.preventDefault();if(studySession.stage==='revealed')rateGuided('recalled');}else if(event.key==='2'){event.preventDefault();if(studySession.stage==='revealed')rateGuided('again');}else if(event.key.toLowerCase()==='s'){event.preventDefault();skipGuided();}else if(event.key==='ArrowLeft'){event.preventDefault();previousGuided();}return;}if(mode!=='create'||!currentMask())return;const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};if(map[event.key]){event.preventDefault();editSelected(map[event.key],event.shiftKey?10:1);}else if(event.key==='Delete'||event.key==='Backspace'){event.preventDefault();deleteSelected();}else if(event.key==='Escape'){selectedMaskId=null;tool='move';twoPointStart=null;pointerCancel();refreshCopy();}}
-  function destroy(){generation++;controller?.abort();imageIO.releaseAll();studyView.destroy();image.hidden=true;setSvgHidden(true);image.removeAttribute('src');}
+  function destroy(){generation++;cancelDraftTimer();controller?.abort();imageIO.releaseAll();studyView.destroy();image.hidden=true;setSvgHidden(true);image.removeAttribute('src');}
   $('addButton').addEventListener('click',()=>$('imageInput').click());
   $('retryButton').addEventListener('click',()=>$('imageInput').click());
   $('imageInput').addEventListener('change',event=>{const files=Array.from(event.target.files||[]);event.target.value='';addImages(files);});
@@ -352,6 +384,7 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
   $('groupButton').addEventListener('click',groupSelected);$('ungroupButton').addEventListener('click',ungroupSelected);$('makeAuxiliaryButton').addEventListener('click',()=>convertSelected('auxiliary'));$('makeAnswerButton').addEventListener('click',()=>convertSelected('answer'));$('duplicateSelectionButton').addEventListener('click',duplicateSelection);
   $('freeModeButton').addEventListener('click',()=>switchStudyMode('free'));$('guidedModeButton').addEventListener('click',()=>switchStudyMode('guided'));$('otherAnswersHidden').addEventListener('change',event=>{if(event.target.checked)changeOtherAnswers('hidden');});$('otherAnswersVisible').addEventListener('change',event=>{if(event.target.checked)changeOtherAnswers('visible');});$('revealCurrentButton').addEventListener('click',revealGuided);$('recalledButton').addEventListener('click',()=>rateGuided('recalled'));$('againButton').addEventListener('click',()=>rateGuided('again'));$('skipButton').addEventListener('click',skipGuided);$('previousQuestionButton').addEventListener('click',previousGuided);$('finishStudyButton').addEventListener('click',finishGuided);$('reviewAgainButton').addEventListener('click',()=>reviewGuided('again'));$('reviewUncheckedButton').addEventListener('click',()=>reviewGuided('unchecked'));
   $('viewLeft').addEventListener('click',()=>nudgeView(-1,0));$('viewRight').addEventListener('click',()=>nudgeView(1,0));$('viewUp').addEventListener('click',()=>nudgeView(0,-1));$('viewDown').addEventListener('click',()=>nudgeView(0,1));$('viewZoomIn').addEventListener('click',()=>zoomView(1.25));$('viewZoomOut').addEventListener('click',()=>zoomView(.8));$('viewFit').addEventListener('click',fitView);$('focusQuestionButton').addEventListener('click',focusCurrentQuestion);$('editCurrentQuestionButton').addEventListener('click',editCurrentQuestion);$('returnToStudyButton').addEventListener('click',returnToStudy);
+  $('draftOptIn').addEventListener('change',changeDraftOptIn);$('resolveConflictSaveButton').addEventListener('click',beginSave);$('resolveConflictReloadButton').addEventListener('click',reloadConflictDraft);
   $('studyButton').addEventListener('click',beginStudy);$('createButton').addEventListener('click',beginCreate);$('saveButton').addEventListener('click',beginSave);$('downloadJsonButton').addEventListener('click',downloadJson);$('openButton').addEventListener('click',()=>$('sheetInput').click());$('sheetInput').addEventListener('change',event=>{const file=event.target.files?.[0]||null;event.target.value='';openSheet(file);});$('hideAllButton').addEventListener('click',()=>{studySession=core.hideAllFree(studySession);refreshCopy();});$('revealPageButton').addEventListener('click',()=>{studySession=core.revealPageFree(doc,studySession,selectedId);refreshCopy();});
   svg.addEventListener('pointerdown',pointerDown);svg.addEventListener('pointermove',pointerMove);svg.addEventListener('pointerup',pointerUp);svg.addEventListener('pointercancel',pointerCancel);svg.addEventListener('click',twoPoint);
   env.document.addEventListener('keydown',keydown);
@@ -364,6 +397,6 @@ function createEditor({core,imageIO,projectIO,appVersion,env,translate,getLangua
   env.addEventListener('pageshow',()=>{if(doc.pages.length)showPreview(true);});
   env.addEventListener('beforeunload',event=>{if(doc.pages.length){event.preventDefault();event.returnValue='';}});
   function localize(){refreshCopy();const page=doc.pages.find(p=>p.id===selectedId);if(page)image.alt=t('imageAlt',{name:page.title});}
-  refreshCopy();showPreview();
+  refreshCopy();showPreview();initPersistence();
   return Object.freeze({localize,destroy});
 }
