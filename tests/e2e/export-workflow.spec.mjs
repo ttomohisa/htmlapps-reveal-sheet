@@ -28,6 +28,8 @@ test('T14: a language switch in the same turn invalidates an in-progress export 
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
   await expect(page.locator('#previewImage')).toBeVisible();
   await page.locator('#saveButton').click();
+  await expect(page.locator('#downloadJsonButton')).toBeEnabled();
+  await page.locator('#outputFilename').fill('language-switch');
 
   let downloads=0;
   page.on('download',()=>downloads++);
@@ -45,8 +47,6 @@ test('T14: Blob preparation failure keeps the sheet and the user can retry',asyn
   await openApp(page);
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
   await expect(page.locator('#previewImage')).toBeVisible();
-  await page.locator('#saveButton').click();
-
   await page.evaluate(()=>{
     window.__RevealOriginalBlob=window.Blob;
     const Original=window.Blob;
@@ -57,11 +57,13 @@ test('T14: Blob preparation failure keeps the sheet and the user can retry',asyn
       }
     };
   });
-  await page.locator('#downloadJsonButton').click();
+  await page.locator('#saveButton').click();
   await expect(page.locator('#inputStatus')).toContainText(/準備できません|Could not prepare/i);
   await expect(page.locator('#pageList button')).toHaveCount(1);
 
   await page.evaluate(()=>{window.Blob=window.__RevealOriginalBlob;delete window.__RevealOriginalBlob;});
+  await page.locator('#saveButton').click();
+  await expect(page.locator('#downloadJsonButton')).toBeEnabled();
   const retryPromise=page.waitForEvent('download');
   await page.locator('#downloadJsonButton').click();
   const retry=await retryPromise;
