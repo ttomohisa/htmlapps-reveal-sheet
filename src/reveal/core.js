@@ -156,6 +156,25 @@ function createRevealCore() {
       const pages=doc.pages.map(item=>item.id===page.id?{...item,title:command.title}:item);
       return mutation({...doc,revision:doc.revision+1,pages});
     }
+    if(command.type==='SET_QUESTION_TEXT') {
+      const question=doc.questions.find(item=>item.id===command.questionId);if(!question)throw error('INVALID_SHEET');
+      const prompt=String(command.prompt??''),answer=String(command.answer??'');
+      if(!validText(prompt,2000)||!validText(answer,2000))throw error('LIMIT_EXCEEDED');
+      if(question.prompt===prompt&&question.answer===answer)return mutation(doc);
+      const questions=doc.questions.map(item=>item.id===question.id?{...item,prompt,answer,revision:item.revision+1}:item);
+      const next={...doc,revision:doc.revision+1,questions};if(totalUserTextBytes(next)>1024*1024)throw error('LIMIT_EXCEEDED');
+      return mutation(next,{affectedQuestionIds:[question.id]});
+    }
+    if(command.type==='SET_PAGE_DESCRIPTION') {
+      const page=doc.pages.find(item=>item.id===command.pageId);if(!page)throw error('INVALID_SHEET');
+      const description=String(command.description??'');if(!validText(description,2000))throw error('LIMIT_EXCEEDED');
+      if(page.description===description)return mutation(doc);
+      const affected=doc.questions.filter(question=>question.pageId===page.id).map(question=>question.id);
+      const pages=doc.pages.map(item=>item.id===page.id?{...item,description}:item);
+      const questions=doc.questions.map(question=>question.pageId===page.id?{...question,revision:question.revision+1}:question);
+      const next={...doc,revision:doc.revision+1,pages,questions};if(totalUserTextBytes(next)>1024*1024)throw error('LIMIT_EXCEEDED');
+      return mutation(next,{affectedQuestionIds:affected});
+    }
     if(command.type==='MOVE_PAGE') {
       const index=doc.pages.findIndex(item=>item.id===command.pageId),delta=Number(command.delta);
       if(index<0||!Number.isInteger(delta)||![-1,1].includes(delta))throw error('INVALID_SHEET');
@@ -298,6 +317,9 @@ function createRevealCore() {
   function codePoints(value){return [...value].length;}
   function utf8Length(value){let length=0;for(const ch of value){const cp=ch.codePointAt(0);length+=cp<=0x7f?1:cp<=0x7ff?2:cp<=0xffff?3:4;}return length;}
   function validText(value,max){return typeof value==='string'&&!value.includes('\0')&&codePoints(value)<=max;}
+  function totalUserTextBytes(doc){
+    return utf8Length(doc.title)+doc.pages.reduce((sum,page)=>sum+utf8Length(page.title)+utf8Length(page.description),0)+doc.questions.reduce((sum,question)=>sum+utf8Length(question.prompt)+utf8Length(question.answer),0);
+  }
   function validPositiveInt(value){return Number.isSafeInteger(value)&&value>=1;}
   function decodedBase64Length(value){
     if(typeof value!=='string'||value.length===0||value.length%4!==0||!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value))return -1;
