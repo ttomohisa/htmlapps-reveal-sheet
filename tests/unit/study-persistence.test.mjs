@@ -56,7 +56,7 @@ test('T10 resumed guided/free sessions always start with answers closed while ke
 
 test('T10 study records contain no image bytes or document payload',async()=>{
   const backend=new Backend(),store=makeStore(backend),{doc,ctx}=fixture();await store.setStudyOptIn(true);const id=await identity(store,doc),session=core.startSession(doc,{mode:'guided'},ctx);await store.saveSession(id,session,0);
-  const record=backend.sessions.get(doc.id),text=JSON.stringify(record);assert.equal('document' in record,false);assert.equal(text.includes('dataBase64'),false);assert.equal(text.includes('iVBOR'),false);
+  const record=[...backend.sessions.values()][0],text=JSON.stringify(record);assert.equal('document' in record,false);assert.equal(text.includes('dataBase64'),false);assert.equal(text.includes('iVBOR'),false);
 });
 
 test('T10 missing Web Crypto disables fingerprint/session persistence but leaves study in memory',async()=>{
