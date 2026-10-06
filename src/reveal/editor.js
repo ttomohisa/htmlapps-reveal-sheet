@@ -10,8 +10,8 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
   let undo=[],redo=[],viewKey='',lastStatus='emptyStatus',mode='create',tool='move',studySession=null,studyMode='free',previousStudySummary=null,studyEditActive=false,studyEditImpact=null;
   let filenameBase='reveal-sheet';
   let gesture=null,twoPointStart=null,draftRect=null;
-  let draftSaveTimer=0,draftSaveChain=Promise.resolve(),localDraftGeneration=0,draftConflict=false,localAvailable=false,lastDraftSavedAt='';
-  let studySaveTimer=0,studySaveChain=Promise.resolve(),studyRecordGeneration=0,studyIdentityToken='',studyConflict=false,lastStudySavedAt='';
+  let draftSaveTimer=0,draftSaveChain=Promise.resolve(),localDraftGeneration=0,draftConflict=false,localAvailable=false,localDraftExists=false,lastDraftSavedAt='';
+  let studySaveTimer=0,studySaveChain=Promise.resolve(),studyRecordGeneration=0,studyIdentityToken='',studyConflict=false,localStudyExists=false,lastStudySavedAt='';
   const image=$('previewImage'),svg=$('maskSvg');
   // SVGElement does not reliably reflect the HTML hidden IDL property.
   // Toggle the attribute explicitly because shared CSS hides [hidden].
@@ -27,8 +27,8 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
   }
   function refreshLocalStudy(){
     const toggle=$('studyOptIn');if(!toggle)return;toggle.checked=Boolean(persistence.settings.studyOptIn);toggle.disabled=!localAvailable;
-    $('clearDraftButton').disabled=!localAvailable||!persistence.settings.draftOptIn;
-    $('clearStudyButton').disabled=!localAvailable||!persistence.settings.studyOptIn;
+    $('clearDraftButton').disabled=!localAvailable||!localDraftExists;
+    $('clearStudyButton').disabled=!localAvailable||!localStudyExists;
   }
   function cancelStudyTimer(){if(studySaveTimer){env.clearTimeout(studySaveTimer);studySaveTimer=0;}}
   function scheduleStudySave(){
@@ -39,7 +39,7 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
       const identity=await currentStudyIdentity(documentSnapshot);if(!identity){setStudyStatus('studyPersistenceUnavailable');return;}
       const token=identityToken(identity);if(token!==studyIdentityToken){studyIdentityToken=token;studyRecordGeneration=0;}
       setStudyStatus('studySaving');
-      try{const receipt=await persistence.saveSession(identity,sessionSnapshot,studyRecordGeneration);if(receipt){studyRecordGeneration=receipt.generation;lastStudySavedAt=receipt.savedAt;setStudyStatus('studySaved',{time:new Date(receipt.savedAt).toLocaleTimeString(getLanguage()==='ja'?'ja-JP':'en-US',{hour:'2-digit',minute:'2-digit'})});}}
+      try{const receipt=await persistence.saveSession(identity,sessionSnapshot,studyRecordGeneration);if(receipt){studyRecordGeneration=receipt.generation;localStudyExists=true;refreshLocalStudy();lastStudySavedAt=receipt.savedAt;setStudyStatus('studySaved',{time:new Date(receipt.savedAt).toLocaleTimeString(getLanguage()==='ja'?'ja-JP':'en-US',{hour:'2-digit',minute:'2-digit'})});}}
       catch(error){if(error?.code==='SAVE_CONFLICT'){studyConflict=true;setStudyStatus('studyConflictStatus');}else setStudyStatus('studySaveFailed');}
       if(!studyConflict&&persistence.settings.studyOptIn&&studySession&&studySession!==sessionSnapshot)scheduleStudySave();
     });},500);
@@ -50,18 +50,18 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
       event.currentTarget.checked=false;const fingerprint=await persistence.fingerprintDocument(doc);if(!fingerprint){setStudyStatus('studyPersistenceUnavailable');refreshLocalStudy();return;}
       const identity={documentId:doc.id,revision:doc.revision,fingerprint};
       const yes=await env.AppConfirm.ask({title:t('studyOptInTitle'),message:t('studyOptInMessage'),confirmLabel:t('studyOptInAction'),cancelLabel:t('cancel')});if(!yes){refreshLocalStudy();return;}
-      try{const existing=await persistence.loadSession(identity);await persistence.setStudyOptIn(true);studyConflict=false;studyRecordGeneration=existing?.generation||0;studyIdentityToken=identityToken(identity);setStudyStatus('studyEnabled');refreshLocalStudy();scheduleStudySave();}catch{setStudyStatus('studySaveFailed');refreshLocalStudy();}
+      try{const existing=await persistence.loadSession(identity);if(existing)localStudyExists=true;await persistence.setStudyOptIn(true);studyConflict=false;studyRecordGeneration=existing?.generation||0;studyIdentityToken=identityToken(identity);setStudyStatus('studyEnabled');refreshLocalStudy();scheduleStudySave();}catch{setStudyStatus('studySaveFailed');refreshLocalStudy();}
     }else{
       cancelStudyTimer();try{await persistence.setStudyOptIn(false);studyConflict=false;studyRecordGeneration=0;studyIdentityToken='';setStudyStatus('studyDisabled');}catch{setStudyStatus('studySaveFailed');}refreshLocalStudy();
     }
   }
   async function clearStudyLocal(){
     const yes=await env.AppConfirm.ask({title:t('clearStudyTitle'),message:t('clearStudyMessage'),confirmLabel:t('clearStudyAction'),cancelLabel:t('cancel'),tone:'danger'});if(!yes)return;
-    cancelStudyTimer();try{await persistence.clearLocal('study');studyConflict=false;studyRecordGeneration=0;studyIdentityToken='';setStudyStatus('studyCleared');refreshLocalStudy();}catch{setStudyStatus('studySaveFailed');}
+    cancelStudyTimer();try{await persistence.clearLocal('study');studyConflict=false;studyRecordGeneration=0;studyIdentityToken='';localStudyExists=false;setStudyStatus('studyCleared');refreshLocalStudy();}catch{setStudyStatus('studySaveFailed');}
   }
   async function clearDraftLocal(){
     const yes=await env.AppConfirm.ask({title:t('clearDraftTitle'),message:t('clearDraftMessage'),confirmLabel:t('clearDraftAction'),cancelLabel:t('cancel'),tone:'danger'});if(!yes)return;
-    cancelDraftTimer();try{await persistence.clearLocal('draft');localDraftGeneration=0;draftConflict=false;lastDraftSavedAt='';setDraftStatus('draftCleared');refreshLocalDraft();refreshLocalStudy();}catch{setDraftStatus('draftSaveFailed');}
+    cancelDraftTimer();try{await persistence.clearLocal('draft');localDraftGeneration=0;draftConflict=false;localDraftExists=false;lastDraftSavedAt='';setDraftStatus('draftCleared');refreshLocalDraft();refreshLocalStudy();}catch{setDraftStatus('draftSaveFailed');}
   }
   function refreshLocalDraft(){
     const toggle=$('draftOptIn');if(!toggle)return;toggle.checked=Boolean(persistence.settings.draftOptIn);toggle.disabled=!localAvailable;
@@ -73,7 +73,7 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
     setDraftStatus('draftSaveWaiting');const scheduledGeneration=generation;
     draftSaveTimer=env.setTimeout(()=>{draftSaveTimer=0;const snapshot=doc;draftSaveChain=draftSaveChain.then(async()=>{
       if(!localAvailable||!persistence.settings.draftOptIn||draftConflict||!snapshot.pages.length)return;if(scheduledGeneration!==generation&&snapshot.id!==doc.id){scheduleDraftSave();return;}
-      setDraftStatus('draftSaving');try{const receipt=await persistence.saveSnapshot(snapshot,localDraftGeneration);if(receipt){localDraftGeneration=receipt.generation;lastDraftSavedAt=receipt.savedAt;setDraftStatus('draftSaved',{time:new Date(receipt.savedAt).toLocaleTimeString(getLanguage()==='ja'?'ja-JP':'en-US',{hour:'2-digit',minute:'2-digit'})});}}
+      setDraftStatus('draftSaving');try{const receipt=await persistence.saveSnapshot(snapshot,localDraftGeneration);if(receipt){localDraftGeneration=receipt.generation;localDraftExists=true;refreshLocalStudy();lastDraftSavedAt=receipt.savedAt;setDraftStatus('draftSaved',{time:new Date(receipt.savedAt).toLocaleTimeString(getLanguage()==='ja'?'ja-JP':'en-US',{hour:'2-digit',minute:'2-digit'})});}}
       catch(error){if(error?.code==='SAVE_CONFLICT'){draftConflict=true;setDraftStatus('draftConflictStatus');refreshLocalDraft();}else setDraftStatus('draftSaveFailed');}
       if(!draftConflict&&persistence.settings.draftOptIn&&(doc.id!==snapshot.id||doc.revision!==snapshot.revision))scheduleDraftSave();
     });},1000);
@@ -85,10 +85,11 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
   }
   async function reloadConflictDraft(){
     const yes=await env.AppConfirm.ask({title:t('reloadLocalTitle'),message:t('reloadLocalMessage'),confirmLabel:t('reloadLocalAction'),cancelLabel:t('cancel'),tone:'danger'});if(!yes)return;
-    try{const saved=await persistence.loadSnapshot();if(!saved)return;localDraftGeneration=saved.generation;draftConflict=false;applyImported({document:saved.document},{fromLocal:true});lastDraftSavedAt=saved.savedAt;setDraftStatus('draftRestored');refreshLocalDraft();}catch{setDraftStatus('draftSaveFailed');}
+    try{const saved=await persistence.loadSnapshot();if(!saved)return;localDraftGeneration=saved.generation;localDraftExists=true;draftConflict=false;applyImported({document:saved.document},{fromLocal:true});lastDraftSavedAt=saved.savedAt;setDraftStatus('draftRestored');refreshLocalDraft();}catch{setDraftStatus('draftSaveFailed');}
   }
   async function initPersistence(){
-    const capability=await persistence.probe();localAvailable=capability.available;refreshLocalDraft();if(!localAvailable){setDraftStatus('draftUnavailable');setStudyStatus('studyPersistenceUnavailable');return;}setStudyStatus(persistence.settings.studyOptIn?'studyEnabled':'studyDisabled');
+    const capability=await persistence.probe();localAvailable=capability.available;refreshLocalDraft();if(!localAvailable){setDraftStatus('draftUnavailable');setStudyStatus('studyPersistenceUnavailable');return;}
+    try{const localState=await persistence.getLocalState();localDraftExists=Boolean(localState.draftExists);localStudyExists=Boolean(localState.studyExists);}catch{localDraftExists=false;localStudyExists=false;}refreshLocalDraft();setStudyStatus(persistence.settings.studyOptIn?'studyEnabled':'studyDisabled');
     let saved=null;try{saved=await persistence.loadSnapshot();}catch{setDraftStatus('draftSaveFailed');return;}if(!saved){setDraftStatus(persistence.settings.draftOptIn?'draftEnabled':'draftDisabled');return;}
     localDraftGeneration=saved.generation;lastDraftSavedAt=saved.savedAt;const yes=await env.AppConfirm.ask({title:t('resumeLocalTitle'),message:t('resumeLocalMessage'),confirmLabel:t('resumeLocalAction'),cancelLabel:t('startFreshAction')});
     if(yes){applyImported({document:saved.document},{fromLocal:true});setDraftStatus('draftRestored');}else setDraftStatus(persistence.settings.draftOptIn?'draftEnabled':'draftDisabled');refreshLocalDraft();
@@ -386,7 +387,7 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
       identity=await currentStudyIdentity();if(identity){try{restored=await persistence.loadSession(identity);}catch{setStudyStatus('studySaveFailed');}}
     }
     if(restored){
-      const yes=await env.AppConfirm.ask({title:t('resumeStudyTitle'),message:t('resumeStudyMessage'),confirmLabel:t('resumeStudyAction'),cancelLabel:t('startStudyFreshAction')});
+      localStudyExists=true;refreshLocalStudy();const yes=await env.AppConfirm.ask({title:t('resumeStudyTitle'),message:t('resumeStudyMessage'),confirmLabel:t('resumeStudyAction'),cancelLabel:t('startStudyFreshAction')});
       studyRecordGeneration=restored.generation;studyIdentityToken=identityToken(identity);
       if(yes){studySession=restored.session;studyMode=studySession.mode;setStudyStatus('studyRestored');}
       else{studySession=core.startSession(doc,{mode:studyMode,...(studyMode==='guided'?{otherAnswers:doc.defaults.otherAnswers}:{})},ctx);scheduleStudySave();}
