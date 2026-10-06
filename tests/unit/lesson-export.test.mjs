@@ -16,7 +16,7 @@ function makeDoc(title='Lesson </script> title'){
 function project(){
   return createProjectIO({core,imageIO:{verifyStoredAsset:async()=>{}},env:{Blob,TextDecoder,TextEncoder}});
 }
-const playerTemplate='<!doctype html><html><head><meta charset="utf-8"><title>Reveal lesson</title><link rel="icon" href="data:image/svg+xml;base64,PHN2Zy8+"></head><body><main id="lessonApp"><p id="lessonWaiting">Preparing…</p></main><script type="application/json" id="reveal-sheet-data">__REVEAL_LESSON_JSON__</script><script>window.__PLAYER_RUNTIME__=true;</script></body></html>';
+const playerTemplate='<!doctype html><html><head><meta charset="utf-8"><title>Reveal lesson</title><link rel="icon" href="data:image/svg+xml;base64,PHN2Zy8+"></head><body><main id="lessonApp"><p id="lessonWaiting">Preparing…</p></main><script id="reveal-sheet-data" type="application/json">__REVEAL_LESSON_JSON__</script><script>window.__PLAYER_RUNTIME__=true;</script></body></html>';
 
 test('T11 lesson serialization is whitelisted and never includes author study/editor state',()=>{
   const io=project(),doc=makeDoc(),text=io.serialize(doc,'lesson','0.6.0'),saved=JSON.parse(text);
@@ -43,7 +43,7 @@ test('T11 prepareHtml embeds exactly one non-executing lesson data tag and no ed
   assert.equal(html.includes('"kind":"lesson"'),true);
   assert.equal(html.includes('"ratings"'),false);
   assert.equal(html.includes('id="maskControls"'),false);
-  const open='<script type="application/json" id="reveal-sheet-data">',start=html.indexOf(open),end=html.indexOf('</script>',start+open.length);assert.ok(start>=0&&end>start);
+  const open='<script id="reveal-sheet-data" type="application/json">',start=html.indexOf(open),end=html.indexOf('</script>',start+open.length);assert.ok(start>=0&&end>start);
 });
 
 test('T11 lesson export rejects sheets without questions and keeps lesson filename normalization',()=>{
