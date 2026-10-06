@@ -47,3 +47,14 @@ test('T10: clearing the saved draft does not clear study opt-in or unrelated bro
   await page.locator('#clearDraftButton').click();await expect(page.locator('#appConfirmDialog')).toBeVisible();await page.locator('#appConfirmOk').click();
   await expect(page.locator('#draftOptIn')).not.toBeChecked();await expect(page.locator('#studyOptIn')).toBeChecked();expect(await page.evaluate(()=>localStorage.getItem('other-app-value'))).toBe('keep');
 });
+
+
+test('T10: starting a new study mode in the same tab advances the same record without a false conflict',async({page})=>{
+  await openApp(page);await makeTwo(page);await enable(page,'#studyOptIn');await enterGuided(page);
+  await page.locator('#revealCurrentButton').click();await page.locator('#recalledButton').click();
+  await expect(page.locator('#studySaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
+  await page.locator('#freeModeButton').click();await expect(page.locator('#appConfirmDialog')).toBeVisible();await page.locator('#appConfirmOk').click();
+  await page.locator('#questionList button').first().click();
+  await expect(page.locator('#studySaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
+  await expect(page.locator('#studySaveStatus')).not.toContainText(/another tab|別タブ/i);
+});
