@@ -97,6 +97,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function currentPage(){return doc.pages.find(p=>p.id===selectedId)||null;}
   function currentAsset(){const page=currentPage();return page&&doc.assets.find(a=>a.id===page.imageId)||null;}
   function currentMask(){return doc.masks.find(m=>m.id===selectedMaskId)||null;}
+  function currentQuestion(){const mask=currentMask();return mask?.kind==='answer'?doc.questions.find(question=>question.id===mask.questionId)||null:null;}
   function refreshCoverPanel(){
     const page=currentPage(),panel=$('coverPanel'),list=$('coverList');
     if(!page){panel.hidden=true;list.replaceChildren();selectedMaskIds.clear();return;}
@@ -120,6 +121,13 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('makeAuxiliaryButton').disabled=busy||chosen.length!==1||chosen[0].kind!=='answer';
     $('makeAnswerButton').disabled=busy||chosen.length!==1||chosen[0].kind!=='auxiliary';
     $('duplicateSelectionButton').disabled=busy||chosen.length===0;
+    const question=currentQuestion(),textPanel=$('questionTextPanel');textPanel.hidden=mode!=='create'||!question;
+    if(question){
+      if(env.document.activeElement!==$('questionPromptInput'))$('questionPromptInput').value=question.prompt;
+      if(env.document.activeElement!==$('questionAnswerInput'))$('questionAnswerInput').value=question.answer;
+    }else if(env.document.activeElement!==$('questionPromptInput')&&env.document.activeElement!==$('questionAnswerInput')){
+      $('questionPromptInput').value='';$('questionAnswerInput').value='';
+    }
     const warnings=core.overlapWarnings(doc,page.id);$('overlapWarning').hidden=warnings.length===0;$('overlapWarning').textContent=warnings.length?t('overlapWarning',{count:warnings.length}):'';
   }
   function renderOverlay(){const page=currentPage(),asset=currentAsset();if(!page||!asset||image.hidden){setSvgHidden(true);return;}studyView.mount({document:doc,pageId:page.id,session:studySession,mode:mode==='study'?'study':'edit',selectedMaskId,selectedMaskIds:[...selectedMaskIds]});setSvgHidden(false);refreshViewControls();}
@@ -155,6 +163,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('studyButton').disabled=busy||doc.questions.length===0;$('saveButton').disabled=busy||exportBusy||doc.pages.length===0;$('openButton').disabled=busy;$('sheetInput').disabled=busy;$('studyPanel').hidden=mode!=='study';$('savePanel').hidden=mode!=='save';$('editControls').hidden=mode!=='create';
     $('createButton').setAttribute('aria-current',mode==='create'?'page':'false');$('studyButton').setAttribute('aria-current',mode==='study'?'page':'false');$('saveButton').setAttribute('aria-current',mode==='save'?'page':'false');
     if(mode!=='study')return;if(!studySession)studySession=core.startSession(doc,{mode:studyMode},ctx);studyMode=studySession.mode;
+    const studyPage=currentPage();$('studyPageDescription').hidden=!studyPage?.description;$('studyPageDescription').textContent=studyPage?.description||'';
     $('freeModeButton').setAttribute('aria-pressed',String(studyMode==='free'));$('guidedModeButton').setAttribute('aria-pressed',String(studyMode==='guided'));$('freeStudyPanel').hidden=studyMode!=='free';$('guidedPanel').hidden=studyMode!=='guided';
     if(studyMode==='free'){
       const summary=core.summaryFree(studySession);$('confirmedCount').textContent=String(summary.confirmed);$('studyQuestionCount').textContent=String(summary.total);$('questionList').replaceChildren();
@@ -192,6 +201,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     const activePage=currentPage(),activePageIndex=activePage?doc.pages.findIndex(page=>page.id===activePage.id):-1;
     $('pageControls').hidden=!activePage||mode!=='create';
     if(activePage&&env.document.activeElement!==$('pageTitleInput'))$('pageTitleInput').value=activePage.title;
+    if(activePage&&env.document.activeElement!==$('pageDescriptionInput'))$('pageDescriptionInput').value=activePage.description||'';
     refreshCoverPanel();
     $('pagePrevButton').disabled=busy||activePageIndex<=0;$('pageNextButton').disabled=busy||activePageIndex<0||activePageIndex>=doc.pages.length-1;$('pageDeleteButton').disabled=busy||!activePage;
     $('coverButton').disabled=busy||!selectedId||mode!=='create';$('twoPointButton').disabled=busy||!selectedId||mode!=='create';$('moveImageButton').disabled=busy||!selectedId||mode!=='create';$('continuousCover').disabled=busy||!selectedId||mode!=='create';$('continuousCover').checked=continuousCover;
@@ -407,6 +417,16 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     try{const result=core.applyCommand(doc,{type:'RENAME_PAGE',pageId:page.id,title},ctx);if(result.document!==doc){commit(result,selectedMaskId);status('pageRenamed');refreshCopy();}}
     catch(error){$('pageTitleInput').value=page.title;}
   }
+  function changePageDescription(){
+    const page=currentPage();if(!page||busy||mode!=='create')return;const description=$('pageDescriptionInput').value;
+    try{const result=core.applyCommand(doc,{type:'SET_PAGE_DESCRIPTION',pageId:page.id,description},ctx);if(result.document!==doc){commit(result,selectedMaskId);status('pageDescriptionChanged');refreshCopy();}}
+    catch(error){$('pageDescriptionInput').value=page.description;status('error_'+(error?.code||'LIMIT_EXCEEDED'));refreshCopy();}
+  }
+  function changeQuestionText(){
+    const question=currentQuestion();if(!question||busy||mode!=='create')return;const prompt=$('questionPromptInput').value,answer=$('questionAnswerInput').value;
+    try{const result=core.applyCommand(doc,{type:'SET_QUESTION_TEXT',questionId:question.id,prompt,answer},ctx);if(result.document!==doc){commit(result,selectedMaskId);status('questionTextChanged');refreshCopy();}}
+    catch(error){$('questionPromptInput').value=question.prompt;$('questionAnswerInput').value=question.answer;status('error_'+(error?.code||'LIMIT_EXCEEDED'));refreshCopy();}
+  }
   function movePage(delta){const page=currentPage();if(!page||busy)return;const result=core.applyCommand(doc,{type:'MOVE_PAGE',pageId:page.id,delta},ctx);if(result.document!==doc){commit(result,selectedMaskId);status('pageMoved');refreshCopy();}}
   async function deletePage(){
     const page=currentPage();if(!page||busy)return;const index=doc.pages.findIndex(item=>item.id===page.id),count=doc.questions.filter(question=>question.pageId===page.id).length;
@@ -538,7 +558,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   $('coverButton').addEventListener('click',()=>setTool('cover'));$('twoPointButton').addEventListener('click',()=>setTool('two-point'));$('moveImageButton').addEventListener('click',()=>setTool('move'));$('continuousCover').addEventListener('change',event=>{continuousCover=Boolean(event.currentTarget.checked);});
   $('maskMoveLeft').addEventListener('click',()=>editSelected('left'));$('maskMoveRight').addEventListener('click',()=>editSelected('right'));$('maskMoveUp').addEventListener('click',()=>editSelected('up'));$('maskMoveDown').addEventListener('click',()=>editSelected('down'));
   $('maskWider').addEventListener('click',()=>editSelected('wider'));$('maskNarrower').addEventListener('click',()=>editSelected('narrower'));$('maskTaller').addEventListener('click',()=>editSelected('taller'));$('maskShorter').addEventListener('click',()=>editSelected('shorter'));$('maskDelete').addEventListener('click',deleteSelected);$('maskDuplicate').addEventListener('click',duplicateSelected);
-  $('pageTitleInput').addEventListener('change',renamePage);$('pageTitleInput').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();event.currentTarget.blur();}});
+  $('pageTitleInput').addEventListener('change',renamePage);$('pageTitleInput').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();event.currentTarget.blur();}});$('pageDescriptionInput').addEventListener('change',changePageDescription);$('questionPromptInput').addEventListener('change',changeQuestionText);$('questionAnswerInput').addEventListener('change',changeQuestionText);
   $('pagePrevButton').addEventListener('click',()=>movePage(-1));$('pageNextButton').addEventListener('click',()=>movePage(1));$('pageDeleteButton').addEventListener('click',deletePage);
   $('groupButton').addEventListener('click',groupSelected);$('ungroupButton').addEventListener('click',ungroupSelected);$('makeAuxiliaryButton').addEventListener('click',()=>convertSelected('auxiliary'));$('makeAnswerButton').addEventListener('click',()=>convertSelected('answer'));$('duplicateSelectionButton').addEventListener('click',duplicateSelection);
   $('freeModeButton').addEventListener('click',()=>switchStudyMode('free'));$('guidedModeButton').addEventListener('click',()=>switchStudyMode('guided'));$('otherAnswersHidden').addEventListener('change',event=>{if(event.target.checked)changeOtherAnswers('hidden');});$('otherAnswersVisible').addEventListener('change',event=>{if(event.target.checked)changeOtherAnswers('visible');});$('revealCurrentButton').addEventListener('click',revealGuided);$('recalledButton').addEventListener('click',()=>rateGuided('recalled'));$('againButton').addEventListener('click',()=>rateGuided('again'));$('skipButton').addEventListener('click',skipGuided);$('previousQuestionButton').addEventListener('click',previousGuided);$('finishStudyButton').addEventListener('click',finishGuided);$('reviewAgainButton').addEventListener('click',()=>reviewGuided('again'));$('reviewUncheckedButton').addEventListener('click',()=>reviewGuided('unchecked'));
