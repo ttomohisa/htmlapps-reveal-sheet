@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.5.0 - 2026-10-06 (development)
+
+T09–T10: opt-in on-device work recovery and separate study-progress continuation. This is still a development milestone, not the v1.0 release.
+
+- Added **Keep this work on this device**, OFF by default. When explicitly enabled, normalized PNG blobs and document metadata are committed to the Reveal Sheet IndexedDB namespace after a 1000 ms debounce.
+- Stored draft metadata and PNG blobs in one read/write transaction and reconstruct/validate the complete document before using a local snapshot.
+- Added generation checks for multi-tab draft writes. A stale tab stops automatic saving instead of overwriting the newer committed copy, while manual editable-sheet export and reload-latest recovery remain available.
+- Kept the previous committed snapshot readable when quota/security/transaction failures occur; local persistence failure does not disable in-memory editing or manual export.
+- Added **Keep only study progress on this device** as a separate OFF-by-default setting. Study records contain session state and document identity, not image bytes or the document payload.
+- Added canonical document SHA-256 fingerprinting using Web Crypto. Saved study progress is offered only when document ID, revision and fingerprint all match.
+- Resume always closes the current answer while preserving prior progress and self-assessment.
+- Disabled only study-record persistence when Web Crypto is unavailable; in-memory study remains usable.
+- Scoped study records by full document identity so edits to the same document ID start a separate record generation instead of conflicting with the old content.
+- Added namespace-limited controls to clear saved work and study progress independently without using global storage clearing.
+
+### Development fixes and verification additions
+
+- Added T09 unit coverage for opt-in defaults, Blob separation/reconstruction, atomic failure preservation, SecurityError fallback and stale-generation conflicts.
+- Added T09 browser coverage for opt-in consent, debounce, reload recovery and two-tab conflict handling.
+- Added T10 unit coverage for canonical fingerprinting, exact identity matching, closed-answer resume, image-free session records, Web Crypto fallback, separate record generations and scoped clearing.
+- Added T10 browser coverage for study resume, document-change mismatch, separate clearing and preservation of unrelated browser storage.
+
 ## 0.4.0 - 2026-10-06 (development)
 
 T07–T08: guided one-at-a-time study, self-assessment/results/review, targeted editing during study, and per-page view-state preservation. This is still a development milestone, not the v1.0 release.

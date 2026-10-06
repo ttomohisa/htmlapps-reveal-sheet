@@ -32,7 +32,7 @@ test('T01: exact declared assembly markers and no runtime dependencies', () => {
 });
 
 test('T01: all assembled Reveal JavaScript sources parse', () => {
-  for (const name of ['core.js','image-io.js','project-io.js','study-view.js','editor.js']) {
+  for (const name of ['core.js','image-io.js','project-io.js','persistence.js','study-view.js','editor.js']) {
     const source=fs.readFileSync('src/reveal/'+name,'utf8');
     assert.doesNotThrow(()=>new vm.Script(source,{filename:name}),name);
   }

@@ -23,3 +23,15 @@ test('T01/T02: loaded image begins within the narrow viewport, not below introdu
  const {imagePath}=await import('../helpers/app.mjs');await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
  const box=await page.locator('#previewImage').boundingBox();expect(box.y).toBeLessThan(600);
 });
+
+test('T01: hero copy and local badge follow the shared app intro layout',async({page})=>{
+ await page.setViewportSize({width:1360,height:780});await openApp(page);await page.locator('#languageButton').click();
+ await expect(page.locator('#heroTitle')).toHaveText('図やノートをめくる教材に');
+ await expect(page.locator('.local-badge')).toContainText('完全ローカル処理');
+ expect(await page.locator('.page-intro').evaluate(node=>getComputedStyle(node).display)).toBe('flex');
+ const desktop=await page.evaluate(()=>{const intro=document.querySelector('.page-intro').getBoundingClientRect(),badge=document.querySelector('.local-badge').getBoundingClientRect(),title=document.querySelector('#heroTitle').getBoundingClientRect();return{introRight:intro.right,badgeRight:badge.right,badgeLeft:badge.left,titleRight:title.right};});
+ expect(desktop.badgeLeft).toBeGreaterThan(desktop.titleRight);
+ expect(desktop.badgeRight).toBeLessThanOrEqual(desktop.introRight+1);
+ await page.setViewportSize({width:390,height:780});
+ expect(await page.locator('.page-intro').evaluate(node=>getComputedStyle(node).display)).toBe('block');
+});
