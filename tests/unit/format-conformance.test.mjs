@@ -96,3 +96,80 @@ test('T13 rejects duplicate ids, orphan assets, cross-page groups and invalid em
   bytes.document.assets[0].byteLength+=1;
   assert.equal(core.validateEnvelope(bytes).ok,false);
 });
+
+
+function manyPages(count){
+  const value=clone(fixture),asset=value.document.assets[0],page=value.document.pages[0];
+  value.document.assets=Array.from({length:count},(_,i)=>({...clone(asset),id:'image_'+i}));
+  value.document.pages=Array.from({length:count},(_,i)=>({...clone(page),id:'page_'+i,imageId:'image_'+i,questionOrder:[]}));
+  value.document.questions=[];value.document.masks=[];
+  return value;
+}
+function manyQuestions(count){
+  const value=clone(fixture),asset=clone(value.document.assets[0]);
+  const pages=Math.ceil(count/core.limits.maxMasksPerPage);
+  value.document.assets=Array.from({length:pages},(_,i)=>({...clone(asset),id:'image_'+i}));
+  value.document.pages=Array.from({length:pages},(_,i)=>({id:'page_'+i,title:'Page '+(i+1),description:'',imageId:'image_'+i,questionOrder:[]}));
+  value.document.questions=[];value.document.masks=[];
+  for(let i=0;i<count;i++){
+    const pageIndex=Math.floor(i/core.limits.maxMasksPerPage),qid='question_'+i,mid='mask_'+i;
+    value.document.pages[pageIndex].questionOrder.push(qid);
+    value.document.questions.push({id:qid,pageId:'page_'+pageIndex,revision:1,maskIds:[mid],prompt:'',answer:''});
+    value.document.masks.push({id:mid,pageId:'page_'+pageIndex,kind:'answer',questionId:qid,rect:{x:0,y:0,w:1,h:1}});
+  }
+  return value;
+}
+
+test('T13 structural limits accept the exact boundary and reject the next item',()=>{
+  const pagesAt=manyPages(core.limits.maxPages);
+  assert.equal(core.validateEnvelope(pagesAt).ok,true);
+  assert.equal(core.validateEnvelope(manyPages(core.limits.maxPages+1)).ok,false);
+
+  const questionsAt=manyQuestions(core.limits.maxQuestions);
+  assert.equal(core.validateEnvelope(questionsAt).ok,true);
+  const questionsOver=manyQuestions(core.limits.maxQuestions+1);
+  const over=core.validateEnvelope(questionsOver);
+  assert.equal(over.ok,false);
+  assert.equal(over.errors[0].code,'INVALID_SHEET');
+
+  const perPage=clone(fixture),asset=perPage.document.assets[0];
+  perPage.document.pages[0].questionOrder=[];perPage.document.questions=[];perPage.document.masks=[];
+  for(let i=0;i<core.limits.maxMasksPerPage;i++){
+    const q='q_'+i,m='m_'+i;perPage.document.pages[0].questionOrder.push(q);
+    perPage.document.questions.push({id:q,pageId:perPage.document.pages[0].id,revision:1,maskIds:[m],prompt:'',answer:''});
+    perPage.document.masks.push({id:m,pageId:perPage.document.pages[0].id,kind:'answer',questionId:q,rect:{x:0,y:0,w:1,h:1}});
+  }
+  assert.equal(core.validateEnvelope(perPage).ok,true);
+  const overPage=clone(perPage),i=core.limits.maxMasksPerPage,q='q_'+i,m='m_'+i;
+  overPage.document.pages[0].questionOrder.push(q);
+  overPage.document.questions.push({id:q,pageId:overPage.document.pages[0].id,revision:1,maskIds:[m],prompt:'',answer:''});
+  overPage.document.masks.push({id:m,pageId:overPage.document.pages[0].id,kind:'answer',questionId:q,rect:{x:0,y:0,w:1,h:1}});
+  const pageCheck=core.validateEnvelope(overPage);
+  assert.equal(pageCheck.ok,false);
+  assert.equal(pageCheck.errors[0].code,'LIMIT_EXCEEDED');
+
+  // Claimed dimensions are structurally checked here; PNG header equality is
+  // independently enforced by imageIO.verifyStoredAsset during file import.
+  const sideAt=clone(fixture);sideAt.document.assets[0].width=core.limits.maxSide;sideAt.document.assets[0].height=1;
+  assert.equal(core.validateEnvelope(sideAt).ok,true);
+  const sideOver=clone(sideAt);sideOver.document.assets[0].width=core.limits.maxSide+1;
+  assert.equal(core.validateEnvelope(sideOver).ok,false);
+});
+
+test('T13 readJson rejects an over-limit file before reading bytes and rejects non-finite numeric JSON',async()=>{
+  const io=project();let reads=0;
+  const huge={name:'huge.reveal.json',size:core.limits.maxJsonBytes+1,arrayBuffer:async()=>{reads++;return new ArrayBuffer(0);}};
+  await assert.rejects(io.readJson(huge),{code:'LIMIT_EXCEEDED'});
+  assert.equal(reads,0);
+
+  const raw=JSON.stringify(fixture).replace('"width":1','"width":1e9999');
+  const file=new Blob([raw],{type:'application/json'});Object.defineProperty(file,'name',{value:'non-finite.reveal.json'});
+  await assert.rejects(io.readJson(file),{code:'INVALID_SHEET'});
+});
+
+test('T13 object-for-array and oversized stored dimensions are rejected',()=>{
+  const wrongArray=clone(fixture);wrongArray.document.pages={0:wrongArray.document.pages[0]};
+  assert.equal(core.validateEnvelope(wrongArray).ok,false);
+  const huge=clone(fixture);huge.document.assets[0].width=core.limits.maxSide+1;
+  assert.equal(core.validateEnvelope(huge).ok,false);
+});
