@@ -54,3 +54,15 @@ test('T11: lesson waits for image decode, supports Japanese, and remains usable 
   await expect(lesson.locator('#lessonStudyOptIn')).toBeDisabled();
   await expect(lesson.locator('#maskSvg .mask-rect')).toHaveCount(1);
 });
+
+
+test('T11: lesson preview uses an isolated session and never starts a download',async({page})=>{
+  await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();await addCover(page,[18,18],[52,38]);
+  await page.locator('#saveButton').click();await expect(page.locator('#savePanel')).toBeVisible();
+  let downloads=0;page.on('download',()=>downloads++);
+  await page.locator('#previewLessonButton').click();await expect(page.locator('#lessonPreviewDialog')).toBeVisible();
+  await expect(page.locator('#lessonPreviewQuestionList button')).toHaveCount(1);await expect(page.locator('#lessonPreviewConfirmed')).toHaveText('0');
+  await page.locator('#lessonPreviewQuestionList button').click();await expect(page.locator('#lessonPreviewConfirmed')).toHaveText('1');expect(downloads).toBe(0);
+  await page.locator('#lessonPreviewClose').click();await expect(page.locator('#lessonPreviewDialog')).toBeHidden();
+  await page.locator('#previewLessonButton').click();await expect(page.locator('#lessonPreviewConfirmed')).toHaveText('0');expect(downloads).toBe(0);
+});
