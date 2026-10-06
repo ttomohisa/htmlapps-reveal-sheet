@@ -37,7 +37,7 @@ function createProjectIO({core,imageIO,env}) {
   }
   function prepareHtml(doc,playerTemplate,appVersion='0.6.0'){
     if(typeof playerTemplate!=='string'||!playerTemplate)fail('INVALID_SHEET');
-    const marker='__REVEAL_LESSON_JSON__',matches=playerTemplate.split(marker).length-1;
+    const marker='__REVEAL_'+'LESSON_JSON__',matches=playerTemplate.split(marker).length-1;
     if(matches!==1)fail('INVALID_SHEET');
     const json=serialize(doc,'lesson',appVersion),html=playerTemplate.replace(marker,escapeJsonForHtml(json));
     if(new env.TextEncoder().encode(html).byteLength>core.limits.maxHtmlBytes)fail('LIMIT_EXCEEDED');
