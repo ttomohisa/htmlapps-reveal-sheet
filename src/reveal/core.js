@@ -419,6 +419,17 @@ function createRevealCore() {
     return {history:{limit:history.limit,undo:boundedPush(history.undo,doc,history.limit),redo:history.redo.slice(0,-1)},mutation:mutation(restored)};
   }
 
+  function isTap({distanceCssPx,cancelled=false}={}){
+    return cancelled!==true&&Number.isFinite(distanceCssPx)&&distanceCssPx>=0&&distanceCssPx<=6;
+  }
+  function resizeView(state,oldBox,newBox){
+    const validBox=box=>box&&Number.isFinite(Number(box.width))&&Number.isFinite(Number(box.height))&&Number(box.width)>0&&Number(box.height)>0;
+    if(!validBox(oldBox)||!validBox(newBox))throw error('INVALID_STUDY_ACTION');
+    const rawZoom=Number(state?.zoom),zoom=Math.max(.5,Math.min(16,Number.isFinite(rawZoom)?rawZoom:1)),half=.5/zoom;
+    const normalizeCenter=value=>Math.max(half,Math.min(1-half,Number.isFinite(Number(value))?Number(value):.5));
+    return {zoom:round6(zoom),centerX:round6(normalizeCenter(state?.centerX)),centerY:round6(normalizeCenter(state?.centerY))};
+  }
+
   function counts(doc){return {pages:doc.pages.length,masks:doc.masks.length,questions:doc.questions.length,auxiliary:doc.masks.filter(mask=>mask.kind==='auxiliary').length};}
   function overlapWarnings(doc,pageId){
     const pageMasks=doc.masks.filter(mask=>mask.pageId===pageId),warnings=[];
@@ -432,5 +443,5 @@ function createRevealCore() {
     return warnings;
   }
 
-  return Object.freeze({limits,error,newDocument,appendAsset,normalizeRect,rectToPixels,applyCommand,createHistory,execute,undo,redo,counts,overlapWarnings,startSession,toggleFree,hideAllFree,revealPageFree,summaryFree,revealCurrent,rate,skip,finishSession,goToQuestion,summary,makeReviewSession,reconcileSession,revealTarget,visibilityFor,validateEnvelope});
+  return Object.freeze({limits,error,newDocument,appendAsset,normalizeRect,rectToPixels,applyCommand,createHistory,execute,undo,redo,counts,overlapWarnings,startSession,toggleFree,hideAllFree,revealPageFree,summaryFree,revealCurrent,rate,skip,finishSession,goToQuestion,summary,makeReviewSession,reconcileSession,revealTarget,visibilityFor,isTap,resizeView,validateEnvelope});
 }
