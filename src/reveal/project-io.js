@@ -32,6 +32,17 @@ function createProjectIO({core,imageIO,env}) {
   function prepareJson(doc,appVersion='0.2.0'){
     return new env.Blob([serialize(doc,'editable',appVersion)],{type:'application/json;charset=utf-8'});
   }
+  function escapeJsonForHtml(text){
+    return String(text).replace(/</g,'\\u003C').replace(/>/g,'\\u003E').replace(/&/g,'\\u0026').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
+  }
+  function prepareHtml(doc,playerTemplate,appVersion='0.6.0'){
+    if(typeof playerTemplate!=='string'||!playerTemplate)fail('INVALID_SHEET');
+    const marker='__REVEAL_LESSON_JSON__',matches=playerTemplate.split(marker).length-1;
+    if(matches!==1)fail('INVALID_SHEET');
+    const json=serialize(doc,'lesson',appVersion),html=playerTemplate.replace(marker,escapeJsonForHtml(json));
+    if(new env.TextEncoder().encode(html).byteLength>core.limits.maxHtmlBytes)fail('LIMIT_EXCEEDED');
+    return new env.Blob([html],{type:'text/html;charset=utf-8'});
+  }
   function jsonDepthWithin(text,maxDepth=16){
     let depth=0,inString=false,escaped=false;
     for(let index=0;index<text.length;index++){
@@ -108,5 +119,5 @@ function createProjectIO({core,imageIO,env}) {
     if(isReserved(value))value='_'+value;
     return value+suffix;
   }
-  return Object.freeze({readJson,serialize,prepareJson,sanitizeFilename,jsonDepthWithin});
+  return Object.freeze({readJson,serialize,prepareJson,prepareHtml,escapeJsonForHtml,sanitizeFilename,jsonDepthWithin});
 }
