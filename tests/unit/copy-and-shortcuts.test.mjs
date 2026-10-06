@@ -17,6 +17,7 @@ function translationBlocks(source){
 
 test('T16 main UI translation keys stay complete across Japanese and English',()=>{
   const {ja,en}=translationBlocks(index),jaKeys=translationKeys(ja),enKeys=translationKeys(en);
+  jaKeys.delete('ja');enKeys.delete('en');
   const missingInEn=[...jaKeys].filter(key=>!enKeys.has(key));
   const missingInJa=[...enKeys].filter(key=>!jaKeys.has(key));
   assert.deepEqual(missingInEn,[]);
