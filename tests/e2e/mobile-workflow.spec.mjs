@@ -17,7 +17,11 @@ test('T15: continuous cover creation stays in cover mode only while enabled',asy
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
   await page.locator('#continuousCover').check();
   await page.locator('#coverButton').click();
+  const topBefore=(await page.locator('#maskSvg').boundingBox()).y;
   await dragCover(page,[8,8],[28,24]);
+  await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
+  const topAfter=(await page.locator('#maskSvg').boundingBox()).y;
+  expect(Math.abs(topAfter-topBefore)).toBeLessThanOrEqual(1);
   await expect(page.locator('#coverButton')).toHaveAttribute('aria-pressed','true');
   await dragCover(page,[40,8],[60,24]);
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(2);
