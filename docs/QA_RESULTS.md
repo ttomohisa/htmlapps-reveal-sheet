@@ -2,7 +2,44 @@
 
 ## Scope and status
 
-This record contains verified CI evidence through v0.4.0 / T01–T08. It does not mark all 48 formal acceptance items complete. Page management, grouped answers, auxiliary covers, free reveal study, guided one-at-a-time study, self-assessment/results/review sessions, targeted study-time editing and per-page view-state preservation are implemented. Automatic local persistence and portable lesson HTML are not implemented. Physical phones, Safari, Firefox, assistive technology and resource-limit stress tests remain untested.
+This record contains verified CI evidence through v0.5.0 / T01–T10. It does not mark all 48 formal acceptance items complete. Page management, grouped/auxiliary covers, free and guided study, review sessions, targeted study-time editing, per-page view-state preservation, opt-in on-device draft recovery, and separate opt-in study-progress continuation are implemented. Portable lesson HTML is not implemented. Physical phones, Safari, Firefox, assistive technology and resource-limit stress tests remain untested.
+
+## Verified v0.5.0 milestone — 2026-10-06
+
+Tested application source commit: **0663aa23d025b171cd6a347bdd409ed58ad2a348**.
+
+- Application workflow **37407766738**: success.
+- Standalone validation workflow **37407766776**: success.
+- PR preview workflow **37407766803**: success.
+
+Environment: GitHub-hosted Windows runner, Node 24 and the repository-pinned Playwright / Chromium development browser. These are hosted automated checks, not physical Android/iPhone, user-PC Edge, Safari or Firefox tests.
+
+| Verification | Result |
+|---|---|
+| Pure unit tests | 84 passed, 0 failed |
+| Normal HTML opened via file URL | 48 passed |
+| Self-extracting HTML opened via file URL | 48 passed |
+| PowerShell syntax / assembly-negative fixtures | Passed |
+| Repository build and standalone contracts | Passed |
+| Normal/root-copy bytes and self-extract restoration | Passed |
+| QA capture step | Passed |
+| Readable HTML size | 0.20 MB |
+| Readable HTML SHA-256 in application workflow | `d9fd7ba459609c24ba4fe16bbd08c2c425e01c5d7a76b90cd8fb23bc79356e65` |
+
+T09 automated checks cover OFF-by-default work persistence, no draft write before consent, normalized-PNG Blob separation and document reconstruction, atomic draft generation, one-second debounce behavior, reload recovery, quota/abort preservation of the previous committed snapshot, SecurityError fallback, and two-tab generation conflicts that stop automatic saving rather than overwriting a newer committed copy. Manual editable-sheet export remains available when persistence is disabled or conflicted.
+
+T10 automated checks cover separate OFF-by-default study persistence, canonical document-key ordering for SHA-256, exact document ID + revision + fingerprint matching, answer-closed resume for guided and free study, study records that contain no image bytes/document payload, Web Crypto fallback, namespace-limited clearing, separate record generations after document edits, malformed-record rejection, same-tab generation continuity across study mode changes, and deterministic two-tab study-record conflict handling.
+
+On-device work saving and study-progress saving are separate settings and separate data scopes. Clearing one does not clear the other or unrelated browser storage. The study record by itself cannot reconstruct a sheet. Editable JSON continues to exclude personal study results and view position.
+
+The approved Reveal Sheet SVG supplied for this milestone is now the canonical `assets/favicon.svg`, used as the source for the favicon and header app icon. Its exact 840-byte source has Git blob SHA-1 `c2cdbccea7b56631f970bbb0cbb057cb66b219ff` and SHA-256 `ec8cbc9472b3dbaef92eb493f68ff3a35422d1634a2481626092b54eb99719b9`.
+
+### v0.5.0 failures found and corrected during verification
+
+- The first T09 browser test used Playwright `check()`, which requires the checkbox to become checked immediately after click. Reveal Sheet intentionally waits for the consent dialog before committing the opt-in, so the test was corrected to click → confirm → assert checked without weakening the product consent flow.
+- The first draft-resume wording assertion matched only “resume”; the actual English copy used “resuming”. The test was changed to check the localized resume meaning instead of a single inflection.
+- Study-session storage originally keyed only by document ID. A failing regression showed that edited content sharing the same document ID would conflict with the old study record. Session keys now include document ID, revision and fingerprint, while true same-identity concurrent writers still use generation conflict detection.
+- A later regression fixed study-generation continuity across same-document mode/session changes and added corrupt-record / tab-conflict coverage before the final green suite.
 
 ## Verified v0.4.0 milestone — 2026-10-06
 
@@ -132,10 +169,10 @@ Feature tests were first observed failing for missing core/input functionality, 
 
 ## Acceptance mapping at this stage
 
-Verified CI paths through v0.4.0 cover the earlier T01–T06 mappings plus the T07/T08 portions of guided-study, session reconciliation, result/review, view-position, keyboard and mobile-layout acceptance. The current 70-unit / 39-readable / 39-self-extract suite also reruns all earlier browser regressions on the v0.4.0 source. Several formal acceptance items intentionally span later persistence / lesson-HTML tasks, manual observation or real-device checks; automated coverage of one path is not full acceptance. No v1.0 release judgment is made.
+Verified CI paths through v0.5.0 cover the earlier T01–T08 mappings plus the T09/T10 portions of AC-37, AC-38, AC-39 and AC-40: opt-in defaults, atomic/recoverable local saving, failure handling, generation conflicts, content-identity study resume and namespace-limited clearing. The current 84-unit / 48-readable / 48-self-extract suite reruns all earlier browser regressions on the v0.5.0 source. Several formal acceptance items intentionally span later lesson-HTML tasks, manual observation or real-device checks; automated coverage of one path is not full acceptance. No v1.0 release judgment is made.
 
 ## Not yet verified / not implemented
 
-Physical Android Chrome and iPhone Safari; macOS Safari; Firefox; Edge-specific behavior; HTTPS-hosted file input; no-JavaScript self-extractor fallback; maximum-size memory stress; OS-level save/reopen outside CI; real screen-reader and software-keyboard behavior. Optional local draft persistence, optional study-session continuation across reloads, and portable lesson HTML are not implemented yet.
+Physical Android Chrome and iPhone Safari; macOS Safari; Firefox; Edge-specific behavior; HTTPS-hosted persistence behavior; no-JavaScript self-extractor fallback; maximum-size memory stress; OS-level manual save/reopen outside CI; real screen-reader and software-keyboard behavior. Browser storage is not claimed to be permanent and can be unavailable or cleared by the user/browser. Portable study HTML and its safe re-edit path are not implemented yet.
 
-The next planned development stage is T09–T10 / v0.5.0. It must not begin until the v0.4.0 review gate is cleared by the repository owner. Continue using the owner-provided full specification, development plan and acceptance matrix. Do not infer later behavior from this milestone's UI.
+The next planned development stage is T11–T12 / v0.6.0. It must not begin until the v0.5.0 review gate is cleared by the repository owner. Continue using the owner-provided full specification, development plan and acceptance matrix. Do not infer later behavior from this milestone's UI.
