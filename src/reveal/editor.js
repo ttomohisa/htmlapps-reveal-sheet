@@ -434,7 +434,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       }
       preparedJsonExport=json;preparedLessonExport=html;status('exportReady');return {json,html};
     }catch(error){
-      if(token!==exportGeneration||error?.code==='EXPORT_FAILED')return null;
+      if(token!==exportGeneration)return null;
       status('error_'+(error?.code||'EXPORT_FAILED'));return null;
     }finally{
       if(token===exportGeneration){exportBusy=false;refreshCopy();}
