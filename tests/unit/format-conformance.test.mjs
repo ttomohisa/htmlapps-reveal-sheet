@@ -60,13 +60,13 @@ test('T13 rejects structural pollution keys but preserves the same text as ordin
   assert.equal(core.validateEnvelope(polluted).ok,false);
 
   const protoKey=JSON.parse(JSON.stringify(fixture));
-  protoKey.document.pages[0]['__proto__']={polluted:true};
+  Object.defineProperty(protoKey.document.pages[0],'__proto__',{value:{polluted:true},enumerable:true});
   assert.equal(core.validateEnvelope(protoKey).ok,false);
 });
 
 test('T13 rejects duplicate ids, orphan assets, cross-page groups and invalid embedded-byte claims',()=>{
   const duplicate=clone(fixture);
-  duplicate.document.pages.push({...clone(duplicate.document.pages[0]),id:'page_second'});
+  duplicate.document.pages.push({...clone(duplicate.document.pages[0])});
   assert.equal(core.validateEnvelope(duplicate).ok,false);
 
   const orphan=clone(fixture);
