@@ -168,6 +168,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     if(studyMode==='free'){
       const summary=core.summaryFree(studySession);$('confirmedCount').textContent=String(summary.confirmed);$('studyQuestionCount').textContent=String(summary.total);$('questionList').replaceChildren();
       const open=new Set(studySession.openQuestionIds);studySession.queue.forEach((qid,index)=>{const question=doc.questions.find(item=>item.id===qid);if(!question)return;const button=env.document.createElement('button');button.type='button';button.className='question-item';button.dataset.questionId=qid;const action=t(open.has(qid)?'hideQuestion':'revealQuestion',{number:index+1});button.textContent=question.prompt?action+' · '+question.prompt:action;button.addEventListener('click',()=>handleViewAction({type:'TOGGLE_QUESTION',questionId:qid}));$('questionList').append(button);});
+      const answers=studySession.queue.filter(qid=>open.has(qid)).map(qid=>doc.questions.find(question=>question.id===qid)?.answer||'').filter(Boolean);$('freeAnswerBox').hidden=answers.length===0;$('freeAnswerText').textContent=answers.join('\n');
       return;
     }
     $('otherAnswersHidden').checked=studySession.otherAnswers==='hidden';$('otherAnswersVisible').checked=studySession.otherAnswers==='visible';
