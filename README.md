@@ -2,7 +2,7 @@
 
 [日本語](README.ja.md)
 
-Reveal Sheet turns diagrams, photos and notes that already contain answers into study sheets with opaque covers. **The current v0.6.0 development build can export a self-contained study-only HTML file and safely reopen Reveal Sheet lesson HTML as validated editable data without executing received outer HTML.** Free/guided study, review sessions, opt-in local persistence and image-embedded editable JSON remain available. It is not the completed v1.0 release.
+Reveal Sheet turns diagrams, photos and notes that already contain answers into study sheets with opaque covers. **The current v0.7.0 development build hardens schema-v1 save compatibility and export recovery: older format-1 fixtures remain readable, hostile or unsupported saved data is rejected before replacement, save sizes are measured before download, and stale prepared output is invalidated after changes.** Self-contained lesson HTML, safe non-executing lesson re-edit, free/guided study and opt-in local persistence remain available. It is not the completed v1.0 release.
 
 ## Available now
 
@@ -24,6 +24,10 @@ Save images, pages, questions and covers as a `.reveal.json` file and reopen it 
 **Study lesson HTML (`.reveal.html`)** packages the images, covers and study player into one file when the sheet contains at least one question. Open it directly in a browser to use free reveal, one-at-a-time study, self-assessment/results/review, Japanese/English switching and keyboard controls without additional network requests. Author study results, Undo history, view position and original filenames are not embedded. Saving editable data from the lesson also excludes personal study results.
 
 **Open a sheet** now accepts both `.reveal.json` and Reveal Sheet `.reveal.html`. Incoming lesson HTML is never adopted as DOM or executed. Reveal Sheet scans the file as UTF-8 text for exactly one fixed non-executing JSON data tag, validates its structure/references/PNG assets, and rebuilds the editor from that data. Outer script, iframe, image, style or refresh markup is ignored rather than constructed.
+
+v0.7.0 fixes the portable **schemaVersion 1** compatibility contract with fixtures from v0.2.0 through v0.6.0. Unknown future schemas, invalid UTF-8, excessive JSON nesting, structural pollution keys, duplicate/orphan references, cross-page groups and disguised animated PNG data are rejected before the current sheet is replaced. See [SAVE_FORMAT.md](docs/SAVE_FORMAT.md) for the format and validation order.
+
+The **Save** view prepares actual editable-JSON and lesson-HTML byte sizes before download. Prepared output is tied to the current document revision/export generation and is discarded if it becomes stale. A browser download is reported only as **started**, not as proof that the operating system completed the save; preparation failures keep the current sheet available for retry.
 
 **Keep this work on this device** starts OFF. Only after explicit opt-in, normalized images and sheet content are stored in IndexedDB and changes are committed after about a one-second debounce. If another tab advances the same saved generation, Reveal Sheet stops automatic saving instead of silently overwriting and offers manual export or reload-latest recovery. Quota/security failures leave the in-memory sheet and manual export available.
 
@@ -93,7 +97,7 @@ Set `APP_VARIANT=self-extract` to run the same E2E suite against the self-extrac
 
 ## Roadmap
 
-The next stage, v0.7.0 / T13–T14, hardens format compatibility, boundary/hostile inputs, output-generation invalidation, re-save behavior and file interoperability/export UX. PDF, OCR, AI and cloud sync are outside the initial scope.
+Next is v0.8.0 / T15–T16: finish smartphone interaction and fixed UI, then bilingual keyboard/screen-reader/accessibility behavior. PDF, OCR, AI and cloud sync remain outside the initial release scope.
 
 ## License
 

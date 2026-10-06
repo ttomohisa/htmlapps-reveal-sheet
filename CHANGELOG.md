@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.7.0 - 2026-10-06 (development)
+
+T13–T14: format-1 interoperability, hostile/boundary saved-data validation, and prepared export recovery. This is still a development milestone, not the v1.0 release.
+
+- Added fixture-backed schemaVersion 1 compatibility coverage from v0.2.0 through v0.6.0, including guided-study defaults introduced after the original editable format.
+- Removed an obsolete v0.3-era import restriction that incorrectly rejected valid guided/visible schema-1 defaults.
+- Classified recognized saved-sheet resource-limit violations as `LIMIT_EXCEEDED` while keeping malformed structure as `INVALID_SHEET`.
+- Added hostile saved-file coverage for invalid UTF-8, excessive JSON nesting, structural pollution keys, duplicate/orphan/cross-page references, future schemas, non-finite numeric JSON, disguised APNG content and exact/over structural limits.
+- Added `docs/SAVE_FORMAT.md` with the format-1 compatibility and validation-order contract.
+- Added `PreparedExport` state containing document identity/revision, export generation, Blob, sanitized filename, measured size and counts.
+- Invalidated in-progress/prepared output after relevant changes so stale output cannot start a download.
+- The Save view now measures editable JSON and lesson HTML sizes before download and keeps filename/format suffixes distinct.
+- Save preparation failure preserves the current sheet and supports retry. Re-saving the same filename remains available.
+- Download UI reports that saving **started** and does not claim the browser/OS completed the save.
+- Added browser regressions for same-turn export invalidation, Blob preparation failure/retry, repeat saves and atomic hostile-file rejection.
+
 ## 0.6.0 - 2026-10-06 (development)
 
 T11–T12: self-contained study lesson HTML and non-executing lesson re-import. This is still a development milestone, not the v1.0 release.
