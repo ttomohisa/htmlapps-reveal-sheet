@@ -48,8 +48,9 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
     const wanted=event.currentTarget.checked;
     if(wanted){
       event.currentTarget.checked=false;const fingerprint=await persistence.fingerprintDocument(doc);if(!fingerprint){setStudyStatus('studyPersistenceUnavailable');refreshLocalStudy();return;}
+      const identity={documentId:doc.id,revision:doc.revision,fingerprint};
       const yes=await env.AppConfirm.ask({title:t('studyOptInTitle'),message:t('studyOptInMessage'),confirmLabel:t('studyOptInAction'),cancelLabel:t('cancel')});if(!yes){refreshLocalStudy();return;}
-      try{await persistence.setStudyOptIn(true);studyConflict=false;studyRecordGeneration=0;studyIdentityToken='';setStudyStatus('studyEnabled');refreshLocalStudy();scheduleStudySave();}catch{setStudyStatus('studySaveFailed');refreshLocalStudy();}
+      try{const existing=await persistence.loadSession(identity);await persistence.setStudyOptIn(true);studyConflict=false;studyRecordGeneration=existing?.generation||0;studyIdentityToken=identityToken(identity);setStudyStatus('studyEnabled');refreshLocalStudy();scheduleStudySave();}catch{setStudyStatus('studySaveFailed');refreshLocalStudy();}
     }else{
       cancelStudyTimer();try{await persistence.setStudyOptIn(false);studyConflict=false;studyRecordGeneration=0;studyIdentityToken='';setStudyStatus('studyDisabled');}catch{setStudyStatus('studySaveFailed');}refreshLocalStudy();
     }
