@@ -2,6 +2,8 @@
 function createProjectIO({core,imageIO,env}) {
   const fail=code=>{throw core.error(code);};
   const isAbort=signal=>Boolean(signal?.aborted);
+  let invalidatedExportGeneration=-1;
+  const validExportGeneration=generation=>Number.isSafeInteger(generation)&&generation>=0&&generation>invalidatedExportGeneration;
   function cleanDocument(doc){
     return {
       id:doc.id,revision:doc.revision,title:doc.title,
@@ -130,6 +132,54 @@ function createProjectIO({core,imageIO,env}) {
     if(isAbort(signal))fail('CANCELLED');
     return envelope(value.document,'editable',value.appVersion);
   }
+
+  function invalidateExport(generation){
+    if(!Number.isSafeInteger(generation)||generation<0)fail('EXPORT_FAILED');
+    invalidatedExportGeneration=Math.max(invalidatedExportGeneration,generation);
+  }
+  async function prepareExport(doc,options={},generation=0){
+    if(!validExportGeneration(generation))fail('EXPORT_FAILED');
+    const kind=options.kind;
+    if(kind!=='json'&&kind!=='html')fail('EXPORT_FAILED');
+    // Yield once so a document change in the same turn can invalidate this
+    // output before a potentially large Blob is exposed as ready.
+    await Promise.resolve();
+    if(!validExportGeneration(generation))fail('EXPORT_FAILED');
+    let blob;
+    try{
+      blob=kind==='html'
+        ?prepareHtml(doc,options.playerTemplate,options.appVersion||'0.7.0')
+        :prepareJson(doc,options.appVersion||'0.7.0');
+    }catch(error){
+      if(['INVALID_SHEET','LIMIT_EXCEEDED','UNSUPPORTED_SCHEMA'].includes(error?.code))throw error;
+      fail('EXPORT_FAILED');
+    }
+    await Promise.resolve();
+    if(!validExportGeneration(generation))fail('EXPORT_FAILED');
+    const counts=Object.freeze({...core.counts(doc)});
+    return Object.freeze({
+      kind,generation,documentId:doc.id,documentRevision:doc.revision,
+      blob,filename:sanitizeFilename(options.filename,kind),size:blob.size,
+      counts,preview:Boolean(options.preview)
+    });
+  }
+  function requestDownload(prepared){
+    if(!prepared||!validExportGeneration(prepared.generation)||!(prepared.blob instanceof env.Blob)||
+       typeof prepared.filename!=='string'||!prepared.filename||!Number.isSafeInteger(prepared.size)||
+       prepared.size!==prepared.blob.size)fail('EXPORT_FAILED');
+    let url='',anchor=null;
+    try{
+      url=env.URL.createObjectURL(prepared.blob);
+      anchor=env.document.createElement('a');anchor.href=url;anchor.download=prepared.filename;anchor.hidden=true;
+      env.document.body.append(anchor);anchor.click();anchor.remove();anchor=null;
+      env.setTimeout(()=>env.URL.revokeObjectURL(url),0);
+      return Object.freeze({started:true,filename:prepared.filename,size:prepared.size,kind:prepared.kind,generation:prepared.generation});
+    }catch{
+      try{anchor?.remove();}catch{}
+      if(url){try{env.URL.revokeObjectURL(url);}catch{}}
+      fail('EXPORT_FAILED');
+    }
+  }
   function stripKnownExtension(value){
     let base=value;
     while(true){
@@ -161,5 +211,5 @@ function createProjectIO({core,imageIO,env}) {
     if(isReserved(value))value='_'+value;
     return value+suffix;
   }
-  return Object.freeze({readJson,readHtml,readSheet,extractLessonEnvelope,serialize,prepareJson,prepareHtml,escapeJsonForHtml,sanitizeFilename,jsonDepthWithin});
+  return Object.freeze({readJson,readHtml,readSheet,extractLessonEnvelope,serialize,prepareJson,prepareHtml,prepareExport,requestDownload,invalidateExport,escapeJsonForHtml,sanitizeFilename,jsonDepthWithin});
 }
