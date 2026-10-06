@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {loadFactory,testContext} from '../helpers/load-factory.mjs';
+import {loadFactory,testContext,toPlain} from '../helpers/load-factory.mjs';
 
 const core=loadFactory('src/reveal/core.js','createRevealCore')();
 const createProjectIO=loadFactory('src/reveal/project-io.js','createProjectIO');
@@ -44,7 +44,7 @@ test('T14 prepareExport freezes the output identity, measured size and sheet cou
   assert.equal(prepared.documentRevision,doc.revision);
   assert.equal(prepared.filename,'a_b.reveal.json');
   assert.equal(prepared.size,prepared.blob.size);
-  assert.deepEqual(prepared.counts,{pages:1,masks:1,questions:1,auxiliary:0});
+  assert.deepEqual(toPlain(prepared.counts),{pages:1,masks:1,questions:1,auxiliary:0});
   assert.equal(prepared.preview,true);
 });
 
@@ -61,7 +61,7 @@ test('T14 requestDownload reports only that the browser save was started',async(
   assert.equal(typeof io.requestDownload,'function');
   const prepared=await io.prepareExport(doc,{kind:'json',filename:'lesson',appVersion:'0.7.0'},8);
   const receipt=io.requestDownload(prepared);
-  assert.deepEqual(receipt,{started:true,filename:'lesson.reveal.json',size:prepared.size,kind:'json',generation:8});
+  assert.deepEqual(toPlain(receipt),{started:true,filename:'lesson.reveal.json',size:prepared.size,kind:'json',generation:8});
   assert.deepEqual(runtime.__clicks,['lesson.reveal.json']);
   assert.deepEqual(runtime.__revoked,['blob:export']);
   assert.equal('completed' in receipt,false);
