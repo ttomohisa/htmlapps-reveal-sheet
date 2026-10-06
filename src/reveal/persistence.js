@@ -39,6 +39,7 @@ function createPersistence({core,env,backend=null}) {
     catch{return null;}
   }
   function validIdentity(identity){return Boolean(identity)&&typeof identity.documentId==='string'&&identity.documentId.length>0&&Number.isSafeInteger(identity.revision)&&identity.revision>=1&&typeof identity.fingerprint==='string'&&/^[0-9a-f]{64}$/.test(identity.fingerprint);}
+  function sessionKey(identity){return identity.documentId+'|'+identity.revision+'|'+identity.fingerprint;}
   function closedSession(session){
     if(!session||!['free','guided'].includes(session.mode))return null;
     const cloned=JSON.parse(JSON.stringify(session));
@@ -48,11 +49,11 @@ function createPersistence({core,env,backend=null}) {
   }
   async function saveSession(identity,session,expectedGeneration=0){
     if(!settings.studyOptIn||!validIdentity(identity))return null;await ensureAvailable();const safe=closedSession(session);if(!safe)return null;
-    try{return await db.atomicSaveSession({key:identity.documentId,expectedGeneration,identity:{...identity},session:JSON.parse(JSON.stringify(session))});}catch(error){throw normalizeFailure(error);}
+    try{return await db.atomicSaveSession({key:sessionKey(identity),expectedGeneration,identity:{...identity},session:JSON.parse(JSON.stringify(session))});}catch(error){throw normalizeFailure(error);}
   }
   async function loadSession(identity){
     if(!validIdentity(identity))return null;await ensureAvailable();
-    try{const record=await db.readSession(identity.documentId);if(!record)return null;const saved=record.identity;if(!saved||saved.documentId!==identity.documentId||saved.revision!==identity.revision||saved.fingerprint!==identity.fingerprint)return null;const session=closedSession(record.session);return session?{session,generation:record.generation,savedAt:record.savedAt}:null;}catch(error){throw normalizeFailure(error);}
+    try{const record=await db.readSession(sessionKey(identity));if(!record)return null;const saved=record.identity;if(!saved||saved.documentId!==identity.documentId||saved.revision!==identity.revision||saved.fingerprint!==identity.fingerprint)return null;const session=closedSession(record.session);return session?{session,generation:record.generation,savedAt:record.savedAt}:null;}catch(error){throw normalizeFailure(error);}
   }
   async function clearLocal(scope='draft'){
     await ensureAvailable();try{if(scope==='draft'||scope==='all'){await db.clearDraft();settings.draftOptIn=false;}if(scope==='study'||scope==='all'){await db.clearSessions();settings.studyOptIn=false;}await db.writeSettings(settings);}catch(error){throw normalizeFailure(error);}
