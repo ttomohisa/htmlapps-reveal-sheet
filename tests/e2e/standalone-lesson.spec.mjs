@@ -66,3 +66,34 @@ test('T11: lesson preview uses an isolated session and never starts a download',
   await page.locator('#lessonPreviewClose').click();await expect(page.locator('#lessonPreviewDialog')).toBeHidden();
   await page.locator('#previewLessonButton').click();await expect(page.locator('#lessonPreviewConfirmed')).toHaveText('0');expect(downloads).toBe(0);
 });
+
+
+test('T11: lesson keeps the image and covers hidden until the first image decode completes',async({page,context},testInfo)=>{
+  await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();await addCover(page,[18,18],[52,38]);
+  await page.locator('#saveButton').click();const dl=page.waitForEvent('download');await page.locator('#downloadHtmlButton').click();const downloaded=await dl,lessonPath=testInfo.outputPath('decode-wait.reveal.html');await downloaded.saveAs(lessonPath);
+  const lesson=await context.newPage();
+  await lesson.addInitScript(()=>{const original=HTMLImageElement.prototype.decode;HTMLImageElement.prototype.decode=function(){return new Promise((resolve,reject)=>{window.releaseLessonDecode=()=>original.call(this).then(resolve,reject);});};});
+  await lesson.goto(pathToFileURL(lessonPath).href);
+  await expect(lesson.locator('#lessonWaiting')).toBeVisible();
+  await expect(lesson.locator('#lessonReady')).toBeHidden();
+  await expect(lesson.locator('#previewImage')).toBeHidden();
+  await expect(lesson.locator('#maskSvg')).toBeHidden();
+  await expect.poll(()=>lesson.evaluate(()=>typeof window.releaseLessonDecode)).toBe('function');
+  await lesson.evaluate(()=>window.releaseLessonDecode());
+  await expect(lesson.locator('#lessonReady')).toBeVisible();
+  await expect(lesson.locator('#previewImage')).toBeVisible();
+  await expect(lesson.locator('#maskSvg .mask-rect')).toHaveCount(1);
+});
+
+test('T11: lesson with JavaScript disabled exposes neither the source image nor answer text',async({page,browser},testInfo)=>{
+  await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();await addCover(page,[18,18],[52,38]);
+  await page.locator('#saveButton').click();const dl=page.waitForEvent('download');await page.locator('#downloadHtmlButton').click();const downloaded=await dl,lessonPath=testInfo.outputPath('no-js.reveal.html');await downloaded.saveAs(lessonPath);
+  const noJsContext=await browser.newContext({javaScriptEnabled:false}),lesson=await noJsContext.newPage();
+  try{
+    await lesson.goto(pathToFileURL(lessonPath).href);
+    await expect(lesson.locator('#previewImage')).toBeHidden();
+    await expect(lesson.locator('#lessonReady')).toBeHidden();
+    await expect(lesson.locator('noscript')).toBeVisible();
+    await expect(lesson.locator('body')).not.toContainText('iVBORw0KGgo');
+  }finally{await noJsContext.close();}
+});
