@@ -28,13 +28,36 @@ function createPersistence({core,env,backend=null}) {
     const draft={document:stripDocument(doc)};try{return await db.atomicSaveDraft({expectedGeneration,draft,assets:assetRecords(doc)});}catch(error){throw normalizeFailure(error);}
   }
   async function loadSnapshot(){await ensureAvailable();try{return await reconstruct(await db.readDraft());}catch(error){throw normalizeFailure(error);}}
+  function canonicalJson(value){
+    if(value===null||typeof value!=='object')return JSON.stringify(value);
+    if(Array.isArray(value))return '['+value.map(canonicalJson).join(',')+']';
+    return '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonicalJson(value[key])).join(',')+'}';
+  }
+  async function fingerprintDocument(doc){
+    const subtle=env?.crypto?.subtle;if(!subtle||typeof subtle.digest!=='function')return null;
+    try{const bytes=new env.TextEncoder().encode(canonicalJson(doc)),digest=new Uint8Array(await subtle.digest('SHA-256',bytes));return Array.from(digest,byte=>byte.toString(16).padStart(2,'0')).join('');}
+    catch{return null;}
+  }
+  function validIdentity(identity){return Boolean(identity)&&typeof identity.documentId==='string'&&identity.documentId.length>0&&Number.isSafeInteger(identity.revision)&&identity.revision>=1&&typeof identity.fingerprint==='string'&&/^[0-9a-f]{64}$/.test(identity.fingerprint);}
+  function closedSession(session){
+    if(!session||!['free','guided'].includes(session.mode))return null;
+    const cloned=JSON.parse(JSON.stringify(session));
+    if(cloned.mode==='free'){if(!Array.isArray(cloned.queue)||!Array.isArray(cloned.confirmedQuestionIds))return null;cloned.openQuestionIds=[];return cloned;}
+    if(!Array.isArray(cloned.queue)||!cloned.ratings||typeof cloned.ratings!=='object'||!Number.isInteger(cloned.index))return null;
+    if(!cloned.ended)cloned.stage='hidden';cloned.epoch=(Number.isSafeInteger(cloned.epoch)?cloned.epoch:0)+1;return cloned;
+  }
+  async function saveSession(identity,session,expectedGeneration=0){
+    if(!settings.studyOptIn||!validIdentity(identity))return null;await ensureAvailable();const safe=closedSession(session);if(!safe)return null;
+    try{return await db.atomicSaveSession({key:identity.documentId,expectedGeneration,identity:{...identity},session:JSON.parse(JSON.stringify(session))});}catch(error){throw normalizeFailure(error);}
+  }
+  async function loadSession(identity){
+    if(!validIdentity(identity))return null;await ensureAvailable();
+    try{const record=await db.readSession(identity.documentId);if(!record)return null;const saved=record.identity;if(!saved||saved.documentId!==identity.documentId||saved.revision!==identity.revision||saved.fingerprint!==identity.fingerprint)return null;const session=closedSession(record.session);return session?{session,generation:record.generation,savedAt:record.savedAt}:null;}catch(error){throw normalizeFailure(error);}
+  }
   async function clearLocal(scope='draft'){
     await ensureAvailable();try{if(scope==='draft'||scope==='all'){await db.clearDraft();settings.draftOptIn=false;}if(scope==='study'||scope==='all'){await db.clearSessions();settings.studyOptIn=false;}await db.writeSettings(settings);}catch(error){throw normalizeFailure(error);}
   }
-  return Object.freeze({settings,probe,setDraftOptIn,setStudyOptIn,saveSnapshot,loadSnapshot,clearLocal,
-    // T10 methods are attached in the next task.
-    async fingerprintDocument(){return null;},async saveSession(){return null;},async loadSession(){return null;}
-  });
+  return Object.freeze({settings,probe,setDraftOptIn,setStudyOptIn,saveSnapshot,loadSnapshot,fingerprintDocument,saveSession,loadSession,clearLocal});
 
   function createIndexedDbBackend(runtime){
     if(!runtime?.indexedDB) return {async probe(){throw new DOMException('IndexedDB unavailable','SecurityError');}};
@@ -49,8 +72,8 @@ function createPersistence({core,env,backend=null}) {
       async atomicSaveDraft({expectedGeneration,draft,assets}){const database=await open();try{return await new Promise((resolve,reject)=>{const tx=database.transaction(['draft','assets'],'readwrite'),draftStore=tx.objectStore('draft'),assetStore=tx.objectStore('assets');let receipt=null,settled=false;const fail=error=>{if(settled)return;settled=true;try{tx.abort();}catch{}reject(error);};const get=draftStore.get('current');get.onerror=()=>fail(get.error||new Error('Draft read failed'));get.onsuccess=()=>{const actual=get.result?.generation||0;if(actual!==expectedGeneration){const conflict=appError('SAVE_CONFLICT');fail(conflict);return;}const generation=actual+1,savedAt=new Date().toISOString();receipt={generation,savedAt};assetStore.clear();for(const asset of assets)assetStore.put(asset,asset.id);draftStore.put({...draft,generation,savedAt},'current');};tx.oncomplete=()=>{if(!settled){settled=true;resolve(receipt);}};tx.onabort=()=>{if(!settled){settled=true;reject(tx.error||new DOMException('Transaction aborted','AbortError'));}};tx.onerror=()=>{};});}finally{database.close();}},
       async readDraft(){const database=await open();try{const tx=database.transaction(['draft','assets'],'readonly'),draftPromise=req(tx.objectStore('draft').get('current')),assetsPromise=req(tx.objectStore('assets').getAll()),draft=await draftPromise,assets=await assetsPromise;await done(tx);return draft?{draft,assets}:null;}finally{database.close();}},
       async clearDraft(){const database=await open();try{const tx=database.transaction(['draft','assets'],'readwrite');tx.objectStore('draft').clear();tx.objectStore('assets').clear();await done(tx);}finally{database.close();}},
-      async atomicSaveSession(){throw appError('LOCAL_SAVE_FAILED');},
-      async readSession(){return null;},
+      async atomicSaveSession({key,expectedGeneration,identity,session}){const database=await open();try{return await new Promise((resolve,reject)=>{const tx=database.transaction('sessions','readwrite'),store=tx.objectStore('sessions');let receipt=null,settled=false;const fail=error=>{if(settled)return;settled=true;try{tx.abort();}catch{}reject(error);};const get=store.get(key);get.onerror=()=>fail(get.error||new Error('Session read failed'));get.onsuccess=()=>{const actual=get.result?.generation||0;if(actual!==expectedGeneration){fail(appError('SAVE_CONFLICT'));return;}const generation=actual+1,savedAt=new Date().toISOString();receipt={generation,savedAt};store.put({identity:{...identity},session:JSON.parse(JSON.stringify(session)),generation,savedAt},key);};tx.oncomplete=()=>{if(!settled){settled=true;resolve(receipt);}};tx.onabort=()=>{if(!settled){settled=true;reject(tx.error||new DOMException('Transaction aborted','AbortError'));}};tx.onerror=()=>{};});}finally{database.close();}},
+      async readSession(key){const database=await open();try{const tx=database.transaction('sessions','readonly'),value=await req(tx.objectStore('sessions').get(key));await done(tx);return value||null;}finally{database.close();}},
       async clearSessions(){const database=await open();try{const tx=database.transaction('sessions','readwrite');tx.objectStore('sessions').clear();await done(tx);}finally{database.close();}}
     };
   }
