@@ -1,14 +1,14 @@
 /** The foundation editor owns transient document and asynchronous input state.
  * No draft/session storage is used in v0.1.0. Files never leave this page.
  */
-function createEditor({core,imageIO,projectIO,persistence,appVersion,env,translate,getLanguage}) {
+function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVersion,env,translate,getLanguage}) {
   const $ = id => env.document.getElementById(id);
   const ctx={newId:kind=>kind+'_'+Array.from(env.crypto.getRandomValues(new Uint8Array(16)),x=>x.toString(16).padStart(2,'0')).join('')};
   let doc=core.newDocument(ctx,translate('untitled'));
   let selectedId=null, selectedMaskId=null, selectedMaskIds=new Set(), generation=0, batchId=0, displayGeneration=0;
   let controller=null, busy=false, failures=[], progress=null;
   let undo=[],redo=[],viewKey='',lastStatus='emptyStatus',mode='create',tool='move',studySession=null,studyMode='free',previousStudySummary=null,studyEditActive=false,studyEditImpact=null;
-  let filenameBase='reveal-sheet';
+  let filenameBase='reveal-sheet',preparedLessonBlob=null;
   let gesture=null,twoPointStart=null,draftRect=null;
   let draftSaveTimer=0,draftSaveChain=Promise.resolve(),localDraftGeneration=0,draftConflict=false,localAvailable=false,localDraftExists=false,lastDraftSavedAt='';
   let studySaveTimer=0,studySaveChain=Promise.resolve(),studyRecordGeneration=0,studyIdentityToken='',studyConflict=false,localStudyExists=false,lastStudySavedAt='';
@@ -213,7 +213,7 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
     const page=doc.pages.find(p=>p.id===selectedId),asset=page&&doc.assets.find(a=>a.id===page.imageId);
     if(asset){$('imageDimensions').textContent=`${asset.width} × ${asset.height} px`;$('imageBytes').textContent=formatBytes(asset.byteLength);}
     const totalAssetBytes=doc.assets.reduce((sum,a)=>sum+a.byteLength,0);
-    $('totalBytes').textContent=formatBytes(totalAssetBytes);$('savePageCount').textContent=String(doc.pages.length);$('saveQuestionCount').textContent=String(doc.questions.length);$('saveImageBytes').textContent=formatBytes(totalAssetBytes);
+    $('totalBytes').textContent=formatBytes(totalAssetBytes);$('savePageCount').textContent=String(doc.pages.length);$('saveQuestionCount').textContent=String(doc.questions.length);$('saveAuxCount').textContent=String(doc.masks.filter(mask=>mask.kind==='auxiliary').length);$('saveImageBytes').textContent=formatBytes(totalAssetBytes);$('saveHtmlBytes').textContent=preparedLessonBlob?formatBytes(preparedLessonBlob.size):'—';$('downloadHtmlButton').disabled=busy||doc.questions.length===0||!playerTemplate;
     if(!$('outputFilename').value)$('outputFilename').value=filenameBase;
     refreshStudy();updateToolButtons();renderOverlay();refreshViewControls();
   }
@@ -245,14 +245,14 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
   }
   function commit(nextOrMutation,maskId=selectedMaskId) {
     const oldDoc=doc,mutationResult=nextOrMutation?.document?nextOrMutation:derivedMutation(oldDoc,nextOrMutation),next=mutationResult.document;
-    undo.push(doc);if(undo.length>core.limits.maxUndo)undo.shift();redo=[];doc=next;selectedMaskId=maskId;reconcileStudyEdit(oldDoc,mutationResult);scheduleDraftSave();
+    undo.push(doc);if(undo.length>core.limits.maxUndo)undo.shift();redo=[];doc=next;preparedLessonBlob=null;selectedMaskId=maskId;reconcileStudyEdit(oldDoc,mutationResult);scheduleDraftSave();
   }
   function history(direction) {
     if(busy||mode==='study')return;
     const from=direction==='undo'?undo:redo,to=direction==='undo'?redo:undo;if(!from.length)return;
     const oldDoc=doc;to.push(doc);const snapshot=from.pop(),revisionMap=new Map(doc.questions.map(question=>[question.id,question.revision]));
     const next={...snapshot,revision:doc.revision+1,questions:snapshot.questions.map(question=>({...question,revision:Math.max(question.revision,revisionMap.get(question.id)||question.revision)}))};
-    const mutationResult=derivedMutation(oldDoc,next);doc=next;reconcileStudyEdit(oldDoc,mutationResult);
+    const mutationResult=derivedMutation(oldDoc,next);doc=next;preparedLessonBlob=null;reconcileStudyEdit(oldDoc,mutationResult);
     if(!doc.pages.some(p=>p.id===selectedId))selectedId=doc.pages.at(-1)?.id||null;
     if(!doc.masks.some(m=>m.id===selectedMaskId))selectedMaskId=null;selectedMaskIds=new Set([...selectedMaskIds].filter(id=>doc.masks.some(mask=>mask.id===id)));
     status(direction==='undo'?'undone':'redone');scheduleDraftSave();refreshCopy();showPreview();
@@ -397,9 +397,13 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
     mode='study';const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);
   }
   function beginCreate(){scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='create';studySession=null;previousStudySummary=null;refreshCopy();$('addButton').focus({preventScroll:true});}
-  function beginSave(){if(!doc.pages.length||busy)return;scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='save';studySession=null;selectedMaskId=null;refreshCopy();$('outputFilename').focus({preventScroll:true});}
+  function beginSave(){
+    if(!doc.pages.length||busy)return;scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='save';studySession=null;selectedMaskId=null;preparedLessonBlob=null;
+    if(doc.questions.length&&playerTemplate){try{preparedLessonBlob=projectIO.prepareHtml(doc,playerTemplate,appVersion);}catch(error){status('error_'+(error?.code||'INVALID_SHEET'));}}
+    refreshCopy();$('outputFilename').focus({preventScroll:true});
+  }
   function applyImported(envelope,{fromLocal=false}={}){
-    generation++;cancelStudyTimer();studyRecordGeneration=0;studyIdentityToken='';studyConflict=false;controller?.abort();imageIO.releaseAll();doc=envelope.document;selectedId=doc.pages[0]?.id||null;selectedMaskId=null;selectedMaskIds.clear();undo=[];redo=[];failures=[];studySession=null;studyEditActive=false;studyEditImpact=null;mode='create';tool='move';twoPointStart=null;viewKey='';
+    generation++;cancelStudyTimer();studyRecordGeneration=0;studyIdentityToken='';studyConflict=false;preparedLessonBlob=null;controller?.abort();imageIO.releaseAll();doc=envelope.document;selectedId=doc.pages[0]?.id||null;selectedMaskId=null;selectedMaskIds.clear();undo=[];redo=[];failures=[];studySession=null;studyEditActive=false;studyEditImpact=null;mode='create';tool='move';twoPointStart=null;viewKey='';
     filenameBase=doc.title&&doc.title!==t('untitled')?doc.title:'reveal-sheet';$('outputFilename').value=filenameBase;status(fromLocal?'draftRestored':'sheetOpened');refreshCopy();showPreview(true);if(!fromLocal)scheduleDraftSave();
   }
   async function openSheet(file){
@@ -428,6 +432,15 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
       status('saveStarted');refreshCopy();
     }catch(error){status('error_'+(error?.code||'INVALID_SHEET'));refreshCopy();}
   }
+  function downloadHtml(){
+    if(!doc.questions.length||busy||!playerTemplate)return;
+    try{
+      const blob=preparedLessonBlob||projectIO.prepareHtml(doc,playerTemplate,appVersion),name=projectIO.sanitizeFilename($('outputFilename').value,'html'),url=env.URL.createObjectURL(blob);
+      preparedLessonBlob=blob;filenameBase=name.replace(/\.reveal\.html$/i,'');$('outputFilename').value=filenameBase;$('saveHtmlBytes').textContent=formatBytes(blob.size);
+      const anchor=env.document.createElement('a');anchor.href=url;anchor.download=name;anchor.hidden=true;env.document.body.append(anchor);anchor.click();anchor.remove();env.setTimeout(()=>env.URL.revokeObjectURL(url),0);
+      status('saveStarted');refreshCopy();
+    }catch(error){status('error_'+(error?.code||'INVALID_SHEET'));refreshCopy();}
+  }
   function keydown(event){if(editableTarget(event.target)||env.document.querySelector('dialog[open]'))return;if(mode==='study'&&studySession?.mode==='guided'){if(event.key===' '){event.preventDefault();revealGuided();}else if(event.key==='1'){event.preventDefault();if(studySession.stage==='revealed')rateGuided('recalled');}else if(event.key==='2'){event.preventDefault();if(studySession.stage==='revealed')rateGuided('again');}else if(event.key.toLowerCase()==='s'){event.preventDefault();skipGuided();}else if(event.key==='ArrowLeft'){event.preventDefault();previousGuided();}return;}if(mode!=='create'||!currentMask())return;const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};if(map[event.key]){event.preventDefault();editSelected(map[event.key],event.shiftKey?10:1);}else if(event.key==='Delete'||event.key==='Backspace'){event.preventDefault();deleteSelected();}else if(event.key==='Escape'){selectedMaskId=null;tool='move';twoPointStart=null;pointerCancel();refreshCopy();}}
   function destroy(){generation++;cancelDraftTimer();cancelStudyTimer();controller?.abort();imageIO.releaseAll();studyView.destroy();image.hidden=true;setSvgHidden(true);image.removeAttribute('src');}
   $('addButton').addEventListener('click',()=>$('imageInput').click());
@@ -446,7 +459,7 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
   $('freeModeButton').addEventListener('click',()=>switchStudyMode('free'));$('guidedModeButton').addEventListener('click',()=>switchStudyMode('guided'));$('otherAnswersHidden').addEventListener('change',event=>{if(event.target.checked)changeOtherAnswers('hidden');});$('otherAnswersVisible').addEventListener('change',event=>{if(event.target.checked)changeOtherAnswers('visible');});$('revealCurrentButton').addEventListener('click',revealGuided);$('recalledButton').addEventListener('click',()=>rateGuided('recalled'));$('againButton').addEventListener('click',()=>rateGuided('again'));$('skipButton').addEventListener('click',skipGuided);$('previousQuestionButton').addEventListener('click',previousGuided);$('finishStudyButton').addEventListener('click',finishGuided);$('reviewAgainButton').addEventListener('click',()=>reviewGuided('again'));$('reviewUncheckedButton').addEventListener('click',()=>reviewGuided('unchecked'));
   $('viewLeft').addEventListener('click',()=>nudgeView(-1,0));$('viewRight').addEventListener('click',()=>nudgeView(1,0));$('viewUp').addEventListener('click',()=>nudgeView(0,-1));$('viewDown').addEventListener('click',()=>nudgeView(0,1));$('viewZoomIn').addEventListener('click',()=>zoomView(1.25));$('viewZoomOut').addEventListener('click',()=>zoomView(.8));$('viewFit').addEventListener('click',fitView);$('focusQuestionButton').addEventListener('click',focusCurrentQuestion);$('editCurrentQuestionButton').addEventListener('click',editCurrentQuestion);$('returnToStudyButton').addEventListener('click',returnToStudy);
   $('draftOptIn').addEventListener('change',changeDraftOptIn);$('studyOptIn').addEventListener('change',changeStudyOptIn);$('clearDraftButton').addEventListener('click',clearDraftLocal);$('clearStudyButton').addEventListener('click',clearStudyLocal);$('resolveConflictSaveButton').addEventListener('click',beginSave);$('resolveConflictReloadButton').addEventListener('click',reloadConflictDraft);
-  $('studyButton').addEventListener('click',beginStudy);$('createButton').addEventListener('click',beginCreate);$('saveButton').addEventListener('click',beginSave);$('downloadJsonButton').addEventListener('click',downloadJson);$('openButton').addEventListener('click',()=>$('sheetInput').click());$('sheetInput').addEventListener('change',event=>{const file=event.target.files?.[0]||null;event.target.value='';openSheet(file);});$('hideAllButton').addEventListener('click',()=>{studySession=core.hideAllFree(studySession);scheduleStudySave();refreshCopy();});$('revealPageButton').addEventListener('click',()=>{studySession=core.revealPageFree(doc,studySession,selectedId);scheduleStudySave();refreshCopy();});
+  $('studyButton').addEventListener('click',beginStudy);$('createButton').addEventListener('click',beginCreate);$('saveButton').addEventListener('click',beginSave);$('downloadJsonButton').addEventListener('click',downloadJson);$('downloadHtmlButton').addEventListener('click',downloadHtml);$('openButton').addEventListener('click',()=>$('sheetInput').click());$('sheetInput').addEventListener('change',event=>{const file=event.target.files?.[0]||null;event.target.value='';openSheet(file);});$('hideAllButton').addEventListener('click',()=>{studySession=core.hideAllFree(studySession);scheduleStudySave();refreshCopy();});$('revealPageButton').addEventListener('click',()=>{studySession=core.revealPageFree(doc,studySession,selectedId);scheduleStudySave();refreshCopy();});
   svg.addEventListener('pointerdown',pointerDown);svg.addEventListener('pointermove',pointerMove);svg.addEventListener('pointerup',pointerUp);svg.addEventListener('pointercancel',pointerCancel);svg.addEventListener('click',twoPoint);
   env.document.addEventListener('keydown',keydown);
   env.document.addEventListener('paste',paste);
