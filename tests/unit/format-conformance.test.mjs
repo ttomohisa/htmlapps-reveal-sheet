@@ -33,6 +33,17 @@ test('T13 keeps schema v1 editable files interoperable after guided-study defaul
   assert.deepEqual(toPlain(roundTrip.document.defaults),{mode:'guided',otherAnswers:'visible'});
 });
 
+test('T13 opens every format-1 milestone fixture without dropping document data',async()=>{
+  const io=project();
+  for(const version of ['0.2.0','0.3.0','0.4.0','0.5.0','0.6.0']){
+    const value=JSON.parse(fs.readFileSync('tests/fixtures/sheets/v'+version+'.reveal.json','utf8'));
+    assert.equal(core.validateEnvelope(value).ok,true,version);
+    const loaded=await io.readJson(asFile(value,'v'+version+'.reveal.json'));
+    assert.equal(loaded.appVersion,version);
+    assert.deepEqual(toPlain(loaded.document),toPlain(value.document));
+  }
+});
+
 test('T13 accepts the v0.2.0 format-1 fixture and rejects future schema versions explicitly',async()=>{
   const io=project();
   assert.equal(core.validateEnvelope(fixture).ok,true);
