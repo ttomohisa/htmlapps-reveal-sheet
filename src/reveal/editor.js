@@ -409,7 +409,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   async function openSheet(file){
     if(busy||!file)return;busy=true;status('openingSheet');refreshCopy();const localController=new env.AbortController();controller=localController;
     try{
-      const loaded=await projectIO.readJson(file,{signal:localController.signal});
+      const loaded=await projectIO.readSheet(file,{signal:localController.signal});
       if(localController.signal.aborted)return;
       busy=false;controller=null;refreshCopy();
       if(doc.pages.length){

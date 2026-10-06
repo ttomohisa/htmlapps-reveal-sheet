@@ -59,7 +59,7 @@ function createProjectIO({core,imageIO,env}) {
     }
     return !inString&&depth===0;
   }
-  const LESSON_DATA_START='<script id="reveal-sheet-data" type="application/json">';
+  const LESSON_DATA_START='<script id="reveal-'+'sheet-data" type="application/json">';
   const LESSON_DATA_END='</'+'script>';
   function extractLessonEnvelope(text){
     if(typeof text!=='string'||text.length===0)fail('INVALID_SHEET');
