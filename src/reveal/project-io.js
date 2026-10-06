@@ -17,10 +17,6 @@ function createProjectIO({core,imageIO,env}) {
   }
   function assertSupportedEditable(value){
     if(value.kind!=='editable')fail('INVALID_SHEET');
-    const doc=value.document;
-    // v0.3 supports grouped questions and auxiliary covers, while guided-study
-    // defaults still belong to a later milestone.
-    if(doc.defaults.mode!=='free'||doc.defaults.otherAnswers!=='hidden')fail('INVALID_SHEET');
   }
   function serialize(doc,kind='editable',appVersion='0.2.0'){
     const value=envelope(doc,kind,appVersion);
