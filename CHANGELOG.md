@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.4.0 - 2026-10-06 (development)
+
+T07–T08: guided one-at-a-time study, self-assessment/results/review, targeted editing during study, and per-page view-state preservation. This is still a development milestone, not the v1.0 release.
+
+- Added one-at-a-time study in page/question order with a hidden → revealed → assessed state machine.
+- Added Recalled / Review again / Skip ratings, early finish, previous-question navigation, and duplicate-epoch guards so repeated events do not advance or assess twice.
+- Added result summaries where total = recalled + review-again + skipped + unanswered, plus separate Review again-only and unchecked review sessions.
+- Added the choice to hide or show other answer covers in guided study while auxiliary covers always remain opaque.
+- Added per-page zoom/center state and explicit pan, zoom, fit-image and This question controls. Revealing or rating an answer does not automatically recenter the image.
+- Added Edit this question / Return to study. Targeted edits reconcile the active study session: affected questions become unanswered, unrelated ratings remain, deleted questions leave the denominator, and normal sessions append newly added questions.
+- Review sessions keep their start target set and do not silently absorb newly added questions.
+- Undo does not resurrect a rating invalidated by an edit, even when geometry is restored.
+- Kept study results and view state out of editable JSON.
+
+### Development fixes and verification additions
+
+- Added guided-session unit coverage for reveal-before-rating, reassessment, skip, early finish, review denominators and auxiliary visibility.
+- Added reconciliation coverage for geometry changes, auxiliary changes, grouping/deletion/addition, review-session target stability, free-study confirmation invalidation and explicit reveal-target centering.
+- Added browser regressions for edit/return view preservation, current-question deletion, explicit This question recentering, language-switch view preservation, and keeping the raw image hidden while a page preview is decoding.
+
 ## 0.3.0 - 2026-10-06 (development)
 
 T05–T06: page management, grouped answers, auxiliary covers and overlap handling. This is still a development milestone, not the v1.0 release.

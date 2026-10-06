@@ -2,7 +2,7 @@
 
 [日本語](README.ja.md)
 
-Reveal Sheet turns diagrams, photos and notes that already contain answers into study sheets with opaque covers. **The current v0.3.0 development build supports image input, page management, cover editing, grouped answers, auxiliary covers, free reveal study, and image-embedded editable JSON save/reopen.** It is not the completed v1.0 release.
+Reveal Sheet turns diagrams, photos and notes that already contain answers into study sheets with opaque covers. **The current v0.4.0 development build adds one-at-a-time study, self-assessment, session results/review, and targeted edits that return to the same study position, alongside the existing free-reveal and image-embedded editable JSON flows.** It is not the completed v1.0 release.
 
 ## Available now
 
@@ -14,6 +14,10 @@ Select multiple answer covers and use **Reveal together** to make them one quest
 
 Free study mode reveals and hides answers in place. The checked count is the number of unique questions opened in that session, not a score or mastery rate. Group members open together.
 
+**One at a time** follows page/question order. A question cannot be rated before its answer is revealed; after revealing, choose Recalled or Review again, or Skip. Results are counted per question. Review again only and Review unchecked start separate review sessions without changing the original session denominator.
+
+Use **Edit this question** during guided study to change the relevant cover and then **Return to study**. The current question and per-page zoom/center are preserved, affected questions become unanswered, and unrelated ratings remain. **This question** recenters only when explicitly requested.
+
 Save images, pages, questions and covers as a `.reveal.json` file and reopen it without reselecting the source image. Study results, Undo history, view position and original filenames are not exported.
 
 ## Usage
@@ -21,8 +25,9 @@ Save images, pages, questions and covers as a `.reveal.json` file and reopen it 
 1. Open `reveal-sheet.html` or `dist/index.html` and choose **Add images**.
 2. Use **Cover** and drag, or **Two points**, to cover an answer.
 3. Select multiple covers when needed and choose **Reveal together**. Convert hint covers to **Keep covered while studying**.
-4. Choose **Study** to reveal answers freely.
-5. Use **Save** to export the editable sheet. Use **Open a sheet** to reopen the `.reveal.json` file later.
+4. Choose **Study**, then use Reveal freely or One at a time. In guided study, reveal the answer before self-assessing and use the result screen for focused review sessions.
+5. Use **Edit this question** when a study item needs correction, then **Return to study** to continue.
+6. Use **Save** to export the editable sheet. Use **Open a sheet** to reopen the `.reveal.json` file later.
 
 Automatic draft saving is not implemented yet. Export an editable sheet before closing the page if you want to keep your work.
 
@@ -76,7 +81,7 @@ Set `APP_VARIANT=self-extract` to run the same E2E suite against the self-extrac
 
 ## Roadmap
 
-The next stage, v0.4.0 / T07–T08, adds one-at-a-time study, self-assessment/results/review sessions, and returning to the same study position after targeted edits. Optional local persistence and portable study HTML come later. PDF, OCR, AI and cloud sync are outside the initial scope.
+The next stage, v0.5.0 / T09–T10, adds opt-in on-device draft persistence and opt-in study-session continuation. Portable study HTML follows in v0.6.0 and later. PDF, OCR, AI and cloud sync are outside the initial scope.
 
 ## License
 

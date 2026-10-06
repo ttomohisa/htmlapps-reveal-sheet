@@ -2,17 +2,51 @@
 
 ## Scope and status
 
-This record contains verified CI evidence through v0.2.0 / T01–T04 and the current v0.3.0 / T05–T06 candidate evidence. It does not mark all 48 formal acceptance items complete. Page management, grouped answers, auxiliary covers and overlap handling are now implemented, but the current-head Windows application workflow is still queued because GitHub Actions is experiencing hosted-runner assignment delays. Guided study, automatic local persistence and portable lesson HTML are not implemented. Physical phones, Safari, Firefox, assistive technology and resource-limit stress tests remain untested.
+This record contains verified CI evidence through v0.4.0 / T01–T08. It does not mark all 48 formal acceptance items complete. Page management, grouped answers, auxiliary covers, free reveal study, guided one-at-a-time study, self-assessment/results/review sessions, targeted study-time editing and per-page view-state preservation are implemented. Automatic local persistence and portable lesson HTML are not implemented. Physical phones, Safari, Firefox, assistive technology and resource-limit stress tests remain untested.
 
-## v0.3.0 milestone candidate — 2026-10-06
+## Verified v0.4.0 milestone — 2026-10-06
+
+Tested application source commit: **5b8487148d5306cf4de473d998f824e4cfcb502d**.
+
+- Application workflow **37398735263**: success.
+- Standalone validation workflow **37398735362**: success.
+- PR preview workflow **37398735219**: success.
+
+Environment: GitHub-hosted Windows runner, Node 24 and the repository-pinned Playwright / Chromium development browser. These are hosted automated checks, not physical Android/iPhone, user-PC Edge, Safari or Firefox tests.
+
+| Verification | Result |
+|---|---|
+| Pure unit tests | 70 passed, 0 failed |
+| Normal HTML opened via file URL | 39 passed |
+| Self-extracting HTML opened via file URL | 39 passed |
+| PowerShell syntax / assembly-negative fixtures | Passed |
+| Repository build and standalone contracts | Passed |
+| Normal/root-copy bytes and self-extract restoration | Passed |
+| QA capture step | Passed |
+| Readable HTML size | 0.17 MB |
+| Readable HTML SHA-256 in application workflow | `7296861e0add31e972b344c2af0cad589f43de17064fcaafcf28ccfbf35071d7` |
+
+T07 automated checks cover guided queue snapshots, hidden → revealed → assessed transitions, reveal-before-rating, Recalled / Review again / Skip, duplicate-event epoch guards, reassessment, early finish, result accounting, Review again-only / unchecked review denominators, other-answer visibility, auxiliary covers remaining closed, keyboard actions and free-mode regression behavior.
+
+T08 automated checks cover question-revision-based session reconciliation, one-pixel answer-cover edits, same-page invalidation for auxiliary-cover edits, rating preservation for page metadata edits, current-question deletion, normal-session new-question append, review-session target-set stability, grouping/deletion effects, free-mode confirmation invalidation, and the rule that Undo does not revive an invalidated rating. Browser checks cover Edit this question → Return to study, preserving zoom/center, deleting the current question, explicit This question recentering, language-switch view preservation, and hiding the raw image / cover layer until a switched page finishes decoding.
+
+The display position is session-only state. It is kept in the browser for the active work session and is not added to editable JSON. Guided ratings/results are likewise not part of the editable document export.
+
+### v0.4.0 failures found and corrected during verification
+
+- Commit `b88163c` produced a browser-wide startup failure because literal `\n` characters were accidentally written into assembled JavaScript source. Unit/build checks did not originally parse every assembled source. A regression now parses `core.js`, `image-io.js`, `project-io.js`, `study-view.js` and `editor.js` as JavaScript before browser tests. The malformed source and incomplete StudyView view-state wiring were corrected in `13da208` / `246c92f`.
+- After startup was restored, the only remaining readable-browser failure was the existing 320px regression requiring the loaded preview to begin above y=600. The longer v0.4 development note pushed the preview down. Commit `5b84871` hides that development note on narrow loaded layouts without removing editing/study controls; the unchanged position assertion then passed.
+- The final workflow above passes both readable and self-extracting direct-file suites without relaxing the prior image-position or startup requirements.
+
+## Historical v0.3.0 milestone evidence — 2026-10-06
 
 Current source commit: **b7ad1d5054492cbc79795e2d48413a7ee440d140**.
 
-Current-head remote evidence:
+Historical candidate evidence:
 
 - Standalone validation workflow **37368668862**: success.
 - PR preview workflow **37368668838**: success.
-- Application workflow **37368668841**: queued at the time of this record. Do not report the current head as a complete Windows readable/self-extract application-suite pass until that workflow finishes successfully.
+- The later docs-head application workflow did not become the final v0.3 direct-file acceptance record. The current v0.4 full suite above includes the T05/T06 regressions and now supplies passing readable/self-extract evidence for those features.
 
 Fresh diagnostics from the exact current-head source snapshot and generated readable artifact:
 
@@ -25,7 +59,7 @@ Fresh diagnostics from the exact current-head source snapshot and generated read
 | Saved envelope versioning | `appVersion: 0.3.0`, `schemaVersion: 1` |
 | Page errors in the above diagnostics | 0 |
 
-The local container blocks the repository's normal direct `file:` browser route, so these page-content diagnostics are **not** counted as direct-file acceptance. The queued Windows workflow remains the required current-head evidence for readable and self-extracting direct-file operation.
+The local container blocks the repository's normal direct `file:` browser route, so these page-content diagnostics were **not** counted as direct-file acceptance. The v0.4 Windows workflow above now supplies current passing readable and self-extracting direct-file coverage including these regressions.
 
 The immediately preceding v0.3.0 candidate commit **31d76a44d51323bcbccd5d72dcddb969efcaf292** ran the Windows suite far enough to show both T06 Chromium tests passing: explicit multi-selection → grouped question → auxiliary conversion, and separate overlapping questions with the unrevealed cover remaining visible. That run failed later because the T04 export regression test still hard-coded `appVersion: 0.2.0`. Commit **b7ad1d5** changed only that expectation to read the current app version from `app.config.json`; the v0.2.0 import fixture remains to exercise format-1 compatibility.
 
@@ -98,10 +132,10 @@ Feature tests were first observed failing for missing core/input functionality, 
 
 ## Acceptance mapping at this stage
 
-Verified CI paths through v0.2.0 cover AC-01 through AC-07, the T03/T04 portions of AC-09, AC-10, AC-11, AC-17, AC-24, AC-27, AC-28 and AC-31, plus the T01 portion of AC-45. The v0.3.0 candidate adds automated coverage for the T05/T06 portions of AC-08, AC-11, AC-12, AC-13, AC-14, AC-15, AC-16 and editable-format compatibility. Current-head Windows direct-file completion remains pending until workflow 37368668841 finishes. Several acceptance items intentionally span later tasks, manual observation or real-device checks; automated coverage of one path is not full acceptance. No v1.0 release judgment is made.
+Verified CI paths through v0.4.0 cover the earlier T01–T06 mappings plus the T07/T08 portions of guided-study, session reconciliation, result/review, view-position, keyboard and mobile-layout acceptance. The current 70-unit / 39-readable / 39-self-extract suite also reruns all earlier browser regressions on the v0.4.0 source. Several formal acceptance items intentionally span later persistence / lesson-HTML tasks, manual observation or real-device checks; automated coverage of one path is not full acceptance. No v1.0 release judgment is made.
 
 ## Not yet verified / not implemented
 
-Physical Android Chrome and iPhone Safari; macOS Safari; Firefox; Edge-specific behavior; HTTPS-hosted file input; no-JavaScript self-extractor fallback; maximum-size memory stress; OS-level save/reopen outside CI; real screen-reader and software-keyboard behavior. The current-head Windows application run is also pending as recorded above. Guided one-at-a-time study, edit-return session reconciliation, automatic local save/resume and portable lesson HTML are not implemented yet.
+Physical Android Chrome and iPhone Safari; macOS Safari; Firefox; Edge-specific behavior; HTTPS-hosted file input; no-JavaScript self-extractor fallback; maximum-size memory stress; OS-level save/reopen outside CI; real screen-reader and software-keyboard behavior. Optional local draft persistence, optional study-session continuation across reloads, and portable lesson HTML are not implemented yet.
 
-The next planned development stage is T07–T08 / v0.4.0, but it should not begin until the v0.3.0 review gate is cleared by the repository owner. Continue using the owner-provided full specification, development plan and acceptance matrix. Do not infer later behavior from this milestone's UI.
+The next planned development stage is T09–T10 / v0.5.0. It must not begin until the v0.4.0 review gate is cleared by the repository owner. Continue using the owner-provided full specification, development plan and acceptance matrix. Do not infer later behavior from this milestone's UI.
