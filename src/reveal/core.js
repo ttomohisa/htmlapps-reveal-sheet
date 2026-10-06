@@ -322,10 +322,13 @@ function createRevealCore() {
     if(!exactKeys(doc,['id','revision','title','defaults','pages','assets','questions','masks']))return fail('$.document');
     if(!validId(doc.id)||!validPositiveInt(doc.revision)||!validText(doc.title,120))return fail('$.document.identity');
     if(!exactKeys(doc.defaults,['mode','otherAnswers'])||!['free','guided'].includes(doc.defaults.mode)||!['hidden','visible'].includes(doc.defaults.otherAnswers))return fail('$.document.defaults');
-    if(!Array.isArray(doc.pages)||doc.pages.length<1||doc.pages.length>limits.maxPages)return fail('$.document.pages');
+    if(!Array.isArray(doc.pages)||doc.pages.length<1)return fail('$.document.pages');
+    if(doc.pages.length>limits.maxPages)return fail('$.document.pages','LIMIT_EXCEEDED');
     if(!Array.isArray(doc.assets)||doc.assets.length<1)return fail('$.document.assets');
-    if(!Array.isArray(doc.questions)||doc.questions.length>limits.maxQuestions)return fail('$.document.questions');
-    if(!Array.isArray(doc.masks)||doc.masks.length>limits.maxMasks)return fail('$.document.masks');
+    if(!Array.isArray(doc.questions))return fail('$.document.questions');
+    if(doc.questions.length>limits.maxQuestions)return fail('$.document.questions','LIMIT_EXCEEDED');
+    if(!Array.isArray(doc.masks))return fail('$.document.masks');
+    if(doc.masks.length>limits.maxMasks)return fail('$.document.masks','LIMIT_EXCEEDED');
     if(value.kind==='lesson'&&doc.questions.length<1)return fail('$.document.questions');
 
     const assets=new Map(),pages=new Map(),questions=new Map(),masks=new Map();
@@ -335,8 +338,10 @@ function createRevealCore() {
       const asset=doc.assets[index],path='$.document.assets['+index+']';
       if(!exactKeys(asset,['id','mime','width','height','byteLength','dataBase64']))return fail(path);
       if(!validId(asset.id)||assets.has(asset.id)||asset.mime!=='image/png')return fail(path);
-      if(!Number.isSafeInteger(asset.width)||!Number.isSafeInteger(asset.height)||asset.width<1||asset.height<1||asset.width>limits.maxSide||asset.height>limits.maxSide||asset.width*asset.height>limits.maxPixels)return fail(path);
-      if(!Number.isSafeInteger(asset.byteLength)||asset.byteLength<1||asset.byteLength>limits.maxPngBytes)return fail(path);
+      if(!Number.isSafeInteger(asset.width)||!Number.isSafeInteger(asset.height)||asset.width<1||asset.height<1)return fail(path);
+      if(asset.width>limits.maxSide||asset.height>limits.maxSide||asset.width*asset.height>limits.maxPixels)return fail(path,'LIMIT_EXCEEDED');
+      if(!Number.isSafeInteger(asset.byteLength)||asset.byteLength<1)return fail(path);
+      if(asset.byteLength>limits.maxPngBytes)return fail(path,'LIMIT_EXCEEDED');
       if(decodedBase64Length(asset.dataBase64)!==asset.byteLength||!asset.dataBase64.startsWith('iVBORw0KGgo'))return fail(path+'.dataBase64');
       totalAssetBytes+=asset.byteLength;if(totalAssetBytes>limits.maxAssetBytes)return fail('$.document.assets','LIMIT_EXCEEDED');
       assets.set(asset.id,asset);
@@ -355,7 +360,8 @@ function createRevealCore() {
       const question=doc.questions[index],path='$.document.questions['+index+']';
       if(!exactKeys(question,['id','pageId','revision','maskIds','prompt','answer']))return fail(path);
       if(!validId(question.id)||questions.has(question.id)||!validId(question.pageId)||!pages.has(question.pageId)||!validPositiveInt(question.revision))return fail(path);
-      if(!Array.isArray(question.maskIds)||question.maskIds.length<1||question.maskIds.length>limits.maxQuestionMasks||question.maskIds.some(id=>!validId(id))||new Set(question.maskIds).size!==question.maskIds.length)return fail(path+'.maskIds');
+      if(!Array.isArray(question.maskIds)||question.maskIds.length<1||question.maskIds.some(id=>!validId(id))||new Set(question.maskIds).size!==question.maskIds.length)return fail(path+'.maskIds');
+      if(question.maskIds.length>limits.maxQuestionMasks)return fail(path+'.maskIds','LIMIT_EXCEEDED');
       if(!validText(question.prompt,2000)||!validText(question.answer,2000))return fail(path);
       totalTextBytes+=utf8Length(question.prompt)+utf8Length(question.answer);questions.set(question.id,question);
     }

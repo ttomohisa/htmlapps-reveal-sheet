@@ -2,7 +2,39 @@
 
 ## Scope and status
 
-This record contains verified CI evidence through v0.6.0 / T01–T12. It does not mark all 48 formal acceptance items complete. Page management, grouped/auxiliary covers, free and guided study, review sessions, targeted study-time editing, per-page view-state preservation, opt-in on-device persistence, self-contained study lesson HTML, and non-executing lesson re-edit are implemented. Physical phones, Safari, Firefox, assistive technology and resource-limit stress tests remain untested.
+This record contains verified CI evidence through v0.7.0 / T01–T14. It does not mark all 48 formal acceptance items complete. Page management, grouped/auxiliary covers, free and guided study, review sessions, targeted study-time editing, per-page view-state preservation, opt-in on-device persistence, self-contained study lesson HTML, non-executing lesson re-edit, schema-v1 compatibility/hostile-file validation, and prepared export recovery are implemented. Physical phones, Safari, Firefox, assistive technology and maximum-resource stress tests remain untested.
+
+## Verified v0.7.0 milestone — 2026-10-06
+
+Tested application source commit: **0e1f7a5b7896299f69df68824888521311105142**.
+
+- Application workflow **37423849095**: success.
+- Standalone validation workflow **37423849172**: success.
+- PR preview workflow **37423849107**: success.
+
+Environment: GitHub-hosted Windows runner, Node 24 and the repository-pinned Playwright / Chromium development browser. These are hosted automated checks, not physical Android/iPhone, user-PC Edge, Safari or Firefox tests.
+
+| Verification | Result |
+|---|---|
+| Pure unit tests | 107 passed, 0 failed |
+| Normal HTML opened via file URL | 66 passed |
+| Self-extracting HTML opened via file URL | 66 passed |
+| PowerShell syntax / assembly-negative fixtures | Passed |
+| Repository build and standalone contracts | Passed |
+| Normal/root-copy bytes and self-extract restoration | Passed |
+| QA capture step | Passed |
+| Readable HTML size | 0.33 MB |
+| Self-extract HTML size | 0.11 MB |
+| Readable HTML SHA-256 in application workflow | `99f2d7cc198b2f4e8ac34386f4f84e5cd9ae19dbec5c81f000e00e93f6de4ab7` |
+| QA artifact | `reveal-qa-0e1f7a5b7896299f69df68824888521311105142`, ID `11394187768` |
+
+T13 automated checks fix the schemaVersion 1 compatibility contract with fixtures from v0.2.0 through v0.6.0. The browser suite reopens an older guided-study fixture through the real file path. Future schema versions, invalid UTF-8, excessive JSON nesting, structural pollution keys, non-finite numeric JSON, duplicate IDs, orphan references, cross-page groups, invalid embedded-byte claims, oversized structural limits, and APNG data disguised as stored PNG are rejected before the current sheet is replaced. The v0.2.0–v0.6.0 compatibility fixtures use a CRC-valid browser-decodable PNG so unit and direct-file browser validation exercise the same asset contract.
+
+T14 automated checks cover `PreparedExport` document identity/revision/generation, measured Blob size and counts, filename normalization and distinct JSON/HTML suffixes, stale-generation rejection, download-start receipts that do not claim OS completion, save-setup failure recovery, repeated same-name saves, same-turn language-switch invalidation before download, and Blob preparation failure followed by retry. The Save view measures editable JSON and lesson HTML before download. Existing lesson-preview tests continue to prove that preview uses an isolated study session and starts no download.
+
+The format/runtime security boundary remains unchanged: incoming lesson outer HTML is not constructed or executed, and the T12 hostile-outer-HTML browser regression plus T13 hostile saved-data tests run in both readable and self-extracting variants. `docs/SAVE_FORMAT.md` records the schema-v1 validation and compatibility contract.
+
+This milestone adds structural and file-validation boundary coverage but is **not** the later maximum-memory/performance certification. OS-level save completion cannot be observed by the page; the UI intentionally reports only that saving started.
 
 ## Verified v0.6.0 milestone — 2026-10-06
 
@@ -210,10 +242,10 @@ Feature tests were first observed failing for missing core/input functionality, 
 
 ## Acceptance mapping at this stage
 
-Verified CI paths through v0.6.0 cover the earlier T01–T10 mappings plus the T11/T12 portions of AC-24, AC-28, AC-29, AC-30, AC-34, AC-35, AC-36 and AC-45: answer-leak prevention during lesson startup, lesson filename/export behavior, self-contained player study, non-executing F6 HTML import, lesson-to-editor round trip, editable-data save inside the lesson, isolated preview, embedded runtime/build markers and external-network blocking. The current 94-unit / 59-readable / 59-self-extract suite reruns all earlier browser regressions on the v0.6.0 source. Several formal acceptance items intentionally span later T13–T20 compatibility, export-race, mobile/accessibility, hostile-file and real-device checks; automated coverage of one path is not full acceptance. No v1.0 release judgment is made.
+Verified CI paths through v0.7.0 cover the earlier T01–T12 mappings plus automated portions of AC-04, AC-05, AC-28, AC-29, AC-30, AC-31, AC-32, AC-33, AC-34, AC-35, AC-36 and AC-45: schema-v1 compatibility fixtures, hostile/boundary saved data, future-version refusal, prepared-output invalidation, filename/re-save behavior, save-start wording, self-contained lesson study/re-edit, isolated preview and external-network blocking. The current 107-unit / 66-readable / 66-self-extract suite reruns all earlier browser regressions on the v0.7.0 source. Formal acceptance items that require physical devices, maximum-resource observation, accessibility/manual review or later T15–T20 work remain open; automated coverage of one path is not full acceptance. No v1.0 release judgment is made.
 
 ## Not yet verified / not implemented
 
-Physical Android Chrome and iPhone Safari; macOS Safari; Firefox; Edge-specific behavior; HTTPS-hosted persistence behavior; no-JavaScript self-extractor fallback; maximum-size memory stress; OS-level manual save/reopen outside CI; real screen-reader and software-keyboard behavior. Browser storage is not claimed to be permanent and can be unavailable or cleared by the user/browser. Full save-format compatibility fixtures, broader hostile/boundary file matrices, output-generation invalidation during concurrent edits, and final export/re-save UX hardening remain later tasks.
+Physical Android Chrome and iPhone Safari; macOS Safari; Firefox; Edge-specific behavior; HTTPS-hosted persistence behavior; no-JavaScript self-extractor fallback; maximum-size memory/performance stress; OS-level manual save/reopen outside CI; real screen-reader, software-keyboard, 200% zoom and forced-colors behavior. Browser storage is not claimed to be permanent and can be unavailable or cleared by the user/browser. The current automated hostile/boundary matrix does not replace the later T18 maximum-resource and real-device checks.
 
-The next planned development stage is T13–T14 / v0.7.0. It must not begin until the v0.6.0 review gate is cleared by the repository owner. Continue using the owner-provided full specification, development plan and acceptance matrix. Do not infer later behavior from this milestone's UI.
+The next planned development stage is T15–T16 / v0.8.0: smartphone interaction/fixed UI, then bilingual keyboard/screen-reader/accessibility hardening. It must not begin until the v0.7.0 review gate is cleared by the repository owner. Continue using the owner-provided full specification, development plan and acceptance matrix. Do not infer later behavior from this milestone's UI.
