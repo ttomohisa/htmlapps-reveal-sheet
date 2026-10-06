@@ -1,7 +1,10 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
 import {pathToFileURL} from 'node:url';
-import {openApp} from '../helpers/app.mjs';
+import {openApp,imagePath} from '../helpers/app.mjs';
+
+async function imagePoint(page,x,y){return page.locator('#maskSvg').evaluate((svg,point)=>{const p=svg.createSVGPoint();p.x=point.x;p.y=point.y;const out=p.matrixTransform(svg.getScreenCTM());return{x:out.x,y:out.y};},{x,y});}
+async function addCover(page){await page.locator('#coverButton').click();const a=await imagePoint(page,16,16),b=await imagePoint(page,58,38);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);await page.mouse.up();await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);}
 
 function guidedFixture(){
   const value=JSON.parse(readFileSync('tests/fixtures/sheets/v0.4.0.reveal.json','utf8'));
@@ -84,4 +87,25 @@ test('T16: exported lesson keeps plain-text answer hidden from assistive output 
   await lesson.locator('#lessonLanguage').click();
   await expect(lesson.locator('#lessonHelpButton')).toHaveAttribute('aria-label',/使い方|注意/);
   await expect(lesson.locator('#lessonPages')).toHaveAttribute('aria-label','ページ');
+});
+
+
+test('T16: optional author text is editable and obeys reveal/accessibility timing',async({page})=>{
+  await openApp(page);
+  await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
+  await page.locator('#pageDescriptionInput').fill('PAGE_CONTEXT_731');await page.locator('#pageDescriptionInput').blur();
+  await addCover(page);
+  await expect(page.locator('#questionTextPanel')).toBeVisible();
+  await page.locator('#questionPromptInput').fill('AUTHOR_PROMPT_731');await page.locator('#questionPromptInput').blur();
+  await page.locator('#questionAnswerInput').fill('AUTHOR_SECRET_731');await page.locator('#questionAnswerInput').blur();
+
+  await page.locator('#studyButton').click();
+  await expect(page.locator('#studyPageDescription')).toHaveText('PAGE_CONTEXT_731');
+  await page.locator('#guidedModeButton').click();
+  if(await page.locator('#appConfirmDialog').isVisible()){await page.locator('#appConfirmOk').click();}
+  await expect(page.locator('#guidedPrompt')).toHaveText('AUTHOR_PROMPT_731');
+  await expect(page.locator('#guidedAnswerBox')).toBeHidden();
+  expect(await page.locator('body').innerText()).not.toContain('AUTHOR_SECRET_731');
+  await page.locator('#revealCurrentButton').click();
+  await expect(page.locator('#guidedAnswer')).toHaveText('AUTHOR_SECRET_731');
 });
