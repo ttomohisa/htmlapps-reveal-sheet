@@ -74,3 +74,16 @@ test('T10: a stale study tab stops only study-progress saving after another tab 
   await expect(second.locator('#draftOptIn')).toBeChecked();
   await expect(second.locator('#studyOptIn')).toBeChecked();
 });
+
+
+test('T10: turning study persistence off and back on reuses the existing record generation',async({page})=>{
+  await openApp(page);await makeTwo(page);await enable(page,'#studyOptIn');await enterGuided(page);
+  await page.locator('#revealCurrentButton').click();await page.locator('#recalledButton').click();
+  await expect(page.locator('#studySaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
+  await page.locator('#studyOptIn').click();await expect(page.locator('#studyOptIn')).not.toBeChecked();
+  await page.locator('#studyOptIn').click();await expect(page.locator('#appConfirmDialog')).toBeVisible();await page.locator('#appConfirmOk').click();
+  await expect(page.locator('#studyOptIn')).toBeChecked();
+  await page.locator('#revealCurrentButton').click();
+  await expect(page.locator('#studySaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
+  await expect(page.locator('#studySaveStatus')).not.toContainText(/another tab|別タブ/i);
+});
