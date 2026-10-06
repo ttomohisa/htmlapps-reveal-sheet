@@ -2,7 +2,46 @@
 
 ## Scope and status
 
-This record contains verified CI evidence through v0.5.0 / T01–T10. It does not mark all 48 formal acceptance items complete. Page management, grouped/auxiliary covers, free and guided study, review sessions, targeted study-time editing, per-page view-state preservation, opt-in on-device draft recovery, and separate opt-in study-progress continuation are implemented. Portable lesson HTML is not implemented. Physical phones, Safari, Firefox, assistive technology and resource-limit stress tests remain untested.
+This record contains verified CI evidence through v0.6.0 / T01–T12. It does not mark all 48 formal acceptance items complete. Page management, grouped/auxiliary covers, free and guided study, review sessions, targeted study-time editing, per-page view-state preservation, opt-in on-device persistence, self-contained study lesson HTML, and non-executing lesson re-edit are implemented. Physical phones, Safari, Firefox, assistive technology and resource-limit stress tests remain untested.
+
+## Verified v0.6.0 milestone — 2026-10-06
+
+Tested application source commit: **e22febb792e4e1c62bb9960920117a1dc1c4aa76**.
+
+- Application workflow **37419304787**: success.
+- Standalone validation workflow **37419304781**: success.
+- PR preview workflow **37419304847**: success.
+
+Environment: GitHub-hosted Windows runner, Node 24 and the repository-pinned Playwright / Chromium development browser. These are hosted automated checks, not physical Android/iPhone, user-PC Edge, Safari or Firefox tests.
+
+| Verification | Result |
+|---|---|
+| Pure unit tests | 94 passed, 0 failed |
+| Normal HTML opened via file URL | 59 passed |
+| Self-extracting HTML opened via file URL | 59 passed |
+| PowerShell syntax / assembly-negative fixtures | Passed |
+| Repository build and standalone contracts | Passed |
+| Normal/root-copy bytes and self-extract restoration | Passed |
+| QA capture step | Passed |
+| Readable HTML size | 0.32 MB |
+| Readable HTML SHA-256 in application workflow | `dfdc9485ac8e14e7d272d0c90c53fdca8c065a06ab178cca2d598b301cc62a4f` |
+
+T11 automated checks cover lesson-envelope whitelist serialization, JSON escaping that cannot form script/style/comment terminators, a fixed single non-executing lesson data tag, at-least-one-question export gating, filename normalization, player-template assembly markers/runtime hash, self-contained lesson download and direct `file://` startup, zero HTTP(S) requests during the tested lesson flow, free and guided study, result/review behavior, editable-data save with confirmation/filename, Japanese switching, storage-unavailable fallback, isolated in-app lesson preview, first-image decode gating and JavaScript-disabled no-answer/no-image rendering.
+
+The lesson player does not include the editor drawing canvas or import controls. It reuses the shared document/study primitives and embeds the trusted player runtime, images, CSS, SVG/favicon and lesson Envelope in one HTML. The author/learner's current ratings, Undo history, view state and original filenames are not copied into the exported lesson or editable-data save produced from the lesson.
+
+T12 automated checks cover the fixed data-tag extractor, missing/duplicate/cut tags, hostile-looking strings containing escaped tag text, 100 MiB HTML rejection before reading, fatal UTF-8 decode, JSON depth/parse, lesson-kind validation, embedded-PNG verification, and filename/content-type routing. Browser tests wrap an otherwise valid lesson in hostile meta-refresh, external img/iframe/style/script markup, replace `DOMParser` with a throwing sentinel, and confirm no external request / outer-script execution before the validated document replacement prompt. Malformed/duplicate lesson data leaves the current sheet intact.
+
+Incoming lesson HTML is not passed to DOMParser, `innerHTML`, iframe/srcdoc, `document.write` or the trusted self-extract loader. Only the fixed embedded JSON text is accepted, validated and rebuilt through the app's own UI.
+
+### v0.6.0 failures found and corrected during verification
+
+- The first lesson-export unit fixture used the fixed script tag attributes in the wrong order and also contained an invalid regular-expression literal. The test was corrected to the specified tag `<script id="reveal-sheet-data" type="application/json">` and string/index checks before implementation work continued.
+- Playwright's temporary download path has no `.html` extension, so Chromium rendered the generated lesson source as plain text. The direct-file test now saves the download under its real `.reveal.html` filename before navigation, matching user behavior.
+- Build-time lesson-template embedding was hardened to keep exactly one lesson JSON marker, replace both lesson favicon/header icon placeholders, preserve PowerShell 5.1-compatible Unicode escaping, and include a fixed player-runtime SHA-256 marker.
+- Editable JSON opened from Playwright's extensionless temporary path regressed when file routing was first added. The router now preserves the existing JSON fallback while selecting lesson HTML by filename/type.
+- Save-panel preview was added as an isolated session after a RED browser regression required preview to start at zero and never trigger a download or mutate saved study progress.
+- Final T11 privacy regressions explicitly delay the first image decode and disable JavaScript to confirm the lesson does not reveal the source image or answer layer before it is ready.
 
 ## Verified v0.5.0 milestone — 2026-10-06
 
@@ -171,10 +210,10 @@ Feature tests were first observed failing for missing core/input functionality, 
 
 ## Acceptance mapping at this stage
 
-Verified CI paths through v0.5.0 cover the earlier T01–T08 mappings plus the T09/T10 portions of AC-37, AC-38, AC-39 and AC-40: opt-in defaults, atomic/recoverable local saving, failure handling, generation conflicts, content-identity study resume and namespace-limited clearing. The current 84-unit / 50-readable / 50-self-extract suite reruns all earlier browser regressions on the v0.5.0 source. Several formal acceptance items intentionally span later lesson-HTML tasks, manual observation or real-device checks; automated coverage of one path is not full acceptance. No v1.0 release judgment is made.
+Verified CI paths through v0.6.0 cover the earlier T01–T10 mappings plus the T11/T12 portions of AC-24, AC-28, AC-29, AC-30, AC-34, AC-35, AC-36 and AC-45: answer-leak prevention during lesson startup, lesson filename/export behavior, self-contained player study, non-executing F6 HTML import, lesson-to-editor round trip, editable-data save inside the lesson, isolated preview, embedded runtime/build markers and external-network blocking. The current 94-unit / 59-readable / 59-self-extract suite reruns all earlier browser regressions on the v0.6.0 source. Several formal acceptance items intentionally span later T13–T20 compatibility, export-race, mobile/accessibility, hostile-file and real-device checks; automated coverage of one path is not full acceptance. No v1.0 release judgment is made.
 
 ## Not yet verified / not implemented
 
-Physical Android Chrome and iPhone Safari; macOS Safari; Firefox; Edge-specific behavior; HTTPS-hosted persistence behavior; no-JavaScript self-extractor fallback; maximum-size memory stress; OS-level manual save/reopen outside CI; real screen-reader and software-keyboard behavior. Browser storage is not claimed to be permanent and can be unavailable or cleared by the user/browser. Portable study HTML and its safe re-edit path are not implemented yet.
+Physical Android Chrome and iPhone Safari; macOS Safari; Firefox; Edge-specific behavior; HTTPS-hosted persistence behavior; no-JavaScript self-extractor fallback; maximum-size memory stress; OS-level manual save/reopen outside CI; real screen-reader and software-keyboard behavior. Browser storage is not claimed to be permanent and can be unavailable or cleared by the user/browser. Full save-format compatibility fixtures, broader hostile/boundary file matrices, output-generation invalidation during concurrent edits, and final export/re-save UX hardening remain later tasks.
 
-The next planned development stage is T11–T12 / v0.6.0. It must not begin until the v0.5.0 review gate is cleared by the repository owner. Continue using the owner-provided full specification, development plan and acceptance matrix. Do not infer later behavior from this milestone's UI.
+The next planned development stage is T13–T14 / v0.7.0. It must not begin until the v0.6.0 review gate is cleared by the repository owner. Continue using the owner-provided full specification, development plan and acceptance matrix. Do not infer later behavior from this milestone's UI.
