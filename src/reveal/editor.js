@@ -9,7 +9,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   let controller=null, busy=false, failures=[], progress=null;
   let undo=[],redo=[],viewKey='',lastStatus='emptyStatus',mode='create',tool='move',studySession=null,studyMode='free',previousStudySummary=null,studyEditActive=false,studyEditImpact=null;
   let filenameBase='reveal-sheet',preparedJsonExport=null,preparedLessonExport=null,exportGeneration=0,exportBusy=false,lessonPreviewSession=null,lessonPreviewPageId=null,lessonPreviewGeneration=0;
-  let gesture=null,twoPointStart=null,draftRect=null;
+  let gesture=null,twoPointStart=null,draftRect=null,continuousCover=false;
   let draftSaveTimer=0,draftSaveChain=Promise.resolve(),localDraftGeneration=0,draftConflict=false,localAvailable=false,localDraftExists=false,lastDraftSavedAt='';
   let studySaveTimer=0,studySaveChain=Promise.resolve(),studyRecordGeneration=0,studyIdentityToken='',studyConflict=false,localStudyExists=false,lastStudySavedAt='';
   const image=$('previewImage'),svg=$('maskSvg');
@@ -194,7 +194,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     if(activePage&&env.document.activeElement!==$('pageTitleInput'))$('pageTitleInput').value=activePage.title;
     refreshCoverPanel();
     $('pagePrevButton').disabled=busy||activePageIndex<=0;$('pageNextButton').disabled=busy||activePageIndex<0||activePageIndex>=doc.pages.length-1;$('pageDeleteButton').disabled=busy||!activePage;
-    $('coverButton').disabled=busy||!selectedId||mode!=='create';$('twoPointButton').disabled=busy||!selectedId||mode!=='create';$('moveImageButton').disabled=busy||!selectedId||mode!=='create';$('continuousCover').disabled=busy||!selectedId||mode!=='create';
+    $('coverButton').disabled=busy||!selectedId||mode!=='create';$('twoPointButton').disabled=busy||!selectedId||mode!=='create';$('moveImageButton').disabled=busy||!selectedId||mode!=='create';$('continuousCover').disabled=busy||!selectedId||mode!=='create';$('continuousCover').checked=continuousCover;
     $('pageList').replaceChildren();
     for(const p of doc.pages){
       const a=doc.assets.find(x=>x.id===p.imageId);
@@ -345,7 +345,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function rectFromPoints(a,b){const asset=currentAsset();if(!asset)return null;const x=Math.min(a.x,b.x),y=Math.min(a.y,b.y),w=Math.abs(a.x-b.x),h=Math.abs(a.y-b.y);if(w<1||h<1)return null;return{x:x/asset.width,y:y/asset.height,w:w/asset.width,h:h/asset.height};}
   function clearDraft(){draftRect?.remove();draftRect=null;gesture=null;}
   function drawDraft(a,b){const rect=rectFromPoints(a,b);if(!rect)return;const asset=currentAsset(),px=core.rectToPixels(rect,asset.width,asset.height);if(!draftRect){draftRect=env.document.createElementNS('http://www.w3.org/2000/svg','rect');draftRect.classList.add('mask-draft');svg.append(draftRect);}draftRect.setAttribute('x',String(px.x));draftRect.setAttribute('y',String(px.y));draftRect.setAttribute('width',String(px.w));draftRect.setAttribute('height',String(px.h));}
-  function addCover(rect){const before=new Set(doc.masks.map(m=>m.id)),result=core.applyCommand(doc,{type:'ADD_ANSWER_MASK',pageId:selectedId,rect},ctx),added=result.document.masks.find(m=>!before.has(m.id));const keepCovering=Boolean($('continuousCover')?.checked),activeTool=tool;commit(result,added?.id||null);status('coverAdded');tool=keepCovering&&['cover','two-point'].includes(activeTool)?activeTool:'move';twoPointStart=null;clearDraft();refreshCopy();}
+  function addCover(rect){const before=new Set(doc.masks.map(m=>m.id)),result=core.applyCommand(doc,{type:'ADD_ANSWER_MASK',pageId:selectedId,rect},ctx),added=result.document.masks.find(m=>!before.has(m.id)),activeTool=tool;commit(result,added?.id||null);status('coverAdded');tool=continuousCover&&['cover','two-point'].includes(activeTool)?activeTool:'move';twoPointStart=null;clearDraft();refreshCopy();}
   function pointerDown(event){
     if(event.button!==0)return;
     if(mode==='create'&&tool==='cover'){
@@ -370,12 +370,12 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     if(!gesture||event.pointerId!==gesture.pointerId)return;
     const active=gesture;try{svg.releasePointerCapture(event.pointerId);}catch{}
     if(active.kind==='pan'){gesture=null;refreshViewControls();return;}
-    const start=active.start,point=imagePoint(event)||active.current;clearDraft();const rect=rectFromPoints(start,point);if(rect)addCover(rect);else{if(!$('continuousCover')?.checked)tool='move';updateToolButtons();}
+    const start=active.start,point=imagePoint(event)||active.current;clearDraft();const rect=rectFromPoints(start,point);if(rect)addCover(rect);else{if(!continuousCover)tool='move';updateToolButtons();}
   }
   function pointerCancel(){
     if(!gesture)return;const active=gesture;
     if(active.kind==='pan'&&selectedId)studyView.setViewState(selectedId,active.startView);
-    clearDraft();if(active.kind==='cover'&&!$('continuousCover')?.checked)tool='move';updateToolButtons();refreshViewControls();
+    clearDraft();if(active.kind==='cover'&&!continuousCover)tool='move';updateToolButtons();refreshViewControls();
   }
   function twoPoint(event){if(mode!=='create'||tool!=='two-point'||event.target!==svg)return;const point=imagePoint(event);if(!point)return;if(!twoPointStart){twoPointStart=point;status('chooseSecondPoint');return;}const rect=rectFromPoints(twoPointStart,point);twoPointStart=null;if(rect)addCover(rect);else status('coverTooSmall');}
   function cancelTransientInteraction(){pointerCancel();twoPointStart=null;tool='move';updateToolButtons();}
@@ -535,7 +535,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   $('newButton').addEventListener('click',startNew);
   $('undoButton').addEventListener('click',()=>history('undo'));
   $('redoButton').addEventListener('click',()=>history('redo'));
-  $('coverButton').addEventListener('click',()=>setTool('cover'));$('twoPointButton').addEventListener('click',()=>setTool('two-point'));$('moveImageButton').addEventListener('click',()=>setTool('move'));
+  $('coverButton').addEventListener('click',()=>setTool('cover'));$('twoPointButton').addEventListener('click',()=>setTool('two-point'));$('moveImageButton').addEventListener('click',()=>setTool('move'));$('continuousCover').addEventListener('change',event=>{continuousCover=Boolean(event.currentTarget.checked);});
   $('maskMoveLeft').addEventListener('click',()=>editSelected('left'));$('maskMoveRight').addEventListener('click',()=>editSelected('right'));$('maskMoveUp').addEventListener('click',()=>editSelected('up'));$('maskMoveDown').addEventListener('click',()=>editSelected('down'));
   $('maskWider').addEventListener('click',()=>editSelected('wider'));$('maskNarrower').addEventListener('click',()=>editSelected('narrower'));$('maskTaller').addEventListener('click',()=>editSelected('taller'));$('maskShorter').addEventListener('click',()=>editSelected('shorter'));$('maskDelete').addEventListener('click',deleteSelected);$('maskDuplicate').addEventListener('click',duplicateSelected);
   $('pageTitleInput').addEventListener('change',renamePage);$('pageTitleInput').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();event.currentTarget.blur();}});
