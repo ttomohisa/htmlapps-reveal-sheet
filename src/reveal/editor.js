@@ -152,7 +152,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('reviewAgainButton').hidden=summary.again===0;$('reviewUncheckedButton').hidden=summary.skipped+summary.unanswered===0;
   }
   function refreshStudy(){
-    $('studyButton').disabled=busy||doc.questions.length===0;$('saveButton').disabled=busy||doc.pages.length===0;$('openButton').disabled=busy;$('sheetInput').disabled=busy;$('studyPanel').hidden=mode!=='study';$('savePanel').hidden=mode!=='save';$('editControls').hidden=mode!=='create';
+    $('studyButton').disabled=busy||doc.questions.length===0;$('saveButton').disabled=busy||exportBusy||doc.pages.length===0;$('openButton').disabled=busy;$('sheetInput').disabled=busy;$('studyPanel').hidden=mode!=='study';$('savePanel').hidden=mode!=='save';$('editControls').hidden=mode!=='create';
     $('createButton').setAttribute('aria-current',mode==='create'?'page':'false');$('studyButton').setAttribute('aria-current',mode==='study'?'page':'false');$('saveButton').setAttribute('aria-current',mode==='save'?'page':'false');
     if(mode!=='study')return;if(!studySession)studySession=core.startSession(doc,{mode:studyMode},ctx);studyMode=studySession.mode;
     $('freeModeButton').setAttribute('aria-pressed',String(studyMode==='free'));$('guidedModeButton').setAttribute('aria-pressed',String(studyMode==='guided'));$('freeStudyPanel').hidden=studyMode!=='free';$('guidedPanel').hidden=studyMode!=='guided';
@@ -441,7 +441,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     }
   }
   function beginSave(){
-    if(!doc.pages.length||busy)return;scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='save';studySession=null;selectedMaskId=null;preparedJsonExport=null;preparedLessonExport=null;
+    if(!doc.pages.length||busy||exportBusy)return;scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='save';studySession=null;selectedMaskId=null;preparedJsonExport=null;preparedLessonExport=null;
     refreshCopy();$('outputFilename').focus({preventScroll:true});prepareSaveExports();
   }
   function applyImported(envelope,{fromLocal=false}={}){
