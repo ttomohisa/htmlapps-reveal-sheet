@@ -190,3 +190,8 @@ button:disabled,input:disabled { cursor:not-allowed; }
 @media(max-width:767px){.local-actions{display:grid;grid-template-columns:1fr}.local-actions .button{width:100%}}
 
 .local-divider{height:1px;margin:14px 0;background:var(--line)}.local-clear-block>strong{font-size:13px}.local-clear-block>p{margin:4px 0 10px;color:var(--muted);font-size:12px;line-height:1.65}
+
+
+/* T11: portable lesson save controls. */
+.save-output-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.save-output-actions>span{display:flex;align-items:center;gap:7px}.save-output-actions small{color:var(--muted);font-size:12px}
+@media(max-width:767px){.save-output-actions{display:grid;grid-template-columns:1fr}.save-output-actions>span{display:grid;grid-template-columns:minmax(0,1fr) auto}.save-output-actions .button{width:100%}}
