@@ -103,8 +103,7 @@ function createProjectIO({core,imageIO,env}) {
   async function readSheet(file,options={}){
     const name=String(file?.name||'').toLowerCase(),type=String(file?.type||'').toLowerCase();
     if(name.endsWith('.reveal.html')||name.endsWith('.html')||type==='text/html')return readHtml(file,options);
-    if(name.endsWith('.reveal.json')||name.endsWith('.json')||type==='application/json'||type==='text/json')return readJson(file,options);
-    fail('INVALID_SHEET');
+    return readJson(file,options);
   }
   async function readJson(file,{signal}={}){
     if(isAbort(signal))fail('CANCELLED');
