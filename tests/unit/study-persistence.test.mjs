@@ -69,3 +69,11 @@ test('T10 clearing study data is namespace-limited and does not clear a saved dr
   const backend=new Backend(),store=makeStore(backend),{doc,ctx}=fixture();await store.setStudyOptIn(true);const id=await identity(store,doc);await store.saveSession(id,core.startSession(doc,{mode:'guided'},ctx),0);
   await store.clearLocal('study');assert.equal(backend.sessions.size,0);assert.deepEqual(backend.draft,{sentinel:true});assert.equal(backend.assets.size,1);assert.equal(store.settings.studyOptIn,false);
 });
+
+test('T10 edited content with the same document id starts a separate study-record generation',async()=>{
+  const backend=new Backend(),store=makeStore(backend),{doc,ctx}=fixture();await store.setStudyOptIn(true);
+  const firstId=await identity(store,doc),session=core.startSession(doc,{mode:'guided'},ctx);await store.saveSession(firstId,session,0);
+  const changed={...doc,revision:doc.revision+1,title:'Edited content'},secondId=await identity(store,changed);
+  const receipt=await store.saveSession(secondId,core.startSession(changed,{mode:'guided'},ctx),0);
+  assert.equal(receipt.generation,1);assert.notEqual(firstId.fingerprint,secondId.fingerprint);assert.equal(backend.sessions.size,2);
+});
