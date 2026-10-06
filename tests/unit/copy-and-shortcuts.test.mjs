@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {loadFactory,testContext,toPlain} from '../helpers/load-factory.mjs';
 
 const index=fs.readFileSync('src/index.template.html','utf8');
 const player=fs.readFileSync('src/reveal/player.js','utf8');
+const core=loadFactory('src/reveal/core.js','createRevealCore')();
 
 function translationKeys(block){
   return new Set([...block.matchAll(/(?:^|[,\n])\s*([A-Za-z0-9_]+):/g)].map(match=>match[1]));
@@ -51,4 +53,30 @@ test('T16 help explicitly states the image-text accessibility limitation',()=>{
 test('T16 closed answer copy is not used as an overlay accessible name',()=>{
   assert.doesNotMatch(player,/aria-label[^\n]*(?:q\?\.answer|question\.answer|\.answer)/);
   assert.doesNotMatch(index,/aria-label="[^"]*\{answer\}/);
+});
+
+
+function textDoc(){
+  const ctx=testContext();let doc=core.newDocument(ctx,'Text sheet');
+  doc=core.appendAsset(doc,{id:'image_text',mime:'image/png',width:100,height:100,byteLength:1,dataBase64:'AA=='},ctx,'Page');
+  doc=core.applyCommand(doc,{type:'ADD_ANSWER_MASK',pageId:doc.pages[0].id,rect:{x:.1,y:.1,w:.2,h:.2}},ctx).document;
+  return {ctx,doc};
+}
+
+test('T16 optional prompt and answer edits advance only the affected question revision',()=>{
+  const {ctx,doc}=textDoc(),qid=doc.questions[0].id,revision=doc.questions[0].revision;
+  const result=core.applyCommand(doc,{type:'SET_QUESTION_TEXT',questionId:qid,prompt:'Prompt text',answer:'Secret answer'},ctx);
+  assert.deepEqual(toPlain(result.affectedQuestionIds),[qid]);
+  assert.equal(result.document.questions[0].revision,revision+1);
+  assert.equal(result.document.questions[0].prompt,'Prompt text');
+  assert.equal(result.document.questions[0].answer,'Secret answer');
+  assert.throws(()=>core.applyCommand(result.document,{type:'SET_QUESTION_TEXT',questionId:qid,prompt:'x'.repeat(2001),answer:''},ctx),{code:'LIMIT_EXCEEDED'});
+});
+
+test('T16 page description edits invalidate every question on that page',()=>{
+  const {ctx,doc}=textDoc(),qid=doc.questions[0].id,revision=doc.questions[0].revision;
+  const result=core.applyCommand(doc,{type:'SET_PAGE_DESCRIPTION',pageId:doc.pages[0].id,description:'Context only'},ctx);
+  assert.deepEqual(toPlain(result.affectedQuestionIds),[qid]);
+  assert.equal(result.document.pages[0].description,'Context only');
+  assert.equal(result.document.questions[0].revision,revision+1);
 });
