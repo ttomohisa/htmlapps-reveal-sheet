@@ -58,3 +58,19 @@ test('T10: starting a new study mode in the same tab advances the same record wi
   await expect(page.locator('#studySaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
   await expect(page.locator('#studySaveStatus')).not.toContainText(/another tab|別タブ/i);
 });
+
+
+test('T10: a stale study tab stops only study-progress saving after another tab commits',async({page,context})=>{
+  await openApp(page);await enable(page,'#draftOptIn');await makeTwo(page);await expect(page.locator('#draftSaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
+  await enable(page,'#studyOptIn');await page.locator('#studyButton').click();await expect(page.locator('#studySaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
+
+  const second=await context.newPage();await openApp(second);await expect(second.locator('#appConfirmDialog')).toBeVisible();await second.locator('#appConfirmOk').click();
+  await second.locator('#studyButton').click();await expect(second.locator('#appConfirmDialog')).toBeVisible();await second.locator('#appConfirmCancel').click();
+  await expect(second.locator('#freeStudyPanel')).toBeVisible();
+
+  await page.locator('#questionList button').first().click();await expect(page.locator('#studySaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
+  await second.locator('#questionList button').first().click();
+  await expect(second.locator('#studySaveStatus')).toContainText(/another tab|別タブ/i,{timeout:5000});
+  await expect(second.locator('#draftOptIn')).toBeChecked();
+  await expect(second.locator('#studyOptIn')).toBeChecked();
+});
