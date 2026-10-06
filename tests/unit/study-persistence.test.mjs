@@ -77,3 +77,11 @@ test('T10 edited content with the same document id starts a separate study-recor
   const receipt=await store.saveSession(secondId,core.startSession(changed,{mode:'guided'},ctx),0);
   assert.equal(receipt.generation,1);assert.notEqual(firstId.fingerprint,secondId.fingerprint);assert.equal(backend.sessions.size,2);
 });
+
+
+test('T10 corrupt study records are ignored instead of being applied',async()=>{
+  const backend=new Backend(),store=makeStore(backend),{doc,ctx}=fixture();await store.setStudyOptIn(true);
+  const id=await identity(store,doc);await store.saveSession(id,core.startSession(doc,{mode:'guided'},ctx),0);
+  const record=[...backend.sessions.values()][0];record.session={mode:'guided',queue:null,index:999};
+  assert.equal(await store.loadSession(id),null);
+});
