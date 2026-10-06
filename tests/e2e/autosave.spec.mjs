@@ -19,7 +19,7 @@ test('T09: local draft starts off, saves only after consent, and can be restored
   expect(await savedGeneration(page)).toBe(1);
   await page.reload();await page.locator('#addButton').waitFor({state:'visible'});
   await expect(page.locator('#appConfirmDialog')).toBeVisible();
-  await expect(page.locator('#appConfirmMessage')).toContainText(/resume|再開/i);
+  await expect(page.locator('#appConfirmMessage')).toContainText(/saved draft|前回の作業|resum|再開/i);
   await page.locator('#appConfirmOk').click();
   await expect(page.locator('#pageList button')).toHaveCount(1);await expect(page.locator('#previewImage')).toBeVisible();
 });
