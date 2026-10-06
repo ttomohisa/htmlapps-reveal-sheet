@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 import { loadFactory, testContext, toPlain } from '../helpers/load-factory.mjs';
 test('T01: core declares the specification limits without browser globals', () => {
   const core = loadFactory('src/reveal/core.js','createRevealCore')();
@@ -28,4 +29,11 @@ test('T01: exact declared assembly markers and no runtime dependencies', () => {
   }
   assert.equal(source.split('__APP_ICON_DATA_URI__').length-1,2);
   assert.equal(JSON.parse(fs.readFileSync('dependencies.json','utf8')).dependencies.length,0);
+});
+
+test('T01: all assembled Reveal JavaScript sources parse', () => {
+  for (const name of ['core.js','image-io.js','project-io.js','study-view.js','editor.js']) {
+    const source=fs.readFileSync('src/reveal/'+name,'utf8');
+    assert.doesNotThrow(()=>new vm.Script(source,{filename:name}),name);
+  }
 });
