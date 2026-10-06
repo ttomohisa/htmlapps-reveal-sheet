@@ -2,7 +2,7 @@
 
 [日本語](README.ja.md)
 
-Reveal Sheet turns diagrams, photos and notes that already contain answers into study sheets with opaque covers. **The current v0.4.0 development build adds one-at-a-time study, self-assessment, session results/review, and targeted edits that return to the same study position, alongside the existing free-reveal and image-embedded editable JSON flows.** It is not the completed v1.0 release.
+Reveal Sheet turns diagrams, photos and notes that already contain answers into study sheets with opaque covers. **The current v0.5.0 development build adds opt-in on-device work recovery and a separate opt-in for study-session continuation, alongside free/guided study, review sessions, targeted edits, and image-embedded editable JSON.** It is not the completed v1.0 release.
 
 ## Available now
 
@@ -20,6 +20,10 @@ Use **Edit this question** during guided study to change the relevant cover and 
 
 Save images, pages, questions and covers as a `.reveal.json` file and reopen it without reselecting the source image. Study results, Undo history, view position and original filenames are not exported.
 
+**Keep this work on this device** starts OFF. Only after explicit opt-in, normalized images and sheet content are stored in IndexedDB and changes are committed after about a one-second debounce. If another tab advances the same saved generation, Reveal Sheet stops automatic saving instead of silently overwriting and offers manual export or reload-latest recovery. Quota/security failures leave the in-memory sheet and manual export available.
+
+**Keep only study progress on this device** is a separate OFF-by-default option. It stores no image bytes: only the small study-session state. Resume is offered only when document ID, revision and a SHA-256 fingerprint of the canonical document all match, and the current answer is closed on resume. Without Web Crypto, study persistence is disabled while in-memory study remains available. Saved work and study progress can be cleared separately.
+
 ## Usage
 
 1. Open `reveal-sheet.html` or `dist/index.html` and choose **Add images**.
@@ -27,9 +31,10 @@ Save images, pages, questions and covers as a `.reveal.json` file and reopen it 
 3. Select multiple covers when needed and choose **Reveal together**. Convert hint covers to **Keep covered while studying**.
 4. Choose **Study**, then use Reveal freely or One at a time. In guided study, reveal the answer before self-assessing and use the result screen for focused review sessions.
 5. Use **Edit this question** when a study item needs correction, then **Return to study** to continue.
-6. Use **Save** to export the editable sheet. Use **Open a sheet** to reopen the `.reveal.json` file later.
+6. Optionally enable **Keep this work on this device** and/or **Keep only study progress on this device**. They are separate settings and both start OFF.
+7. Use **Save** to export the editable sheet manually. Use **Open a sheet** to reopen the `.reveal.json` file later.
 
-Automatic draft saving is not implemented yet. Export an editable sheet before closing the page if you want to keep your work.
+Manual editable-sheet export is always available even when on-device persistence is disabled. Leave on-device persistence off on shared devices.
 
 ## Formats and safety limits
 
@@ -52,7 +57,7 @@ Image and editable-sheet processing takes place inside the page. Original filena
 
 **Covers are for studying. The original answers and images remain in the editable sheet file. This tool does not redact personal or confidential information.**
 
-There are no runtime CDNs, remote fonts, analytics, ads or external APIs. CSP uses `connect-src 'none'`, and runtime third-party dependencies remain zero. Automatic draft storage and personal study-record persistence are not implemented yet.
+There are no runtime CDNs, remote fonts, analytics, ads or external APIs. CSP uses `connect-src 'none'`, and runtime third-party dependencies remain zero. Optional persistence uses IndexedDB in this browser. Work saving and study-progress saving are separate OFF-by-default choices. Browser storage can be cleared or become unavailable, so keep important sheets as manually exported `.reveal.json` files too.
 
 ## Browser verification and limitations
 
@@ -81,7 +86,7 @@ Set `APP_VARIANT=self-extract` to run the same E2E suite against the self-extrac
 
 ## Roadmap
 
-The next stage, v0.5.0 / T09–T10, adds opt-in on-device draft persistence and opt-in study-session continuation. Portable study HTML follows in v0.6.0 and later. PDF, OCR, AI and cloud sync are outside the initial scope.
+The next stage, v0.6.0 / T11–T12, adds self-contained study HTML export and a safe re-edit path that extracts its embedded data without executing received HTML. PDF, OCR, AI and cloud sync are outside the initial scope.
 
 ## License
 

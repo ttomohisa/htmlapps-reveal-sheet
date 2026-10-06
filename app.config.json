@@ -3,9 +3,9 @@
   "name": "Reveal Sheet",
   "nameJa": "めくる暗記シート",
   "slug": "reveal-sheet",
-  "version": "0.4.0",
-  "description": "Create study sheets from images with grouped covers, free or guided study, self-assessment, review sessions, editable JSON, and study-position-preserving edits.",
-  "descriptionJa": "画像に覆いを作り、自由／一問ずつ学習、自己評価・再確認、学習位置を保った修正、画像込み編集データ保存に対応する暗記シート。",
+  "version": "0.5.0",
+  "description": "Create study sheets from images with free or guided study, review sessions, opt-in on-device draft recovery, and separate study-progress continuation.",
+  "descriptionJa": "画像に覆いを作って学習し、自由／一問ずつ学習、再確認、任意の端末内作業保存、別設定の学習続き保存に対応する暗記シート。",
   "defaultLanguage": "auto",
   "repository": {
     "owner": "ttomohisa",
