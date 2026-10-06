@@ -34,7 +34,7 @@ function createPlayer({core,projectIO,persistence,env,envelope}) {
     $('lessonFreeMode').setAttribute('aria-pressed',String(mode==='free'));$('lessonGuidedMode').setAttribute('aria-pressed',String(mode==='guided'));$('lessonFreePanel').hidden=mode!=='free';$('lessonGuidedPanel').hidden=mode!=='guided';
     if(mode==='free'){
       const sum=core.summaryFree(session);$('lessonConfirmedCount').textContent=String(sum.confirmed);$('lessonQuestionCount').textContent=String(sum.total);const open=new Set(session.openQuestionIds),list=$('lessonQuestionList');list.replaceChildren();
-      session.queue.forEach((qid,index)=>{const b=env.document.createElement('button');b.type='button';b.className='lesson-question';b.textContent=(open.has(qid)?'✓ ':'')+(index+1);b.addEventListener('click',()=>{session=core.toggleFree(session,qid);scheduleStudySave();render();studyView.render();});list.append(b);});
+      session.queue.forEach((qid,index)=>{const q=doc.questions.find(item=>item.id===qid);if(!q)return;const b=env.document.createElement('button');b.type='button';b.className='lesson-question';const base=(open.has(qid)?'✓ ':'')+(index+1);b.textContent=q.prompt?base+' · '+q.prompt:base;b.addEventListener('click',()=>{session=core.toggleFree(session,qid);scheduleStudySave();render();studyView.render();});list.append(b);});
     }else{
       $('lessonOtherHidden').checked=session.otherAnswers==='hidden';$('lessonOtherVisible').checked=session.otherAnswers==='visible';
       const total=session.queue.length,current=session.ended?total:Math.min(session.index+1,total);$('lessonGuidedProgress').textContent=current+' / '+total;const qid=currentGuidedId(),q=qid&&doc.questions.find(item=>item.id===qid),revealed=Boolean(q&&session.stage==='revealed');
