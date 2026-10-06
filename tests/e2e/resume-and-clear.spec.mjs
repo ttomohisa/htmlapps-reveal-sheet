@@ -65,7 +65,7 @@ test('T10: a stale study tab stops only study-progress saving after another tab 
   await enable(page,'#studyOptIn');await page.locator('#studyButton').click();await expect(page.locator('#studySaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
 
   const second=await context.newPage();await openApp(second);await expect(second.locator('#appConfirmDialog')).toBeVisible();await second.locator('#appConfirmOk').click();
-  await second.locator('#studyButton').click();await expect(second.locator('#appConfirmDialog')).toBeVisible();await second.locator('#appConfirmCancel').click();
+  await second.locator('#studyButton').click();await expect(second.locator('#appConfirmDialog')).toBeVisible();await second.locator('#appConfirmOk').click();
   await expect(second.locator('#freeStudyPanel')).toBeVisible();
 
   await page.locator('#questionList button').first().click();await expect(page.locator('#studySaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
