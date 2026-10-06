@@ -185,3 +185,5 @@ button:disabled,input:disabled { cursor:not-allowed; }
 /* T09: opt-in local draft persistence. */
 .local-persistence-panel{margin:18px 0 0;padding:14px;border:1px solid var(--line);border-radius:12px;background:#fafbf8}.local-persistence-panel h3{margin:0 0 10px;font-size:15px}.local-setting{display:flex;align-items:flex-start;gap:10px;min-height:48px}.local-setting input{margin-top:5px}.local-setting span{display:flex;flex-direction:column;gap:3px}.local-setting small,.local-save-status,.local-conflict p{color:var(--muted);font-size:12px;line-height:1.65}.local-save-status{margin:8px 0 0}.local-conflict{margin-top:10px;padding:10px;border:1px solid #d0a14b;border-radius:10px;background:#fff9e9}.local-conflict p{margin:0 0 8px}.local-actions{display:flex;flex-wrap:wrap;gap:8px}.local-actions .button{min-height:44px;font-size:12px}
 @media(max-width:767px){.local-actions{display:grid;grid-template-columns:1fr}.local-actions .button{width:100%}}
+
+.local-divider{height:1px;margin:14px 0;background:var(--line)}.local-clear-block>strong{font-size:13px}.local-clear-block>p{margin:4px 0 10px;color:var(--muted);font-size:12px;line-height:1.65}

@@ -11,6 +11,7 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
   let filenameBase='reveal-sheet';
   let gesture=null,twoPointStart=null,draftRect=null;
   let draftSaveTimer=0,draftSaveChain=Promise.resolve(),localDraftGeneration=0,draftConflict=false,localAvailable=false,lastDraftSavedAt='';
+  let studySaveTimer=0,studySaveChain=Promise.resolve(),studyRecordGeneration=0,studyIdentityToken='',studyConflict=false,lastStudySavedAt='';
   const image=$('previewImage'),svg=$('maskSvg');
   // SVGElement does not reliably reflect the HTML hidden IDL property.
   // Toggle the attribute explicitly because shared CSS hides [hidden].
@@ -18,9 +19,52 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
   const t=translate;
   const studyView=createStudyView({core,dom:env.document,onAction:action=>handleViewAction(action)});
   function setDraftStatus(key,values={}){const node=$('draftSaveStatus');if(node)node.textContent=t(key,values);}
+  function setStudyStatus(key,values={}){const node=$('studySaveStatus');if(node)node.textContent=t(key,values);}
+  function identityToken(identity){return identity?identity.documentId+'|'+identity.revision+'|'+identity.fingerprint:'';}
+  async function currentStudyIdentity(documentSnapshot=doc){
+    const fingerprint=await persistence.fingerprintDocument(documentSnapshot);if(!fingerprint)return null;
+    return {documentId:documentSnapshot.id,revision:documentSnapshot.revision,fingerprint};
+  }
+  function refreshLocalStudy(){
+    const toggle=$('studyOptIn');if(!toggle)return;toggle.checked=Boolean(persistence.settings.studyOptIn);toggle.disabled=!localAvailable;
+    $('clearDraftButton').disabled=!localAvailable||!persistence.settings.draftOptIn;
+    $('clearStudyButton').disabled=!localAvailable||!persistence.settings.studyOptIn;
+  }
+  function cancelStudyTimer(){if(studySaveTimer){env.clearTimeout(studySaveTimer);studySaveTimer=0;}}
+  function scheduleStudySave(){
+    cancelStudyTimer();if(!localAvailable||!persistence.settings.studyOptIn||studyConflict||!studySession||!doc.questions.length)return;
+    const sessionSnapshot=studySession,documentSnapshot=doc;setStudyStatus('studySaveWaiting');
+    studySaveTimer=env.setTimeout(()=>{studySaveTimer=0;studySaveChain=studySaveChain.then(async()=>{
+      if(!localAvailable||!persistence.settings.studyOptIn||studyConflict)return;
+      const identity=await currentStudyIdentity(documentSnapshot);if(!identity){setStudyStatus('studyPersistenceUnavailable');return;}
+      const token=identityToken(identity);if(token!==studyIdentityToken){studyIdentityToken=token;studyRecordGeneration=0;}
+      setStudyStatus('studySaving');
+      try{const receipt=await persistence.saveSession(identity,sessionSnapshot,studyRecordGeneration);if(receipt){studyRecordGeneration=receipt.generation;lastStudySavedAt=receipt.savedAt;setStudyStatus('studySaved',{time:new Date(receipt.savedAt).toLocaleTimeString(getLanguage()==='ja'?'ja-JP':'en-US',{hour:'2-digit',minute:'2-digit'})});}}
+      catch(error){if(error?.code==='SAVE_CONFLICT'){studyConflict=true;setStudyStatus('studyConflictStatus');}else setStudyStatus('studySaveFailed');}
+      if(!studyConflict&&persistence.settings.studyOptIn&&studySession&&studySession!==sessionSnapshot)scheduleStudySave();
+    });},500);
+  }
+  async function changeStudyOptIn(event){
+    const wanted=event.currentTarget.checked;
+    if(wanted){
+      event.currentTarget.checked=false;const fingerprint=await persistence.fingerprintDocument(doc);if(!fingerprint){setStudyStatus('studyPersistenceUnavailable');refreshLocalStudy();return;}
+      const yes=await env.AppConfirm.ask({title:t('studyOptInTitle'),message:t('studyOptInMessage'),confirmLabel:t('studyOptInAction'),cancelLabel:t('cancel')});if(!yes){refreshLocalStudy();return;}
+      try{await persistence.setStudyOptIn(true);studyConflict=false;studyRecordGeneration=0;studyIdentityToken='';setStudyStatus('studyEnabled');refreshLocalStudy();scheduleStudySave();}catch{setStudyStatus('studySaveFailed');refreshLocalStudy();}
+    }else{
+      cancelStudyTimer();try{await persistence.setStudyOptIn(false);studyConflict=false;studyRecordGeneration=0;studyIdentityToken='';setStudyStatus('studyDisabled');}catch{setStudyStatus('studySaveFailed');}refreshLocalStudy();
+    }
+  }
+  async function clearStudyLocal(){
+    const yes=await env.AppConfirm.ask({title:t('clearStudyTitle'),message:t('clearStudyMessage'),confirmLabel:t('clearStudyAction'),cancelLabel:t('cancel'),tone:'danger'});if(!yes)return;
+    cancelStudyTimer();try{await persistence.clearLocal('study');studyConflict=false;studyRecordGeneration=0;studyIdentityToken='';setStudyStatus('studyCleared');refreshLocalStudy();}catch{setStudyStatus('studySaveFailed');}
+  }
+  async function clearDraftLocal(){
+    const yes=await env.AppConfirm.ask({title:t('clearDraftTitle'),message:t('clearDraftMessage'),confirmLabel:t('clearDraftAction'),cancelLabel:t('cancel'),tone:'danger'});if(!yes)return;
+    cancelDraftTimer();try{await persistence.clearLocal('draft');localDraftGeneration=0;draftConflict=false;lastDraftSavedAt='';setDraftStatus('draftCleared');refreshLocalDraft();refreshLocalStudy();}catch{setDraftStatus('draftSaveFailed');}
+  }
   function refreshLocalDraft(){
     const toggle=$('draftOptIn');if(!toggle)return;toggle.checked=Boolean(persistence.settings.draftOptIn);toggle.disabled=!localAvailable;
-    $('draftConflict').hidden=!draftConflict;$('resolveConflictSaveButton').hidden=!draftConflict;$('resolveConflictReloadButton').hidden=!draftConflict;
+    $('draftConflict').hidden=!draftConflict;$('resolveConflictSaveButton').hidden=!draftConflict;$('resolveConflictReloadButton').hidden=!draftConflict;refreshLocalStudy();
   }
   function cancelDraftTimer(){if(draftSaveTimer){env.clearTimeout(draftSaveTimer);draftSaveTimer=0;}}
   function scheduleDraftSave(){
@@ -43,7 +87,7 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
     try{const saved=await persistence.loadSnapshot();if(!saved)return;localDraftGeneration=saved.generation;draftConflict=false;applyImported({document:saved.document},{fromLocal:true});lastDraftSavedAt=saved.savedAt;setDraftStatus('draftRestored');refreshLocalDraft();}catch{setDraftStatus('draftSaveFailed');}
   }
   async function initPersistence(){
-    const capability=await persistence.probe();localAvailable=capability.available;refreshLocalDraft();if(!localAvailable){setDraftStatus('draftUnavailable');return;}
+    const capability=await persistence.probe();localAvailable=capability.available;refreshLocalDraft();if(!localAvailable){setDraftStatus('draftUnavailable');setStudyStatus('studyPersistenceUnavailable');return;}setStudyStatus(persistence.settings.studyOptIn?'studyEnabled':'studyDisabled');
     let saved=null;try{saved=await persistence.loadSnapshot();}catch{setDraftStatus('draftSaveFailed');return;}if(!saved){setDraftStatus(persistence.settings.draftOptIn?'draftEnabled':'draftDisabled');return;}
     localDraftGeneration=saved.generation;lastDraftSavedAt=saved.savedAt;const yes=await env.AppConfirm.ask({title:t('resumeLocalTitle'),message:t('resumeLocalMessage'),confirmLabel:t('resumeLocalAction'),cancelLabel:t('startFreshAction')});
     if(yes){applyImported({document:saved.document},{fromLocal:true});setDraftStatus('draftRestored');}else setDraftStatus(persistence.settings.draftOptIn?'draftEnabled':'draftDisabled');refreshLocalDraft();
@@ -281,7 +325,7 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
   function pointerUp(event){if(!gesture||event.pointerId!==gesture.pointerId)return;const start=gesture.start,point=imagePoint(event)||gesture.current;svg.releasePointerCapture(event.pointerId);clearDraft();const rect=rectFromPoints(start,point);if(rect)addCover(rect);else{tool='move';updateToolButtons();}}
   function pointerCancel(){if(!gesture)return;clearDraft();tool='move';updateToolButtons();}
   function twoPoint(event){if(mode!=='create'||tool!=='two-point'||event.target!==svg)return;const point=imagePoint(event);if(!point)return;if(!twoPointStart){twoPointStart=point;status('chooseSecondPoint');return;}const rect=rectFromPoints(twoPointStart,point);twoPointStart=null;if(rect)addCover(rect);else status('coverTooSmall');}
-  function handleViewAction(action){if(action.type==='SELECT_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);refreshCopy();return;}if(mode!=='study')return;if(action.type==='TOGGLE_QUESTION'&&studySession?.mode==='free'){studySession=core.toggleFree(studySession,action.questionId);refreshCopy();return;}if(action.type==='REVEAL_CURRENT'&&studySession?.mode==='guided'&&action.questionId===currentGuidedId()){revealGuided();}}
+  function handleViewAction(action){if(action.type==='SELECT_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);refreshCopy();return;}if(mode!=='study')return;if(action.type==='TOGGLE_QUESTION'&&studySession?.mode==='free'){studySession=core.toggleFree(studySession,action.questionId);scheduleStudySave();refreshCopy();return;}if(action.type==='REVEAL_CURRENT'&&studySession?.mode==='guided'&&action.questionId===currentGuidedId()){revealGuided();}}
   function editSelected(kind,amount=1){const mask=currentMask(),asset=currentAsset();if(!mask||!asset||mode!=='create')return;const dx=amount/asset.width,dy=amount/asset.height;let r={...mask.rect};if(kind==='left')r.x-=dx;if(kind==='right')r.x+=dx;if(kind==='up')r.y-=dy;if(kind==='down')r.y+=dy;if(kind==='wider')r.w+=dx;if(kind==='narrower')r.w-=dx;if(kind==='taller')r.h+=dy;if(kind==='shorter')r.h-=dy;try{const result=core.applyCommand(doc,{type:'SET_MASK_RECT',maskId:mask.id,rect:r},ctx);commit(result,mask.id);status('coverChanged');refreshCopy();}catch(error){if(error.code!=='INVALID_SHEET')throw error;}}
   function deleteSelected(){const mask=currentMask();if(!mask)return;const result=core.applyCommand(doc,{type:'DELETE_MASK',maskId:mask.id},ctx);commit(result,null);status('coverDeleted');refreshCopy();}
   function duplicateSelected(){const mask=currentMask();if(!mask)return;const before=new Set(doc.masks.map(m=>m.id)),result=core.applyCommand(doc,{type:'DUPLICATE_MASK',maskId:mask.id},ctx),added=result.document.masks.find(m=>!before.has(m.id));commit(result,added?.id||null);status('coverAdded');refreshCopy();}
@@ -317,28 +361,43 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
     if(!next.assets.some(asset=>asset.id===imageId))imageIO.release(imageId);
     selectedId=next.pages[Math.min(index,next.pages.length-1)]?.id||null;viewKey='';status('pageDeleted');refreshCopy();showPreview(true);
   }
-  function startStudySession(nextMode=studyMode,otherAnswers=null){studyMode=nextMode;previousStudySummary=null;studySession=core.startSession(doc,{mode:nextMode,...(nextMode==='guided'?{otherAnswers:otherAnswers||doc.defaults.otherAnswers}:{})},ctx);const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);}
+  function startStudySession(nextMode=studyMode,otherAnswers=null){studyMode=nextMode;previousStudySummary=null;studySession=core.startSession(doc,{mode:nextMode,...(nextMode==='guided'?{otherAnswers:otherAnswers||doc.defaults.otherAnswers}:{})},ctx);studyRecordGeneration=0;studyIdentityToken='';studyConflict=false;const pageChanged=syncGuidedPage();scheduleStudySave();refreshCopy();if(pageChanged)showPreview(true);}
   async function switchStudyMode(nextMode){if(mode!=='study'||studyMode===nextMode)return;const proceed=!studyHasProgress(studySession)||await env.AppConfirm.ask({title:t('studyRestartTitle'),message:t('studyRestartMessage'),confirmLabel:t('studyRestartAction'),cancelLabel:t('cancel')});if(!proceed){refreshCopy();return;}startStudySession(nextMode);}
   async function changeOtherAnswers(value){if(mode!=='study'||studyMode!=='guided'||!['hidden','visible'].includes(value)||value===studySession.otherAnswers)return;const proceed=!studyHasProgress(studySession)||await env.AppConfirm.ask({title:t('studyRestartTitle'),message:t('studyRestartMessage'),confirmLabel:t('studyRestartAction'),cancelLabel:t('cancel')});if(!proceed){refreshCopy();return;}startStudySession('guided',value);}
-  function revealGuided(){if(studySession?.mode!=='guided')return;studySession=core.revealCurrent(studySession,studySession.epoch);refreshCopy();}
-  function rateGuided(rating){if(studySession?.mode!=='guided')return;const qid=currentGuidedId(),epoch=studySession.epoch;if(!qid)return;studySession=core.rate(studySession,qid,rating,epoch);const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);}
-  function skipGuided(){if(studySession?.mode!=='guided'||!currentGuidedId())return;studySession=core.skip(studySession,studySession.epoch);const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);}
-  function finishGuided(){if(studySession?.mode!=='guided')return;studySession=core.finishSession(studySession,studySession.epoch);refreshCopy();}
-  function goGuidedQuestion(qid){if(studySession?.mode!=='guided')return;studySession=core.goToQuestion(studySession,qid);const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);}
+  function revealGuided(){if(studySession?.mode!=='guided')return;studySession=core.revealCurrent(studySession,studySession.epoch);scheduleStudySave();refreshCopy();}
+  function rateGuided(rating){if(studySession?.mode!=='guided')return;const qid=currentGuidedId(),epoch=studySession.epoch;if(!qid)return;studySession=core.rate(studySession,qid,rating,epoch);scheduleStudySave();const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);}
+  function skipGuided(){if(studySession?.mode!=='guided'||!currentGuidedId())return;studySession=core.skip(studySession,studySession.epoch);scheduleStudySave();const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);}
+  function finishGuided(){if(studySession?.mode!=='guided')return;studySession=core.finishSession(studySession,studySession.epoch);scheduleStudySave();refreshCopy();}
+  function goGuidedQuestion(qid){if(studySession?.mode!=='guided')return;studySession=core.goToQuestion(studySession,qid);scheduleStudySave();const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);}
   function previousGuided(){if(studySession?.mode!=='guided'||!studySession.queue.length)return;const index=studySession.ended?studySession.queue.length-1:Math.max(0,studySession.index-1);goGuidedQuestion(studySession.queue[index].questionId);}
-  function reviewGuided(kind){if(studySession?.mode!=='guided')return;const previous=core.summary(studySession),next=core.makeReviewSession(doc,studySession,kind,ctx);if(!next)return;previousStudySummary=previous;studySession=next;studyMode='guided';const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);}
+  function reviewGuided(kind){if(studySession?.mode!=='guided')return;const previous=core.summary(studySession),next=core.makeReviewSession(doc,studySession,kind,ctx);if(!next)return;previousStudySummary=previous;studySession=next;studyMode='guided';studyRecordGeneration=0;studyIdentityToken='';studyConflict=false;scheduleStudySave();const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);}
   function editCurrentQuestion(){
     const qid=currentGuidedId();if(mode!=='study'||studySession?.mode!=='guided'||!qid)return;const question=doc.questions.find(item=>item.id===qid);if(!question)return;
     studyEditActive=true;studyEditImpact={changed:new Set(),deleted:new Set(),added:new Set()};mode='create';selectedId=question.pageId;selectedMaskId=question.maskIds[0]||null;selectedMaskIds=new Set(question.maskIds);tool='move';refreshCopy();showPreview();
   }
   function returnToStudy(){
-    if(!studyEditActive||!studySession)return;studyEditActive=false;mode='study';selectedMaskId=null;selectedMaskIds.clear();const impact=studyEditImpact||{changed:new Set(),deleted:new Set(),added:new Set()};studyEditImpact=null;const pageChanged=syncGuidedPage();status('studyEditSummary',{changed:impact.changed.size,deleted:impact.deleted.size,added:impact.added.size});refreshCopy();if(pageChanged)showPreview(true);else showPreview();
+    if(!studyEditActive||!studySession)return;studyEditActive=false;mode='study';selectedMaskId=null;selectedMaskIds.clear();const impact=studyEditImpact||{changed:new Set(),deleted:new Set(),added:new Set()};studyEditImpact=null;const pageChanged=syncGuidedPage();status('studyEditSummary',{changed:impact.changed.size,deleted:impact.deleted.size,added:impact.added.size});studyRecordGeneration=0;studyIdentityToken='';studyConflict=false;scheduleStudySave();refreshCopy();if(pageChanged)showPreview(true);else showPreview();
   }
-  function beginStudy(){if(!doc.questions.length||busy)return;studyEditActive=false;studyEditImpact=null;mode='study';tool='move';selectedMaskId=null;studyMode=doc.defaults.mode||'free';studySession=core.startSession(doc,{mode:studyMode,...(studyMode==='guided'?{otherAnswers:doc.defaults.otherAnswers}:{})},ctx);previousStudySummary=null;const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);}
-  function beginCreate(){studyEditActive=false;studyEditImpact=null;mode='create';studySession=null;previousStudySummary=null;refreshCopy();$('addButton').focus({preventScroll:true});}
-  function beginSave(){if(!doc.pages.length||busy)return;studyEditActive=false;studyEditImpact=null;mode='save';studySession=null;selectedMaskId=null;refreshCopy();$('outputFilename').focus({preventScroll:true});}
+  async function beginStudy(){
+    if(!doc.questions.length||busy)return;studyEditActive=false;studyEditImpact=null;tool='move';selectedMaskId=null;previousStudySummary=null;studyConflict=false;
+    studyMode=doc.defaults.mode||'free';let restored=null,identity=null;
+    if(localAvailable&&persistence.settings.studyOptIn){
+      identity=await currentStudyIdentity();if(identity){try{restored=await persistence.loadSession(identity);}catch{setStudyStatus('studySaveFailed');}}
+    }
+    if(restored){
+      const yes=await env.AppConfirm.ask({title:t('resumeStudyTitle'),message:t('resumeStudyMessage'),confirmLabel:t('resumeStudyAction'),cancelLabel:t('startStudyFreshAction')});
+      studyRecordGeneration=restored.generation;studyIdentityToken=identityToken(identity);
+      if(yes){studySession=restored.session;studyMode=studySession.mode;setStudyStatus('studyRestored');}
+      else{studySession=core.startSession(doc,{mode:studyMode,...(studyMode==='guided'?{otherAnswers:doc.defaults.otherAnswers}:{})},ctx);scheduleStudySave();}
+    }else{
+      studyRecordGeneration=0;studyIdentityToken=identity?identityToken(identity):'';studySession=core.startSession(doc,{mode:studyMode,...(studyMode==='guided'?{otherAnswers:doc.defaults.otherAnswers}:{})},ctx);scheduleStudySave();
+    }
+    mode='study';const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);
+  }
+  function beginCreate(){scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='create';studySession=null;previousStudySummary=null;refreshCopy();$('addButton').focus({preventScroll:true});}
+  function beginSave(){if(!doc.pages.length||busy)return;scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='save';studySession=null;selectedMaskId=null;refreshCopy();$('outputFilename').focus({preventScroll:true});}
   function applyImported(envelope,{fromLocal=false}={}){
-    generation++;controller?.abort();imageIO.releaseAll();doc=envelope.document;selectedId=doc.pages[0]?.id||null;selectedMaskId=null;selectedMaskIds.clear();undo=[];redo=[];failures=[];studySession=null;studyEditActive=false;studyEditImpact=null;mode='create';tool='move';twoPointStart=null;viewKey='';
+    generation++;cancelStudyTimer();studyRecordGeneration=0;studyIdentityToken='';studyConflict=false;controller?.abort();imageIO.releaseAll();doc=envelope.document;selectedId=doc.pages[0]?.id||null;selectedMaskId=null;selectedMaskIds.clear();undo=[];redo=[];failures=[];studySession=null;studyEditActive=false;studyEditImpact=null;mode='create';tool='move';twoPointStart=null;viewKey='';
     filenameBase=doc.title&&doc.title!==t('untitled')?doc.title:'reveal-sheet';$('outputFilename').value=filenameBase;status(fromLocal?'draftRestored':'sheetOpened');refreshCopy();showPreview(true);if(!fromLocal)scheduleDraftSave();
   }
   async function openSheet(file){
@@ -368,7 +427,7 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
     }catch(error){status('error_'+(error?.code||'INVALID_SHEET'));refreshCopy();}
   }
   function keydown(event){if(editableTarget(event.target)||env.document.querySelector('dialog[open]'))return;if(mode==='study'&&studySession?.mode==='guided'){if(event.key===' '){event.preventDefault();revealGuided();}else if(event.key==='1'){event.preventDefault();if(studySession.stage==='revealed')rateGuided('recalled');}else if(event.key==='2'){event.preventDefault();if(studySession.stage==='revealed')rateGuided('again');}else if(event.key.toLowerCase()==='s'){event.preventDefault();skipGuided();}else if(event.key==='ArrowLeft'){event.preventDefault();previousGuided();}return;}if(mode!=='create'||!currentMask())return;const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};if(map[event.key]){event.preventDefault();editSelected(map[event.key],event.shiftKey?10:1);}else if(event.key==='Delete'||event.key==='Backspace'){event.preventDefault();deleteSelected();}else if(event.key==='Escape'){selectedMaskId=null;tool='move';twoPointStart=null;pointerCancel();refreshCopy();}}
-  function destroy(){generation++;cancelDraftTimer();controller?.abort();imageIO.releaseAll();studyView.destroy();image.hidden=true;setSvgHidden(true);image.removeAttribute('src');}
+  function destroy(){generation++;cancelDraftTimer();cancelStudyTimer();controller?.abort();imageIO.releaseAll();studyView.destroy();image.hidden=true;setSvgHidden(true);image.removeAttribute('src');}
   $('addButton').addEventListener('click',()=>$('imageInput').click());
   $('retryButton').addEventListener('click',()=>$('imageInput').click());
   $('imageInput').addEventListener('change',event=>{const files=Array.from(event.target.files||[]);event.target.value='';addImages(files);});
@@ -384,8 +443,8 @@ function createEditor({core,imageIO,projectIO,persistence,appVersion,env,transla
   $('groupButton').addEventListener('click',groupSelected);$('ungroupButton').addEventListener('click',ungroupSelected);$('makeAuxiliaryButton').addEventListener('click',()=>convertSelected('auxiliary'));$('makeAnswerButton').addEventListener('click',()=>convertSelected('answer'));$('duplicateSelectionButton').addEventListener('click',duplicateSelection);
   $('freeModeButton').addEventListener('click',()=>switchStudyMode('free'));$('guidedModeButton').addEventListener('click',()=>switchStudyMode('guided'));$('otherAnswersHidden').addEventListener('change',event=>{if(event.target.checked)changeOtherAnswers('hidden');});$('otherAnswersVisible').addEventListener('change',event=>{if(event.target.checked)changeOtherAnswers('visible');});$('revealCurrentButton').addEventListener('click',revealGuided);$('recalledButton').addEventListener('click',()=>rateGuided('recalled'));$('againButton').addEventListener('click',()=>rateGuided('again'));$('skipButton').addEventListener('click',skipGuided);$('previousQuestionButton').addEventListener('click',previousGuided);$('finishStudyButton').addEventListener('click',finishGuided);$('reviewAgainButton').addEventListener('click',()=>reviewGuided('again'));$('reviewUncheckedButton').addEventListener('click',()=>reviewGuided('unchecked'));
   $('viewLeft').addEventListener('click',()=>nudgeView(-1,0));$('viewRight').addEventListener('click',()=>nudgeView(1,0));$('viewUp').addEventListener('click',()=>nudgeView(0,-1));$('viewDown').addEventListener('click',()=>nudgeView(0,1));$('viewZoomIn').addEventListener('click',()=>zoomView(1.25));$('viewZoomOut').addEventListener('click',()=>zoomView(.8));$('viewFit').addEventListener('click',fitView);$('focusQuestionButton').addEventListener('click',focusCurrentQuestion);$('editCurrentQuestionButton').addEventListener('click',editCurrentQuestion);$('returnToStudyButton').addEventListener('click',returnToStudy);
-  $('draftOptIn').addEventListener('change',changeDraftOptIn);$('resolveConflictSaveButton').addEventListener('click',beginSave);$('resolveConflictReloadButton').addEventListener('click',reloadConflictDraft);
-  $('studyButton').addEventListener('click',beginStudy);$('createButton').addEventListener('click',beginCreate);$('saveButton').addEventListener('click',beginSave);$('downloadJsonButton').addEventListener('click',downloadJson);$('openButton').addEventListener('click',()=>$('sheetInput').click());$('sheetInput').addEventListener('change',event=>{const file=event.target.files?.[0]||null;event.target.value='';openSheet(file);});$('hideAllButton').addEventListener('click',()=>{studySession=core.hideAllFree(studySession);refreshCopy();});$('revealPageButton').addEventListener('click',()=>{studySession=core.revealPageFree(doc,studySession,selectedId);refreshCopy();});
+  $('draftOptIn').addEventListener('change',changeDraftOptIn);$('studyOptIn').addEventListener('change',changeStudyOptIn);$('clearDraftButton').addEventListener('click',clearDraftLocal);$('clearStudyButton').addEventListener('click',clearStudyLocal);$('resolveConflictSaveButton').addEventListener('click',beginSave);$('resolveConflictReloadButton').addEventListener('click',reloadConflictDraft);
+  $('studyButton').addEventListener('click',beginStudy);$('createButton').addEventListener('click',beginCreate);$('saveButton').addEventListener('click',beginSave);$('downloadJsonButton').addEventListener('click',downloadJson);$('openButton').addEventListener('click',()=>$('sheetInput').click());$('sheetInput').addEventListener('change',event=>{const file=event.target.files?.[0]||null;event.target.value='';openSheet(file);});$('hideAllButton').addEventListener('click',()=>{studySession=core.hideAllFree(studySession);scheduleStudySave();refreshCopy();});$('revealPageButton').addEventListener('click',()=>{studySession=core.revealPageFree(doc,studySession,selectedId);scheduleStudySave();refreshCopy();});
   svg.addEventListener('pointerdown',pointerDown);svg.addEventListener('pointermove',pointerMove);svg.addEventListener('pointerup',pointerUp);svg.addEventListener('pointercancel',pointerCancel);svg.addEventListener('click',twoPoint);
   env.document.addEventListener('keydown',keydown);
   env.document.addEventListener('paste',paste);
