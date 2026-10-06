@@ -29,7 +29,7 @@ test('T11 escapeJsonForHtml prevents script/style/comment terminators without ch
   const io=project(),raw=JSON.stringify({a:'</script><script>alert(1)</script>',b:'<!--x-->',c:'</style>'});
   assert.equal(typeof io.escapeJsonForHtml,'function');
   const escaped=io.escapeJsonForHtml(raw);
-  assert.equal(/<\\/script/i.test(escaped),false);assert.equal(/<\\/style/i.test(escaped),false);assert.equal(escaped.includes('<!--'),false);
+  const lower=escaped.toLowerCase();assert.equal(lower.includes('</script'),false);assert.equal(lower.includes('</style'),false);assert.equal(escaped.includes('<!--'),false);
   assert.deepEqual(JSON.parse(escaped),JSON.parse(raw));
 });
 
@@ -43,7 +43,7 @@ test('T11 prepareHtml embeds exactly one non-executing lesson data tag and no ed
   assert.equal(html.includes('"kind":"lesson"'),true);
   assert.equal(html.includes('"ratings"'),false);
   assert.equal(html.includes('id="maskControls"'),false);
-  assert.equal(/<script type="application\\/json" id="reveal-sheet-data">[\\s\\S]*?<\\/script>/.test(html),true);
+  const open='<script type="application/json" id="reveal-sheet-data">',start=html.indexOf(open),end=html.indexOf('</script>',start+open.length);assert.ok(start>=0&&end>start);
 });
 
 test('T11 lesson export rejects sheets without questions and keeps lesson filename normalization',()=>{
