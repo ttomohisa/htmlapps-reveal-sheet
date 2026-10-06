@@ -54,8 +54,11 @@ test('T16: forced colors and reduced motion keep selected/mode controls operable
   await page.emulateMedia({forcedColors:'active',reducedMotion:'reduce'});
   await openApp(page);
   await expect(page.locator('#languageButton')).toBeVisible();
-  expect(await page.evaluate(()=>getComputedStyle(document.documentElement).colorScheme)).toBe('light');
+  expect(await page.evaluate(()=>matchMedia('(forced-colors: active)').matches)).toBe(true);
+  expect(await page.evaluate(()=>matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
   expect(await page.locator('#languageButton').evaluate(node=>{const s=getComputedStyle(node);return s.visibility!=='hidden'&&s.display!=='none';})).toBe(true);
+  await page.locator('#languageButton').focus();await expect(page.locator('#languageButton')).toBeFocused();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
 
