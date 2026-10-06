@@ -1,6 +1,7 @@
-/** Shared image-overlay renderer for editing and free study. */
+/** Shared image-overlay renderer and per-page view state for editing and study. */
 function createStudyView({core,dom,onAction}) {
-  const svg=dom.getElementById('maskSvg'),image=dom.getElementById('previewImage');\n  const viewStates=new Map();
+  const svg=dom.getElementById('maskSvg'),image=dom.getElementById('previewImage');
+  const viewStates=new Map();
   let state={document:null,pageId:null,session:null,mode:'edit',selectedMaskId:null,selectedMaskIds:[]};
   const defaultView=()=>({zoom:1,centerX:.5,centerY:.5});
   function normalizeView(value){
@@ -10,11 +11,12 @@ function createStudyView({core,dom,onAction}) {
   }
   function getViewState(pageId=state.pageId){return {...(viewStates.get(pageId)||defaultView())};}
   function applyView(){
-    if(!state.pageId)return;const current=getViewState(state.pageId),tx=(.5-current.centerX)*100,ty=(.5-current.centerY)*100,transform='translate('+tx+'% , '+ty+'%) scale('+current.zoom+')';
+    if(!state.pageId)return;
+    const view=getViewState(state.pageId),tx=(.5-view.centerX)*100,ty=(.5-view.centerY)*100,transform=`translate(${tx}% , ${ty}%) scale(${view.zoom})`;
     image.style.transformOrigin='50% 50%';svg.style.transformOrigin='50% 50%';image.style.transform=transform;svg.style.transform=transform;
-    svg.dataset.viewZoom=String(current.zoom);svg.dataset.viewCenterX=String(current.centerX);svg.dataset.viewCenterY=String(current.centerY);
+    svg.dataset.viewZoom=String(view.zoom);svg.dataset.viewCenterX=String(view.centerX);svg.dataset.viewCenterY=String(view.centerY);
   }
-  function setViewState(pageId,value){if(!pageId)return defaultView();const current=normalizeView(value);viewStates.set(pageId,current);if(pageId===state.pageId)applyView();return {...current};}
+  function setViewState(pageId,value){if(!pageId)return defaultView();const view=normalizeView(value);viewStates.set(pageId,view);if(pageId===state.pageId)applyView();return {...view};}
   function svgNode(name){return dom.createElementNS('http://www.w3.org/2000/svg',name);}
   function render(){
     const doc=state.document,page=doc&&doc.pages.find(p=>p.id===state.pageId);
@@ -33,13 +35,15 @@ function createStudyView({core,dom,onAction}) {
       const guided=state.mode==='study'&&state.session?.mode==='guided',currentGuided=guided&&!state.session.ended?state.session.queue[state.session.index]?.questionId:null;
       const interactive=state.mode==='edit'||(mask.kind==='answer'&&(!guided||mask.questionId===currentGuided));
       if(interactive){rect.setAttribute('tabindex','0');rect.setAttribute('role','button');rect.setAttribute('aria-label',state.mode==='study'?'Covered answer':'Cover');}
-      else{rect.setAttribute('aria-hidden','true');}
+      else rect.setAttribute('aria-hidden','true');
       const activate=()=>{if(state.mode==='study'&&mask.kind==='answer'){if(guided)onAction({type:'REVEAL_CURRENT',questionId:mask.questionId});else onAction({type:'TOGGLE_QUESTION',questionId:mask.questionId});}else if(state.mode==='edit')onAction({type:'SELECT_MASK',maskId:mask.id});};
-      if(interactive){rect.addEventListener('click',event=>{event.stopPropagation();activate();});rect.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}});}svg.append(rect);
+      if(interactive){rect.addEventListener('click',event=>{event.stopPropagation();activate();});rect.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}});}
+      svg.append(rect);
     }
+    applyView();
   }
   function mount(next){state={...state,...next};render();}
   function setSelection(maskId){state={...state,selectedMaskId:maskId};render();}
-  function destroy(){state={document:null,pageId:null,session:null,mode:'edit',selectedMaskId:null,selectedMaskIds:[]};svg.replaceChildren();}
-  return Object.freeze({mount,render,setSelection,destroy});
+  function destroy(){state={document:null,pageId:null,session:null,mode:'edit',selectedMaskId:null,selectedMaskIds:[]};viewStates.clear();svg.replaceChildren();image.style.transform='';svg.style.transform='';}
+  return Object.freeze({mount,render,setSelection,getViewState,setViewState,destroy});
 }
