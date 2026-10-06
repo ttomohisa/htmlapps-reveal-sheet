@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
 import {openApp,imagePath} from '../helpers/app.mjs';
 
 function editableFixture(){
@@ -61,4 +62,17 @@ test('T13: an APNG disguised as a stored PNG is rejected before replacement',asy
     name:'animated-stored.reveal.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(value))
   });
   await expectRejectedAndPreserved(page);
+});
+
+
+test('T13: an older schema-v1 guided fixture opens without losing its study defaults',async({page})=>{
+  await seedCurrentSheet(page);
+  await page.locator('#sheetInput').setInputFiles(resolve('tests/fixtures/sheets/v0.4.0.reveal.json'));
+  await expect(page.locator('#appConfirmDialog')).toBeVisible();
+  await page.locator('#appConfirmOk').click();
+  await expect(page.locator('#pageList button')).toHaveCount(1);
+  await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
+  await page.locator('#studyButton').click();
+  await expect(page.locator('#guidedPanel')).toBeVisible();
+  await expect(page.locator('#otherAnswersVisible')).toBeChecked();
 });
