@@ -130,7 +130,7 @@ test('T13 structural limits accept the exact boundary and reject the next item',
   const questionsOver=manyQuestions(core.limits.maxQuestions+1);
   const over=core.validateEnvelope(questionsOver);
   assert.equal(over.ok,false);
-  assert.equal(over.errors[0].code,'INVALID_SHEET');
+  assert.equal(over.errors[0].code,'LIMIT_EXCEEDED');
 
   const perPage=clone(fixture),asset=perPage.document.assets[0];
   perPage.document.pages[0].questionOrder=[];perPage.document.questions=[];perPage.document.masks=[];
