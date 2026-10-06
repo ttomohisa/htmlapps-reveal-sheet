@@ -1,6 +1,7 @@
 /* Reveal Sheet: light-only, touch-size controls and one bounded image surface. */
 :root { color-scheme:light; --mobile-bar-height:72px; }
 html,body { max-width:100%;overflow-x:hidden; }
+textarea{font:inherit;color:inherit}textarea:focus-visible{outline:3px solid #16624f;outline-offset:2px}.app-confirm-button,.app-confirm-close{min-height:48px}.app-confirm-close{width:48px;height:48px}
 .reveal-shell,.reveal-grid,.preview-column,.study-panel,.save-panel { min-width:0; }
 [hidden] { display:none !important; }
 button:disabled,input:disabled { cursor:not-allowed; }
