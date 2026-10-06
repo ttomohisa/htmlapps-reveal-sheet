@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.6.0 - 2026-10-06 (development)
+
+T11–T12: self-contained study lesson HTML and non-executing lesson re-import. This is still a development milestone, not the v1.0 release.
+
+- Added `.reveal.html` export for sheets with at least one question. The lesson embeds images, covers, favicon, CSS and a fixed study runtime in one HTML file.
+- Reused the shared document / study primitives for free reveal, guided study, grouped answers, auxiliary covers, self-assessment, results and review sessions.
+- Added a fixed player runtime SHA-256 marker at build time and kept the player template embedded in the main standalone app rather than loading runtime code externally.
+- Added Japanese / English lesson UI, help, keyboard study controls, optional study-progress persistence and an editable-data save action with explicit confirmation and editable filename.
+- Lesson editable-data export excludes author / learner ratings, Undo history, view state and original filenames.
+- Added a save-panel lesson preview that runs in an isolated temporary study session and starts no download.
+- Added first-image decode gating: the lesson image and cover layer remain hidden until decoding succeeds. JavaScript-disabled lesson HTML exposes neither source image pixels nor answer text in the rendered page.
+- Added `.reveal.html` import through a strict non-executing text path: 100 MiB file limit → fatal UTF-8 decode → exactly one fixed JSON data tag → JSON depth / parse → lesson Envelope validation → embedded PNG verification.
+- Incoming lesson HTML is never passed to DOMParser, innerHTML, iframe/srcdoc, document.write or another execution path; outer script / style / img / iframe / meta-refresh markup is ignored and not adopted.
+- Duplicate, missing or cut lesson data tags are rejected before replacement, preserving the current sheet.
+- A validated lesson is converted back to editable data so its original images do not need to be selected again.
+
+### Verification-driven fixes
+
+- Corrected the T11 unit fixture to use the specification's fixed tag order: `<script id="reveal-sheet-data" type="application/json">`.
+- Corrected the direct-file E2E to save Playwright downloads using the real `.reveal.html` extension before navigation; Playwright's extensionless temporary download path is otherwise rendered as text by Chromium.
+- Kept the lesson marker unique in the trusted embedded player template and escaped player-template / user JSON delimiters so build-time embedding cannot create inline script terminators.
+- Preserved extensionless editable-JSON reopen behavior while adding filename/content-type routing for lesson HTML.
+- Added isolated preview-session regression coverage so lesson preview never mutates current or persisted study progress.
+
 ## 0.5.0 - 2026-10-06 (development)
 
 T09–T10: opt-in on-device work recovery and separate study-progress continuation. This is still a development milestone, not the v1.0 release.
