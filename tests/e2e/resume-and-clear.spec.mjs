@@ -94,6 +94,9 @@ test('T10: saved local data remains clearable after its opt-in is turned off',as
   await enable(page,'#studyOptIn');await enterGuided(page);await page.locator('#revealCurrentButton').click();await expect(page.locator('#studySaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
   await page.locator('#draftOptIn').click();await page.locator('#studyOptIn').click();
   await expect(page.locator('#draftOptIn')).not.toBeChecked();await expect(page.locator('#studyOptIn')).not.toBeChecked();
+  await page.reload();await page.locator('#addButton').waitFor({state:'visible'});
+  await expect(page.locator('#appConfirmDialog')).toBeVisible();await page.locator('#appConfirmCancel').click();
+  await expect(page.locator('#draftOptIn')).not.toBeChecked();await expect(page.locator('#studyOptIn')).not.toBeChecked();
   await expect(page.locator('#clearDraftButton')).toBeEnabled();await expect(page.locator('#clearStudyButton')).toBeEnabled();
   await page.locator('#clearDraftButton').click();await page.locator('#appConfirmOk').click();
   await page.locator('#clearStudyButton').click();await page.locator('#appConfirmOk').click();
