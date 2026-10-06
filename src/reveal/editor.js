@@ -8,7 +8,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   let selectedId=null, selectedMaskId=null, selectedMaskIds=new Set(), generation=0, batchId=0, displayGeneration=0;
   let controller=null, busy=false, failures=[], progress=null;
   let undo=[],redo=[],viewKey='',lastStatus='emptyStatus',mode='create',tool='move',studySession=null,studyMode='free',previousStudySummary=null,studyEditActive=false,studyEditImpact=null;
-  let filenameBase='reveal-sheet',preparedLessonExport=null,exportGeneration=0,exportBusy=false,lessonPreviewSession=null,lessonPreviewPageId=null,lessonPreviewGeneration=0;
+  let filenameBase='reveal-sheet',preparedJsonExport=null,preparedLessonExport=null,exportGeneration=0,exportBusy=false,lessonPreviewSession=null,lessonPreviewPageId=null,lessonPreviewGeneration=0;
   let gesture=null,twoPointStart=null,draftRect=null;
   let draftSaveTimer=0,draftSaveChain=Promise.resolve(),localDraftGeneration=0,draftConflict=false,localAvailable=false,localDraftExists=false,lastDraftSavedAt='';
   let studySaveTimer=0,studySaveChain=Promise.resolve(),studyRecordGeneration=0,studyIdentityToken='',studyConflict=false,localStudyExists=false,lastStudySavedAt='';
@@ -213,7 +213,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     const page=doc.pages.find(p=>p.id===selectedId),asset=page&&doc.assets.find(a=>a.id===page.imageId);
     if(asset){$('imageDimensions').textContent=`${asset.width} × ${asset.height} px`;$('imageBytes').textContent=formatBytes(asset.byteLength);}
     const totalAssetBytes=doc.assets.reduce((sum,a)=>sum+a.byteLength,0);
-    $('totalBytes').textContent=formatBytes(totalAssetBytes);$('savePageCount').textContent=String(doc.pages.length);$('saveQuestionCount').textContent=String(doc.questions.length);$('saveAuxCount').textContent=String(doc.masks.filter(mask=>mask.kind==='auxiliary').length);$('saveImageBytes').textContent=formatBytes(totalAssetBytes);$('saveHtmlBytes').textContent=preparedLessonExport?formatBytes(preparedLessonExport.size):'—';$('downloadJsonButton').disabled=busy||exportBusy||doc.pages.length===0;$('downloadHtmlButton').disabled=busy||exportBusy||doc.questions.length===0||!playerTemplate;$('previewLessonButton').disabled=busy||exportBusy||doc.questions.length===0||!playerTemplate;
+    $('totalBytes').textContent=formatBytes(totalAssetBytes);$('savePageCount').textContent=String(doc.pages.length);$('saveQuestionCount').textContent=String(doc.questions.length);$('saveAuxCount').textContent=String(doc.masks.filter(mask=>mask.kind==='auxiliary').length);$('saveImageBytes').textContent=formatBytes(totalAssetBytes);$('saveJsonBytes').textContent=preparedJsonExport?formatBytes(preparedJsonExport.size):'—';$('saveHtmlBytes').textContent=preparedLessonExport?formatBytes(preparedLessonExport.size):'—';$('downloadJsonButton').disabled=busy||exportBusy||doc.pages.length===0;$('downloadHtmlButton').disabled=busy||exportBusy||doc.questions.length===0||!playerTemplate;$('previewLessonButton').disabled=busy||exportBusy||doc.questions.length===0||!playerTemplate;
     if(!$('outputFilename').value)$('outputFilename').value=filenameBase;
     refreshStudy();updateToolButtons();renderOverlay();refreshViewControls();
   }
@@ -265,7 +265,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     for(const id of mutationResult.affectedQuestionIds||[])studyEditImpact.changed.add(id);for(const id of mutationResult.deletedQuestionIds||[]){studyEditImpact.deleted.add(id);studyEditImpact.changed.delete(id);}for(const id of mutationResult.addedQuestionIds||[])studyEditImpact.added.add(id);
   }
   function invalidatePreparedExport(){
-    projectIO.invalidateExport(exportGeneration);exportGeneration++;preparedLessonExport=null;exportBusy=false;
+    projectIO.invalidateExport(exportGeneration);exportGeneration++;preparedJsonExport=null;preparedLessonExport=null;exportBusy=false;
   }
   function commit(nextOrMutation,maskId=selectedMaskId) {
     const oldDoc=doc,mutationResult=nextOrMutation?.document?nextOrMutation:derivedMutation(oldDoc,nextOrMutation),next=mutationResult.document;
@@ -421,13 +421,18 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     mode='study';const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);
   }
   function beginCreate(){scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='create';studySession=null;previousStudySummary=null;refreshCopy();$('addButton').focus({preventScroll:true});}
-  async function prepareLessonExport(){
-    if(!doc.questions.length||!playerTemplate)return null;
-    const token=exportGeneration,snapshot=doc;exportBusy=true;preparedLessonExport=null;status('exportPreparing');refreshCopy();
+  async function prepareSaveExports(){
+    if(!doc.pages.length)return null;
+    const token=exportGeneration,snapshot=doc;exportBusy=true;preparedJsonExport=null;preparedLessonExport=null;status('exportPreparing');refreshCopy();
     try{
-      const prepared=await projectIO.prepareExport(snapshot,{kind:'html',filename:$('outputFilename').value,playerTemplate,appVersion,preview:true},token);
+      const json=await projectIO.prepareExport(snapshot,{kind:'json',filename:$('outputFilename').value,appVersion,preview:true},token);
       if(token!==exportGeneration||snapshot!==doc)return null;
-      preparedLessonExport=prepared;status('exportReady',{size:formatBytes(prepared.size)});return prepared;
+      let html=null;
+      if(doc.questions.length&&playerTemplate){
+        html=await projectIO.prepareExport(snapshot,{kind:'html',filename:$('outputFilename').value,playerTemplate,appVersion,preview:true},token);
+        if(token!==exportGeneration||snapshot!==doc)return null;
+      }
+      preparedJsonExport=json;preparedLessonExport=html;status('exportReady');return {json,html};
     }catch(error){
       if(token!==exportGeneration||error?.code==='EXPORT_FAILED')return null;
       status('error_'+(error?.code||'EXPORT_FAILED'));return null;
@@ -436,8 +441,8 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     }
   }
   function beginSave(){
-    if(!doc.pages.length||busy)return;scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='save';studySession=null;selectedMaskId=null;preparedLessonExport=null;
-    refreshCopy();$('outputFilename').focus({preventScroll:true});if(doc.questions.length&&playerTemplate)prepareLessonExport();
+    if(!doc.pages.length||busy)return;scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='save';studySession=null;selectedMaskId=null;preparedJsonExport=null;preparedLessonExport=null;
+    refreshCopy();$('outputFilename').focus({preventScroll:true});prepareSaveExports();
   }
   function applyImported(envelope,{fromLocal=false}={}){
     generation++;cancelStudyTimer();studyRecordGeneration=0;studyIdentityToken='';studyConflict=false;invalidatePreparedExport();controller?.abort();imageIO.releaseAll();doc=envelope.document;selectedId=doc.pages[0]?.id||null;selectedMaskId=null;selectedMaskIds.clear();undo=[];redo=[];failures=[];studySession=null;studyEditActive=false;studyEditImpact=null;mode='create';tool='move';twoPointStart=null;viewKey='';
@@ -464,10 +469,14 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     if(busy||exportBusy||!doc.pages.length||(kind==='html'&&(!doc.questions.length||!playerTemplate)))return;
     const token=exportGeneration,snapshot=doc;exportBusy=true;status('exportPreparing');refreshCopy();
     try{
-      const prepared=await projectIO.prepareExport(snapshot,{kind,filename:$('outputFilename').value,playerTemplate,appVersion},token);
+      const desiredName=projectIO.sanitizeFilename($('outputFilename').value,kind);
+      let prepared=kind==='html'?preparedLessonExport:preparedJsonExport;
+      if(!prepared||prepared.generation!==token||prepared.documentRevision!==snapshot.revision||prepared.filename!==desiredName){
+        prepared=await projectIO.prepareExport(snapshot,{kind,filename:$('outputFilename').value,playerTemplate,appVersion},token);
+      }
       if(token!==exportGeneration||snapshot!==doc)return;
       projectIO.requestDownload(prepared);
-      if(kind==='html')preparedLessonExport=prepared;
+      if(kind==='html')preparedLessonExport=prepared;else preparedJsonExport=prepared;
       filenameBase=prepared.filename.replace(kind==='html'?/\.reveal\.html$/i:/\.reveal\.json$/i,'');$('outputFilename').value=filenameBase;
       status('saveStarted',{name:prepared.filename});refreshCopy();
     }catch(error){
