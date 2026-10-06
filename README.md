@@ -2,7 +2,7 @@
 
 [日本語](README.ja.md)
 
-Reveal Sheet turns diagrams, photos and notes that already contain answers into study sheets with opaque covers. **The current v0.5.0 development build adds opt-in on-device work recovery and a separate opt-in for study-session continuation, alongside free/guided study, review sessions, targeted edits, and image-embedded editable JSON.** It is not the completed v1.0 release.
+Reveal Sheet turns diagrams, photos and notes that already contain answers into study sheets with opaque covers. **The current v0.6.0 development build can export a self-contained study-only HTML file and safely reopen Reveal Sheet lesson HTML as validated editable data without executing received outer HTML.** Free/guided study, review sessions, opt-in local persistence and image-embedded editable JSON remain available. It is not the completed v1.0 release.
 
 ## Available now
 
@@ -20,6 +20,11 @@ Use **Edit this question** during guided study to change the relevant cover and 
 
 Save images, pages, questions and covers as a `.reveal.json` file and reopen it without reselecting the source image. Study results, Undo history, view position and original filenames are not exported.
 
+
+**Study lesson HTML (`.reveal.html`)** packages the images, covers and study player into one file when the sheet contains at least one question. Open it directly in a browser to use free reveal, one-at-a-time study, self-assessment/results/review, Japanese/English switching and keyboard controls without additional network requests. Author study results, Undo history, view position and original filenames are not embedded. Saving editable data from the lesson also excludes personal study results.
+
+**Open a sheet** now accepts both `.reveal.json` and Reveal Sheet `.reveal.html`. Incoming lesson HTML is never adopted as DOM or executed. Reveal Sheet scans the file as UTF-8 text for exactly one fixed non-executing JSON data tag, validates its structure/references/PNG assets, and rebuilds the editor from that data. Outer script, iframe, image, style or refresh markup is ignored rather than constructed.
+
 **Keep this work on this device** starts OFF. Only after explicit opt-in, normalized images and sheet content are stored in IndexedDB and changes are committed after about a one-second debounce. If another tab advances the same saved generation, Reveal Sheet stops automatic saving instead of silently overwriting and offers manual export or reload-latest recovery. Quota/security failures leave the in-memory sheet and manual export available.
 
 **Keep only study progress on this device** is a separate OFF-by-default option. It stores no image bytes: only the small study-session state. Resume is offered only when document ID, revision and a SHA-256 fingerprint of the canonical document all match, and the current answer is closed on resume. Without Web Crypto, study persistence is disabled while in-memory study remains available. Saved work and study progress can be cleared separately.
@@ -32,7 +37,8 @@ Save images, pages, questions and covers as a `.reveal.json` file and reopen it 
 4. Choose **Study**, then use Reveal freely or One at a time. In guided study, reveal the answer before self-assessing and use the result screen for focused review sessions.
 5. Use **Edit this question** when a study item needs correction, then **Return to study** to continue.
 6. Optionally enable **Keep this work on this device** and/or **Keep only study progress on this device**. They are separate settings and both start OFF.
-7. Use **Save** to export the editable sheet manually. Use **Open a sheet** to reopen the `.reveal.json` file later.
+7. Use **Save** to export editable data (`.reveal.json`) or, when at least one question exists, a self-contained study lesson (`.reveal.html`). The lesson can be previewed in an isolated study session before download.
+8. Use **Open a sheet** to reopen either `.reveal.json` or Reveal Sheet `.reveal.html` without reselecting source images.
 
 Manual editable-sheet export is always available even when on-device persistence is disabled. Leave on-device persistence off on shared devices.
 
@@ -48,6 +54,7 @@ Manual editable-sheet export is always available even when on-device persistence
 | Covers | 1,000 total, 200 per page |
 | Questions | 1,000 total, 50 covers per question |
 | Editable JSON | 96 MiB |
+| Lesson HTML | 100 MiB (embedded JSON remains at or below 96 MiB) |
 
 These are rejection rules, not measured guarantees of every device's capacity. GIF, APNG, animated WebP, SVG, HEIC / HEIF, AVIF, PDF and URL-based image input are unsupported.
 
@@ -57,7 +64,7 @@ Image and editable-sheet processing takes place inside the page. Original filena
 
 **Covers are for studying. The original answers and images remain in the editable sheet file. This tool does not redact personal or confidential information.**
 
-There are no runtime CDNs, remote fonts, analytics, ads or external APIs. CSP uses `connect-src 'none'`, and runtime third-party dependencies remain zero. Optional persistence uses IndexedDB in this browser. Work saving and study-progress saving are separate OFF-by-default choices. Browser storage can be cleared or become unavailable, so keep important sheets as manually exported `.reveal.json` files too.
+There are no runtime CDNs, remote fonts, analytics, ads or external APIs. CSP uses `connect-src 'none'`, and runtime third-party dependencies remain zero. Exported lesson HTML embeds its images, required code, CSS and SVG and requires no additional network request after it is opened. Incoming lesson HTML is not executed or inserted; only its fixed JSON data tag is parsed and validated. Optional persistence uses IndexedDB in this browser. Work saving and study-progress saving are separate OFF-by-default choices. Browser storage can be cleared or become unavailable, so keep important sheets as manually exported `.reveal.json` files too.
 
 ## Browser verification and limitations
 
@@ -65,7 +72,7 @@ Chrome / Edge are primary targets. Automated Windows Chromium runs and local dia
 
 ## Single HTML / offline behavior
 
-Generated files are `dist/index.html`, `dist/index.self-extract.html`, and `reveal-sheet.html`. After a compatible browser opens the single HTML, the image-input, editing, study and editable-JSON save/reopen flow requires no additional network request. OS file previews may not execute JavaScript.
+App build outputs are `dist/index.html`, `dist/index.self-extract.html`, and `reveal-sheet.html`. User-exported study lessons are named `sheet-name.reveal.html` and embed the images and study player in one file. After a compatible browser opens the single HTML, image input, editing, study, editable JSON / lesson HTML export, and validated Reveal Sheet lesson re-open require no additional network request. OS file previews may not execute JavaScript.
 
 ## Development and build
 
@@ -86,7 +93,7 @@ Set `APP_VARIANT=self-extract` to run the same E2E suite against the self-extrac
 
 ## Roadmap
 
-The next stage, v0.6.0 / T11–T12, adds self-contained study HTML export and a safe re-edit path that extracts its embedded data without executing received HTML. PDF, OCR, AI and cloud sync are outside the initial scope.
+The next stage, v0.7.0 / T13–T14, hardens format compatibility, boundary/hostile inputs, output-generation invalidation, re-save behavior and file interoperability/export UX. PDF, OCR, AI and cloud sync are outside the initial scope.
 
 ## License
 

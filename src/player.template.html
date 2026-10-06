@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#f5f5f2">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src 'none'; media-src 'none'; worker-src 'none'; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Reveal Sheet lesson</title>
+<link rel="icon" href="__APP_ICON_DATA_URI__">
+<meta name="reveal-player-runtime-sha256" content="__REVEAL_PLAYER_RUNTIME_SHA256__">
+<style>
+/* REVEAL:PLAYER_SHARED_CSS */
+:root{--lesson-max:1180px}.lesson-body{margin:0;background:var(--bg,#f5f5f2);color:var(--text,#20211f);font:15px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.lesson-header{position:sticky;top:0;z-index:30;border-bottom:1px solid var(--line,#d9dfd9);background:#f9faf7f5}.lesson-header-inner{width:min(var(--lesson-max),calc(100% - 32px));min-height:64px;margin:auto;display:flex;align-items:center;gap:10px}.lesson-icon{width:38px;height:38px;border-radius:10px}.lesson-header-copy{min-width:0;flex:1}.lesson-header-copy h1{margin:0;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lesson-header-actions{display:flex;gap:6px}.lesson-icon-button{min-width:44px;min-height:44px;border:0;border-radius:10px;background:transparent}.lesson-icon-button:hover{background:var(--surface-hover,#e9e9e5)}.lesson-main{width:min(var(--lesson-max),calc(100% - 32px));margin:24px auto 54px}.lesson-waiting,.lesson-error{padding:28px;border:1px solid var(--line,#d9dfd9);border-radius:16px;background:#fff}.lesson-layout{display:grid;grid-template-columns:190px minmax(0,1fr);gap:18px}.lesson-pages,.lesson-panel{border:1px solid var(--line,#d9dfd9);border-radius:14px;background:#fff}.lesson-pages{padding:10px;align-self:start}.lesson-page-button,.lesson-question{width:100%;min-height:44px;margin:3px 0;padding:8px 10px;border:1px solid var(--line,#d9dfd9);border-radius:9px;background:#fff;text-align:left}.lesson-page-button[aria-pressed="true"],.lesson-question[aria-current="true"]{border-color:#16624f;background:#edf4f0}.lesson-panel{padding:16px;min-width:0}.lesson-preview{position:relative;overflow:hidden;height:min(58vh,620px);min-height:300px;border:1px solid var(--line,#d9dfd9);border-radius:12px;background:#eef0ed;display:grid;place-items:center}.lesson-preview img{display:block;max-width:100%;max-height:100%;object-fit:contain}.lesson-preview .mask-layer{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}.lesson-preview .mask-rect{fill:#20211f;stroke:#fff;stroke-width:1;pointer-events:auto}.lesson-preview .mask-rect.auxiliary{fill:#16624f}.lesson-study{margin-top:14px}.lesson-mode-switch,.lesson-actions,.lesson-save-actions{display:flex;flex-wrap:wrap;gap:8px}.lesson-mode-switch button[aria-pressed="true"]{border-color:#16624f;background:#edf4f0;color:#16624f}.lesson-summary{margin:10px 0;color:var(--muted,#626b64)}.lesson-question-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.lesson-question-list .lesson-question{width:auto;min-width:48px;text-align:center}.lesson-options{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0;padding:10px;border:1px solid var(--line,#d9dfd9);border-radius:10px}.lesson-answer{margin:10px 0;padding:12px;border:1px solid #b8cfc4;border-radius:10px;background:#edf4f0}.lesson-results,.lesson-save,.lesson-persistence{margin-top:16px;padding-top:14px;border-top:1px solid var(--line,#d9dfd9)}.lesson-result-grid{display:grid;grid-template-columns:auto auto;gap:5px 14px;width:max-content;max-width:100%}.lesson-save label{display:grid;gap:6px;max-width:520px}.lesson-save input{min-height:44px;padding:9px 10px;border:1px solid var(--line,#d9dfd9);border-radius:9px}.lesson-setting{display:flex;gap:10px;align-items:flex-start}.lesson-setting input{margin-top:7px}.lesson-setting small{display:block;color:var(--muted,#626b64)}.lesson-status{color:var(--muted,#626b64);font-size:12px}.lesson-dialog{width:min(520px,calc(100vw - 24px));padding:0;border:1px solid var(--line,#d9dfd9);border-radius:16px;background:#fff}.lesson-dialog::backdrop{background:#1118}.lesson-dialog-body{padding:18px}.lesson-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.lesson-dialog button{min-height:44px}.lesson-dialog input{width:100%;min-height:44px}.lesson-footer{margin-top:22px;color:var(--muted,#626b64);font-size:12px;text-align:center}
+@media(max-width:720px){.lesson-header-inner,.lesson-main{width:calc(100% - 24px)}.lesson-layout{grid-template-columns:1fr}.lesson-pages{display:flex;gap:6px;overflow-x:auto}.lesson-page-button{min-width:140px;width:140px;flex:0 0 auto}.lesson-preview{height:48vh;min-height:250px}.lesson-panel{padding:12px}.lesson-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.lesson-actions .primary{grid-column:1/-1}.lesson-dialog-actions{display:grid;grid-template-columns:1fr}}
+</style>
+</head>
+<body class="lesson-body">
+<header class="lesson-header"><div class="lesson-header-inner"><img class="lesson-icon" src="__APP_ICON_DATA_URI__" alt=""><div class="lesson-header-copy"><h1 id="lessonTitle">Reveal Sheet lesson</h1></div><div class="lesson-header-actions"><button id="lessonLanguage" class="lesson-icon-button" type="button">日本語</button><button id="lessonHelpButton" class="lesson-icon-button" type="button" aria-label="Help">?</button></div></div></header>
+<main class="lesson-main">
+<section id="lessonWaiting" class="lesson-waiting" role="status">Preparing lesson…</section>
+<section id="lessonError" class="lesson-error" hidden>Could not display this lesson image.</section>
+<section id="lessonReady" hidden>
+<div class="lesson-layout">
+<aside id="lessonPages" class="lesson-pages" aria-label="Pages"></aside>
+<section class="lesson-panel">
+<div class="lesson-preview"><img id="previewImage" alt="" hidden><svg id="maskSvg" class="mask-layer" hidden aria-label="Covers"></svg></div>
+<div class="lesson-study">
+<div class="lesson-mode-switch"><button class="button" id="lessonFreeMode" type="button" aria-pressed="true"></button><button class="button" id="lessonGuidedMode" type="button" aria-pressed="false"></button></div>
+<div id="lessonFreePanel"><p class="lesson-summary"><span id="lessonCheckedLabel"></span> <strong id="lessonConfirmedCount">0</strong> / <strong id="lessonQuestionCount">0</strong></p><div class="lesson-actions"><button class="button" id="lessonHideAll" type="button"></button><button class="button" id="lessonRevealPage" type="button"></button></div><div id="lessonQuestionList" class="lesson-question-list"></div></div>
+<div id="lessonGuidedPanel" hidden>
+<fieldset class="lesson-options"><legend id="lessonOtherLegend"></legend><label><input id="lessonOtherHidden" type="radio" name="lessonOther" value="hidden" checked><span id="lessonOtherHiddenText"></span></label><label><input id="lessonOtherVisible" type="radio" name="lessonOther" value="visible"><span id="lessonOtherVisibleText"></span></label></fieldset>
+<p><strong id="lessonGuidedProgress">0 / 0</strong></p><p id="lessonPrompt" hidden></p><div id="lessonAnswerBox" class="lesson-answer" hidden><p id="lessonAnswer"></p></div>
+<div class="lesson-actions"><button class="button primary" id="lessonRevealCurrent" type="button"></button><button class="button" id="lessonRecalled" type="button"></button><button class="button" id="lessonAgain" type="button"></button><button class="button" id="lessonSkip" type="button"></button><button class="button" id="lessonPrevious" type="button"></button><button class="button" id="lessonFinish" type="button"></button></div>
+<div id="lessonGuidedList" class="lesson-question-list"></div>
+<section id="lessonResults" class="lesson-results" hidden><h2 id="lessonResultsTitle"></h2><div class="lesson-result-grid"><span id="lessonTotalLabel"></span><strong id="lessonResultTotal">0</strong><span>Recalled</span><strong id="lessonResultRecalled">0</strong><span>Review again</span><strong id="lessonResultAgain">0</strong><span>Skipped</span><strong id="lessonResultSkipped">0</strong><span id="lessonUnansweredLabel"></span><strong id="lessonResultUnanswered">0</strong></div><div class="lesson-actions"><button class="button" id="lessonReviewAgain" type="button"></button><button class="button" id="lessonReviewUnchecked" type="button"></button></div></section>
+</div>
+<section class="lesson-persistence"><label class="lesson-setting"><input id="lessonStudyOptIn" type="checkbox"><span><strong id="lessonStudyOptInText"></strong><small id="lessonStudyOptInNote"></small></span></label><p id="lessonStudyStatus" class="lesson-status" role="status" aria-live="polite"></p></section>
+<section class="lesson-save"><label>Filename<input id="lessonFilename" type="text" value="reveal-sheet" autocomplete="off" spellcheck="false"></label><div class="lesson-save-actions"><button class="button" id="lessonSaveEditableButton" type="button"></button></div></section>
+</div>
+</section>
+</div>
+<footer class="lesson-footer">Reveal Sheet · Browser Kitty · Fully local processing</footer>
+</section>
+</main>
+<dialog id="lessonHelpDialog" class="lesson-dialog"><div class="lesson-dialog-body"><h2 id="lessonHelpTitle"></h2><p id="lessonHelpBody"></p><div class="lesson-dialog-actions"><button class="button" id="lessonHelpClose" type="button">Close</button></div></div></dialog>
+<dialog id="lessonConfirmDialog" class="lesson-dialog"><div class="lesson-dialog-body"><h2 id="lessonConfirmTitle"></h2><p id="lessonConfirmMessage"></p><div class="lesson-dialog-actions"><button class="button" id="lessonConfirmCancel" type="button"></button><button class="button primary" id="lessonConfirmOk" type="button"></button></div></div></dialog>
+<script id="reveal-sheet-data" type="application/json">__REVEAL_LESSON_JSON__</script>
+<script>
+'use strict';
+/* REVEAL:PLAYER_JS */
+const LESSON_ENVELOPE=JSON.parse(document.getElementById('reveal-sheet-data').textContent);
+const lessonCore=createRevealCore();
+const lessonProjectIO=createProjectIO({core:lessonCore,imageIO:{verifyStoredAsset:async()=>{}},env:window});
+const lessonPersistence=createPersistence({core:lessonCore,env:window});
+const lessonPlayer=createPlayer({core:lessonCore,projectIO:lessonProjectIO,persistence:lessonPersistence,env:window,envelope:LESSON_ENVELOPE});
+lessonPlayer.start().catch(error=>{document.getElementById('lessonWaiting').hidden=true;const node=document.getElementById('lessonError');node.hidden=false;node.textContent='Could not start this Reveal Sheet lesson.';console.error(error);});
+</script>
+<noscript><p>This Reveal Sheet lesson requires JavaScript.</p></noscript>
+</body>
+</html>

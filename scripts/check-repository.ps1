@@ -29,6 +29,7 @@ $required = @(
   "docs\WEBRTC_QR_PAIRING.ja.md",
   "examples\dependencies.webrtc-qr.json",
   "src\index.template.html",
+  "src\player.template.html",
   "build-standalone.ps1",
   "scripts\build-self-extract.ps1",
   "scripts\check-powershell-syntax.ps1",

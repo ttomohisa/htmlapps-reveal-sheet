@@ -7,7 +7,7 @@ $html = [IO.File]::ReadAllText($Path, [Text.Encoding]::UTF8)
 foreach ($token in @("/* REVEAL:APP_JS */", "/* REVEAL:SHARED_CSS */", "__REVEAL_PLAYER_TEMPLATE_JSON__")) {
   if ($html.Contains($token)) { throw "Unresolved Reveal marker: $token" }
 }
-foreach ($token in @("function createRevealCore", "function createImageIO", "function createPersistence", "function createEditor", "const REVEAL_PLAYER_TEMPLATE = null", "default-src 'none'", "connect-src 'none'", "worker-src 'none'", "frame-src 'none'", "id=`"previewImage`"")) {
+foreach ($token in @("function createRevealCore", "function createImageIO", "function createPersistence", "function createPlayer", "function createEditor", "const REVEAL_PLAYER_TEMPLATE =", "reveal-sheet-data", "default-src 'none'", "connect-src 'none'", "worker-src 'none'", "frame-src 'none'", "id=`"previewImage`"")) {
   if (-not $html.Contains($token)) { throw "Missing Reveal contract: $token" }
 }
 $config = Get-Content -Raw -Encoding UTF8 (Join-Path $Root "app.config.json") | ConvertFrom-Json

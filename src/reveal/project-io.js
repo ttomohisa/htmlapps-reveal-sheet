@@ -32,6 +32,17 @@ function createProjectIO({core,imageIO,env}) {
   function prepareJson(doc,appVersion='0.2.0'){
     return new env.Blob([serialize(doc,'editable',appVersion)],{type:'application/json;charset=utf-8'});
   }
+  function escapeJsonForHtml(text){
+    return String(text).replace(/</g,'\\u003C').replace(/>/g,'\\u003E').replace(/&/g,'\\u0026').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
+  }
+  function prepareHtml(doc,playerTemplate,appVersion='0.6.0'){
+    if(typeof playerTemplate!=='string'||!playerTemplate)fail('INVALID_SHEET');
+    const marker='__REVEAL_'+'LESSON_JSON__',matches=playerTemplate.split(marker).length-1;
+    if(matches!==1)fail('INVALID_SHEET');
+    const json=serialize(doc,'lesson',appVersion),html=playerTemplate.replace(marker,escapeJsonForHtml(json));
+    if(new env.TextEncoder().encode(html).byteLength>core.limits.maxHtmlBytes)fail('LIMIT_EXCEEDED');
+    return new env.Blob([html],{type:'text/html;charset=utf-8'});
+  }
   function jsonDepthWithin(text,maxDepth=16){
     let depth=0,inString=false,escaped=false;
     for(let index=0;index<text.length;index++){
@@ -47,6 +58,52 @@ function createProjectIO({core,imageIO,env}) {
       else if(ch==='}'||ch===']'){depth--;if(depth<0)return false;}
     }
     return !inString&&depth===0;
+  }
+  const LESSON_DATA_START='<script id="reveal-'+'sheet-data" type="application/json">';
+  const LESSON_DATA_END='</'+'script>';
+  function extractLessonEnvelope(text){
+    if(typeof text!=='string'||text.length===0)fail('INVALID_SHEET');
+    const start=text.indexOf(LESSON_DATA_START);
+    if(start<0||text.indexOf(LESSON_DATA_START,start+LESSON_DATA_START.length)>=0)fail('INVALID_SHEET');
+    const jsonStart=start+LESSON_DATA_START.length,end=text.indexOf(LESSON_DATA_END,jsonStart);
+    if(end<0)fail('INVALID_SHEET');
+    const json=text.slice(jsonStart,end);
+    if(new env.TextEncoder().encode(json).byteLength>core.limits.maxJsonBytes)fail('LIMIT_EXCEEDED');
+    if(!jsonDepthWithin(json,16))fail('INVALID_SHEET');
+    let value;
+    try{value=JSON.parse(json);}catch{fail('INVALID_SHEET');}
+    if(value&&value.format==='reveal-sheet'&&value.schemaVersion!==1)fail('UNSUPPORTED_SCHEMA');
+    const checked=core.validateEnvelope(value);
+    if(!checked.ok)fail(checked.errors?.[0]?.code==='UNSUPPORTED_SCHEMA'?'UNSUPPORTED_SCHEMA':'INVALID_SHEET');
+    if(value.kind!=='lesson')fail('INVALID_SHEET');
+    return envelope(value.document,'lesson',value.appVersion);
+  }
+  async function readHtml(file,{signal}={}){
+    if(isAbort(signal))fail('CANCELLED');
+    if(!file||!Number.isSafeInteger(file.size)||file.size<1)fail('INVALID_SHEET');
+    if(file.size>core.limits.maxHtmlBytes)fail('LIMIT_EXCEEDED');
+    let text;
+    try{
+      const bytes=new Uint8Array(await file.arrayBuffer());
+      if(isAbort(signal))fail('CANCELLED');
+      text=new env.TextDecoder('utf-8',{fatal:true}).decode(bytes);
+    }catch(error){
+      if(error?.code==='CANCELLED')throw error;
+      fail('INVALID_SHEET');
+    }
+    const lesson=extractLessonEnvelope(text);
+    for(const asset of lesson.document.assets){
+      if(isAbort(signal))fail('CANCELLED');
+      try{await imageIO.verifyStoredAsset(asset,{signal});}
+      catch(error){if(error?.code==='CANCELLED')throw error;fail(error?.code==='LIMIT_EXCEEDED'?'LIMIT_EXCEEDED':'INVALID_SHEET');}
+    }
+    if(isAbort(signal))fail('CANCELLED');
+    return envelope(lesson.document,'editable',lesson.appVersion);
+  }
+  async function readSheet(file,options={}){
+    const name=String(file?.name||'').toLowerCase(),type=String(file?.type||'').toLowerCase();
+    if(name.endsWith('.reveal.html')||name.endsWith('.html')||type==='text/html')return readHtml(file,options);
+    return readJson(file,options);
   }
   async function readJson(file,{signal}={}){
     if(isAbort(signal))fail('CANCELLED');
@@ -108,5 +165,5 @@ function createProjectIO({core,imageIO,env}) {
     if(isReserved(value))value='_'+value;
     return value+suffix;
   }
-  return Object.freeze({readJson,serialize,prepareJson,sanitizeFilename,jsonDepthWithin});
+  return Object.freeze({readJson,readHtml,readSheet,extractLessonEnvelope,serialize,prepareJson,prepareHtml,escapeJsonForHtml,sanitizeFilename,jsonDepthWithin});
 }

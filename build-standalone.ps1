@@ -365,7 +365,7 @@ $replacementExpectedCounts = @{
   "__APP_CONFIG_JSON__" = 1
   "__BUILD_MANIFEST_JSON__" = 1
   "__EMBEDDED_ASSET_BUNDLE_JSON__" = 1
-  "__APP_ICON_DATA_URI__" = 2
+  "__APP_ICON_DATA_URI__" = 4
 }
 
 foreach ($entry in $replacements.GetEnumerator()) {
