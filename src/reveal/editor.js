@@ -509,7 +509,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   env.addEventListener('pagehide',()=>{controller?.abort();imageIO.releaseAll();viewKey='';image.hidden=true;setSvgHidden(true);});
   env.addEventListener('pageshow',()=>{if(doc.pages.length)showPreview(true);});
   env.addEventListener('beforeunload',event=>{if(doc.pages.length){event.preventDefault();event.returnValue='';}});
-  function localize(){if(mode==='save'&&exportBusy)invalidatePreparedExport();refreshCopy();if(lessonPreviewSession)renderLessonPreview();const page=doc.pages.find(p=>p.id===selectedId);if(page)image.alt=t('imageAlt',{name:page.title});}
+  function localize(){if(mode==='save'&&exportBusy){invalidatePreparedExport();status('exportChanged');}refreshCopy();if(lessonPreviewSession)renderLessonPreview();const page=doc.pages.find(p=>p.id===selectedId);if(page)image.alt=t('imageAlt',{name:page.title});}
   refreshCopy();showPreview();initPersistence();
   return Object.freeze({localize,destroy});
 }
