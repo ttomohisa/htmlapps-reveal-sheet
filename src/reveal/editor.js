@@ -12,7 +12,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   let gesture=null,draftRect=null;
   let draftSaveTimer=0,draftSaveChain=Promise.resolve(),localDraftGeneration=0,draftConflict=false,localAvailable=false,localDraftExists=false,lastDraftSavedAt='';
   let studySaveTimer=0,studySaveChain=Promise.resolve(),studyRecordGeneration=0,studyIdentityToken='',studyConflict=false,localStudyExists=false,lastStudySavedAt='';
-  const image=$('previewImage'),svg=$('maskSvg');
+  const image=$('previewImage'),svg=$('maskSvg'),surface=$('dropZone');
   // SVGElement does not reliably reflect the HTML hidden IDL property.
   // Toggle the attribute explicitly because shared CSS hides [hidden].
   function setSvgHidden(hidden){if(hidden)svg.setAttribute('hidden','');else svg.removeAttribute('hidden');}
@@ -379,21 +379,22 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function beginDirectEdit(event,maskId,kind,corner=null){
     const mask=doc.masks.find(item=>item.id===maskId),point=imagePoint(event,true);if(!mask||!point)return false;
     selectedMaskId=mask.id;selectedMaskIds=new Set([mask.id]);event.preventDefault();
-    gesture={kind,pointerId:event.pointerId,maskId:mask.id,corner,start:point,current:point,startRect:{...mask.rect},currentRect:{...mask.rect},startClientX:event.clientX,startClientY:event.clientY,distanceCssPx:0,cancelled:false};
-    refreshCoverPanel();updateToolButtons();event.target.classList?.add('selected');svg.setPointerCapture(event.pointerId);return true;
+    gesture={kind,pointerId:event.pointerId,maskId:mask.id,corner,start:point,current:point,startRect:{...mask.rect},currentRect:{...mask.rect},startClientX:event.clientX,startClientY:event.clientY,distanceCssPx:0,cancelled:false,captureTarget:event.currentTarget};
+    refreshCoverPanel();updateToolButtons();event.target.classList?.add('selected');event.currentTarget.setPointerCapture(event.pointerId);return true;
   }
   function pointerDown(event){
     if(event.button!==0)return;
+    if(event.target?.closest?.('#viewControls'))return;
     const handle=event.target?.closest?.('.mask-resize-handle'),maskNode=event.target?.closest?.('.mask-rect');
     if(mode==='create'&&handle?.dataset.maskId&&beginDirectEdit(event,handle.dataset.maskId,'mask-resize',handle.dataset.resizeCorner))return;
     if(mode==='create'&&maskNode?.dataset.maskId&&beginDirectEdit(event,maskNode.dataset.maskId,'mask-move'))return;
-    const background=event.target===svg||event.target?.classList?.contains('mask-hit-surface');if(!background)return;
+    const background=event.target===surface||event.target===image||event.target===svg||event.target?.classList?.contains('mask-hit-surface');if(!background)return;
     if(mode==='create'&&!event.shiftKey){
-      const point=imagePoint(event);if(!point)return;event.preventDefault();gesture={kind:'cover',pointerId:event.pointerId,start:point,current:point};svg.setPointerCapture(event.pointerId);return;
+      const point=imagePoint(event);if(!point)return;event.preventDefault();gesture={kind:'cover',pointerId:event.pointerId,start:point,current:point,captureTarget:event.currentTarget};event.currentTarget.setPointerCapture(event.pointerId);return;
     }
     if(mode==='create'||mode==='study'){
       const box=svg.getBoundingClientRect();if(!(box.width>0&&box.height>0))return;
-      event.preventDefault();gesture={kind:'pan',pointerId:event.pointerId,startClientX:event.clientX,startClientY:event.clientY,currentClientX:event.clientX,currentClientY:event.clientY,startView:studyView.getViewState(selectedId),box:{width:box.width,height:box.height},distanceCssPx:0,cancelled:false};svg.setPointerCapture(event.pointerId);
+      event.preventDefault();gesture={kind:'pan',pointerId:event.pointerId,startClientX:event.clientX,startClientY:event.clientY,currentClientX:event.clientX,currentClientY:event.clientY,startView:studyView.getViewState(selectedId),box:{width:box.width,height:box.height},distanceCssPx:0,cancelled:false,captureTarget:event.currentTarget};event.currentTarget.setPointerCapture(event.pointerId);
     }
   }
   function pointerMove(event){
@@ -411,7 +412,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   }
   function pointerUp(event){
     if(!gesture||event.pointerId!==gesture.pointerId)return;
-    const active=gesture;try{svg.releasePointerCapture(event.pointerId);}catch{}
+    const active=gesture;try{active.captureTarget?.releasePointerCapture(event.pointerId);}catch{}
     if(active.kind==='pan'){gesture=null;refreshViewControls();return;}
     if(active.kind==='mask-move'||active.kind==='mask-resize'){
       gesture=null;
@@ -602,7 +603,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   $('previewLessonButton').addEventListener('click',openLessonPreview);$('lessonPreviewClose').addEventListener('click',()=>$('lessonPreviewDialog').close());$('lessonPreviewDialog').addEventListener('close',resetLessonPreview);
   $('draftOptIn').addEventListener('change',changeDraftOptIn);$('studyOptIn').addEventListener('change',changeStudyOptIn);$('clearDraftButton').addEventListener('click',clearDraftLocal);$('clearStudyButton').addEventListener('click',clearStudyLocal);$('resolveConflictSaveButton').addEventListener('click',beginSave);$('resolveConflictReloadButton').addEventListener('click',reloadConflictDraft);
   $('studyButton').addEventListener('click',beginStudy);$('createButton').addEventListener('click',beginCreate);$('saveButton').addEventListener('click',beginSave);$('downloadJsonButton').addEventListener('click',downloadJson);$('downloadHtmlButton').addEventListener('click',downloadHtml);$('openButton').addEventListener('click',()=>$('sheetInput').click());$('sheetInput').addEventListener('change',event=>{const file=event.target.files?.[0]||null;event.target.value='';openSheet(file);});$('hideAllButton').addEventListener('click',()=>{studySession=core.hideAllFree(studySession);scheduleStudySave();refreshCopy();});$('revealPageButton').addEventListener('click',()=>{studySession=core.revealPageFree(doc,studySession,selectedId);scheduleStudySave();refreshCopy();});
-  svg.addEventListener('pointerdown',pointerDown);svg.addEventListener('pointermove',pointerMove);svg.addEventListener('pointerup',pointerUp);svg.addEventListener('pointercancel',pointerCancel);
+  surface.addEventListener('pointerdown',pointerDown);surface.addEventListener('pointermove',pointerMove);surface.addEventListener('pointerup',pointerUp);surface.addEventListener('pointercancel',pointerCancel);
   env.document.addEventListener('keydown',keydown);
   env.document.addEventListener('paste',paste);
   env.document.addEventListener('dragover',event=>{if(Array.from(event.dataTransfer?.types||[]).includes('Files'))event.preventDefault();});
