@@ -73,3 +73,22 @@ test('T05: save mode keeps page-card titles readable in the full card width',asy
   const card=page.locator('#pageList .page-item').first(),title=card.locator('.page-card-title-static');await expect(title).toContainText(/Page 1|ページ1/);
   const cb=await card.boundingBox(),tb=await title.boundingBox();expect(tb.width).toBeGreaterThan(cb.width*.65);
 });
+
+test('T05: many page cards keep the Add description row visible instead of flex-shrinking',async({page})=>{
+  await page.setViewportSize({width:1200,height:760});await openApp(page);
+  await page.locator('#imageInput').setInputFiles([
+    imagePath('static.png'),imagePath('static.jpg'),imagePath('static.webp'),
+    imagePath('static.png'),imagePath('static.jpg'),imagePath('static.webp')
+  ]);
+  const cards=page.locator('#pageList .page-item');await expect(cards).toHaveCount(6);
+  for(let i=0;i<6;i++){
+    const card=cards.nth(i),summary=card.locator('.page-description-summary');
+    await expect(summary).toBeVisible();
+    const cb=await card.boundingBox(),sb=await summary.boundingBox();
+    expect(sb.y+sb.height).toBeLessThanOrEqual(cb.y+cb.height+1);
+    expect(cb.height).toBeGreaterThanOrEqual(100);
+  }
+  const list=page.locator('#pageList');
+  expect(await list.evaluate(node=>node.scrollHeight>node.clientHeight)).toBe(true);
+});
+
