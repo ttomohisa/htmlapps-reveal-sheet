@@ -2,12 +2,12 @@ import {test,expect} from '@playwright/test';
 import {openApp,imagePath} from '../helpers/app.mjs';
 
 async function dragPage(page,from,to){
-  const cards=page.locator('#pageList .page-item'),handle=cards.nth(from).locator('.page-drag-handle'),target=cards.nth(to);
-  const hb=await handle.boundingBox(),tb=await target.boundingBox();
-  await page.mouse.move(hb.x+hb.width/2,hb.y+hb.height/2);await page.mouse.down();
-  await expect(cards.nth(from)).toHaveClass(/dragging/);
-  expect(await cards.nth(from).evaluate(node=>getComputedStyle(node).transform)).not.toBe('none');
-  await page.mouse.move(tb.x+tb.width/2,tb.y+tb.height/2,{steps:6});await page.mouse.up();
+  const cards=page.locator('#pageList .page-item'),source=cards.nth(from),target=cards.nth(to);
+  const sb=await source.boundingBox(),tb=await target.boundingBox();
+  await page.mouse.move(sb.x+sb.width*.72,sb.y+sb.height*.48);await page.mouse.down();
+  await expect(source).toHaveClass(/dragging/);
+  expect(await source.evaluate(node=>getComputedStyle(node).transform)).not.toBe('none');
+  await page.mouse.move(tb.x+tb.width*.72,tb.y+tb.height*.48,{steps:6});await page.mouse.up();
 }
 
 test('T05: page cards edit title/description, drag reorder, trash delete and Undo',async({page})=>{
@@ -29,7 +29,7 @@ test('T05: page cards edit title/description, drag reorder, trash delete and Und
 
   await cards.nth(1).locator('.page-delete-button').click();await expect(page.locator('#appConfirmDialog')).toBeVisible();await page.locator('#appConfirmCancel').click();await expect(cards).toHaveCount(3);
   await cards.nth(1).locator('.page-delete-button').click();await page.locator('#appConfirmOk').click();await expect(cards).toHaveCount(2);
-  await page.locator('#undoButton').click();await expect(cards).toHaveCount(3);await expect(page.locator('#pageList')).toContainText('Middle page');
+  await page.locator('#undoButton').click();await expect(cards).toHaveCount(3);await expect(page.locator('#pageList input.page-card-title').filter({hasValue:'Middle page'})).toHaveCount(1);
 });
 
 test('T05: deleting the last page from its trash icon returns to empty and Undo restores it',async({page})=>{
@@ -59,7 +59,7 @@ test('T05: page-card drag reorder also works in the horizontal mobile list',asyn
 
 test('T05: drag handle keeps a keyboard reorder alternative',async({page})=>{
   await openApp(page);await page.locator('#imageInput').setInputFiles([imagePath('static.png'),imagePath('static.jpg')]);
-  const cards=page.locator('#pageList .page-item'),firstTitle=await page.locator('#pageList .page-item').nth(0).locator('.page-card-title').inputValue();
+  const cards=page.locator('#pageList .page-item');await expect(cards.nth(0).locator('input.page-card-title')).toBeVisible();const firstTitle=await cards.nth(0).locator('input.page-card-title').inputValue();
   await cards.nth(0).locator('.page-drag-handle').focus();await page.keyboard.press('ArrowDown');
-  await expect(cards.nth(1).locator('.page-card-title')).toHaveValue(firstTitle);
+  await expect(cards.nth(1).locator('input.page-card-title')).toHaveValue(firstTitle);
 });

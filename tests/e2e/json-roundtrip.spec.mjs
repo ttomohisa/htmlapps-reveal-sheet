@@ -83,6 +83,6 @@ test('T04: a valid replacement is confirmed only after validation',async({page})
   await page.locator('#sheetInput').setInputFiles({name:'valid.reveal.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(value))});
   await page.locator('#appConfirmOk').click();
   await expect(page.locator('#sheetTitle')).toHaveText('Imported sheet');
-  await expect(page.locator('#pageList .page-item')).toContainText('Imported page');
+  await expect(page.locator('#pageList input.page-card-title')).toHaveValue('Imported page');
   expect(requests).toEqual([]);
 });

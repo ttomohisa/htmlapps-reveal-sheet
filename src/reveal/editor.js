@@ -258,6 +258,8 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
         summary.addEventListener('click',()=>selectPage(p.id));details.addEventListener('toggle',()=>{if(details.open)expandedPageDescriptions.add(p.id);else expandedPageDescriptions.delete(p.id);});
         card.append(details);
       }
+      card.addEventListener('pointerdown',event=>{if(event.target.closest('input,textarea,button,summary,details'))return;beginPageDrag(event,p.id);});
+      card.addEventListener('pointermove',movePageDrag);card.addEventListener('pointerup',event=>endPageDrag(event,false));card.addEventListener('pointercancel',event=>endPageDrag(event,true));
       card.addEventListener('click',event=>{if(event.target.closest('input,textarea,button,summary,details'))return;selectPage(p.id);});
       card.addEventListener('keydown',event=>{if(event.target!==card)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();selectPage(p.id);}});
       list.append(card);
@@ -266,7 +268,6 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function refreshCopy() {
     env.document.documentElement.style.setProperty('--cover-color',doc.defaults.coverColor||'#16624f');
     env.document.body.classList.toggle('has-pages',doc.pages.length>0);env.document.body.classList.toggle('is-busy',busy);env.document.body.classList.toggle('create-mode',mode==='create');env.document.body.classList.toggle('study-mode',mode==='study');env.document.body.classList.toggle('save-mode',mode==='save');
-    $('developmentNote').hidden=doc.pages.length>0;$('developmentNote').textContent=doc.pages.length?'':t('developmentNote');
     $('sheetTitle').textContent=doc.title;
     $('sheetCount').textContent=t('pageCount',{count:doc.pages.length});
     $('inputStatus').textContent=t(lastStatus,progress||{});

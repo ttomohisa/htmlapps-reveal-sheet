@@ -34,7 +34,6 @@ test('T01: header and hero follow the current Browser Kitty compact app frame',a
 });
 
 
-test('T01: loaded editor removes the obsolete development capability sentence',async({page})=>{
- const {imagePath}=await import('../helpers/app.mjs');await openApp(page);await page.locator('#languageButton').click();await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
- await expect(page.locator('#developmentNote')).toBeHidden();expect(await page.locator('body').innerText()).not.toContain('編集・学習・教材HTMLに加え');
+test('T01: obsolete development capability sentence is absent from the app frame',async({page})=>{
+ await openApp(page);await page.locator('#languageButton').click();await expect(page.locator('#developmentNote')).toHaveCount(0);expect(await page.locator('body').innerText()).not.toContain('編集・学習・教材HTMLに加え');
 });

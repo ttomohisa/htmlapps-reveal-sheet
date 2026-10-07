@@ -27,9 +27,9 @@ test('T15: Shift-drag pans a zoomed view and viewport resize keeps center and zo
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
   await page.locator('#viewZoomIn').click();await page.locator('#viewZoomIn').click();
   const before=await page.locator('#maskSvg').evaluate(svg=>({zoom:+svg.dataset.viewZoom,x:+svg.dataset.viewCenterX,y:+svg.dataset.viewCenterY}));
-  const box=await page.locator('#maskSvg').boundingBox();
-  await page.keyboard.down('Shift');await page.mouse.move(box.x+box.width*.5,box.y+box.height*.75);
-  await page.mouse.down();await page.mouse.move(box.x+box.width*.35,box.y+box.height*.62,{steps:4});await page.mouse.up();await page.keyboard.up('Shift');
+  const a=await imagePoint(page,60,40),b=await imagePoint(page,42,34);
+  await page.keyboard.down('Shift');await page.mouse.move(a.x,a.y);
+  await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:4});await page.mouse.up();await page.keyboard.up('Shift');
   const panned=await page.locator('#maskSvg').evaluate(svg=>({zoom:+svg.dataset.viewZoom,x:+svg.dataset.viewCenterX,y:+svg.dataset.viewCenterY}));
   expect(panned.zoom).toBe(before.zoom);expect(panned.x).not.toBe(before.x);
   await page.setViewportSize({width:700,height:390});

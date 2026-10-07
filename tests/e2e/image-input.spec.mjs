@@ -7,7 +7,7 @@ test('T02: selection order, static types, failures and undo',async({page})=>{
  await expect(page.locator('#pageList .page-item')).toHaveCount(3);
  await loaded(page);
  await expect(page.locator('#failureList')).toContainText('unsupported.gif');
- await expect(page.locator('#pageList .page-item').first()).toContainText('Page 1');
+ await expect(page.locator('#pageList input.page-card-title').first()).toHaveValue('Page 1');
  await page.locator('#undoButton').click();await expect(page.locator('#pageList .page-item')).toHaveCount(2);
  await page.locator('#redoButton').click();await expect(page.locator('#pageList .page-item')).toHaveCount(3);
  await expect(page.locator('#studyButton')).toBeDisabled();
