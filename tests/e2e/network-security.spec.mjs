@@ -18,7 +18,7 @@ async function startAppServer(){
   return {url,close:()=>new Promise(ok=>server.close(ok))};
 }
 async function imagePoint(page,x,y){return page.locator('#maskSvg').evaluate((svg,point)=>{const p=svg.createSVGPoint();p.x=point.x;p.y=point.y;const out=p.matrixTransform(svg.getScreenCTM());return{x:out.x,y:out.y};},{x,y});}
-async function addCover(page){await page.locator('#coverButton').click();const a=await imagePoint(page,18,18),b=await imagePoint(page,54,38);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);await page.mouse.up();}
+async function addCover(page){const a=await imagePoint(page,18,18),b=await imagePoint(page,54,38);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);await page.mouse.up();}
 function verifyLessonHash(html){
   const csp=html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/)?.[1]||'';
   const hex=html.match(/<meta name="reveal-player-runtime-sha256" content="([a-f0-9]{64})">/)?.[1]||'';

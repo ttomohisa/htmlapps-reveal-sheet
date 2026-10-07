@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 import {openApp,imagePath} from '../helpers/app.mjs';
 
 async function imagePoint(page,x,y){return page.locator('#maskSvg').evaluate((svg,point)=>{const p=svg.createSVGPoint();p.x=point.x;p.y=point.y;const out=p.matrixTransform(svg.getScreenCTM());return{x:out.x,y:out.y};},{x,y});}
-async function addCover(page,a,b){await page.locator('#coverButton').click();const p1=await imagePoint(page,...a),p2=await imagePoint(page,...b);await page.mouse.move(p1.x,p1.y);await page.mouse.down();await page.mouse.move(p2.x,p2.y);await page.mouse.up();}
+async function addCover(page,a,b){const p1=await imagePoint(page,...a),p2=await imagePoint(page,...b);await page.mouse.move(p1.x,p1.y);await page.mouse.down();await page.mouse.move(p2.x,p2.y);await page.mouse.up();}
 async function enable(page,id){await page.locator(id).click();await expect(page.locator('#appConfirmDialog')).toBeVisible();await page.locator('#appConfirmOk').click();await expect(page.locator(id)).toBeChecked();}
 async function makeTwo(page){await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();await addCover(page,[10,10],[32,28]);await addCover(page,[52,10],[74,28]);}
 async function enterGuided(page){await page.locator('#studyButton').click();await page.locator('#guidedModeButton').click();await expect(page.locator('#guidedPanel')).toBeVisible();}

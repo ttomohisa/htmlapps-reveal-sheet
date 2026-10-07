@@ -12,33 +12,24 @@ async function dragCover(page,a,b){
   await page.mouse.move(p1.x,p1.y);await page.mouse.down();await page.mouse.move(p2.x,p2.y);await page.mouse.up();
 }
 
-test('T15: continuous cover creation stays in cover mode only while enabled',async({page})=>{
+test('T15: cover creation stays continuously available without a mode toggle',async({page})=>{
   await page.setViewportSize({width:390,height:760});await openApp(page);
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
-  await page.locator('#continuousCover').check();
-  await page.locator('#coverButton').click();
+  await expect(page.locator('#coverButton')).toHaveCount(0);await expect(page.locator('#continuousCover')).toHaveCount(0);
   const topBefore=(await page.locator('#maskSvg').boundingBox()).y;
-  await dragCover(page,[8,8],[28,24]);
-  await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
-  const topAfter=(await page.locator('#maskSvg').boundingBox()).y;
-  expect(Math.abs(topAfter-topBefore)).toBeLessThanOrEqual(1);
-  await expect(page.locator('#coverButton')).toHaveAttribute('aria-pressed','true');
-  await dragCover(page,[40,8],[60,24]);
-  await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(2);
-  await page.locator('#continuousCover').uncheck();
-  await dragCover(page,[72,8],[92,24]);
+  await dragCover(page,[8,8],[28,24]);await dragCover(page,[40,8],[60,24]);await dragCover(page,[72,8],[92,24]);
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(3);
-  await expect(page.locator('#coverButton')).toHaveAttribute('aria-pressed','false');
+  const topAfter=(await page.locator('#maskSvg').boundingBox()).y;expect(Math.abs(topAfter-topBefore)).toBeLessThanOrEqual(1);
 });
 
-test('T15: touch-style pan changes center and viewport resize keeps center and zoom',async({page})=>{
+test('T15: Shift-drag pans a zoomed view and viewport resize keeps center and zoom',async({page})=>{
   await page.setViewportSize({width:390,height:700});await openApp(page);
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
   await page.locator('#viewZoomIn').click();await page.locator('#viewZoomIn').click();
   const before=await page.locator('#maskSvg').evaluate(svg=>({zoom:+svg.dataset.viewZoom,x:+svg.dataset.viewCenterX,y:+svg.dataset.viewCenterY}));
   const box=await page.locator('#maskSvg').boundingBox();
-  await page.mouse.move(box.x+box.width*.5,box.y+box.height*.75);
-  await page.mouse.down();await page.mouse.move(box.x+box.width*.35,box.y+box.height*.62,{steps:4});await page.mouse.up();
+  await page.keyboard.down('Shift');await page.mouse.move(box.x+box.width*.5,box.y+box.height*.75);
+  await page.mouse.down();await page.mouse.move(box.x+box.width*.35,box.y+box.height*.62,{steps:4});await page.mouse.up();await page.keyboard.up('Shift');
   const panned=await page.locator('#maskSvg').evaluate(svg=>({zoom:+svg.dataset.viewZoom,x:+svg.dataset.viewCenterX,y:+svg.dataset.viewCenterY}));
   expect(panned.zoom).toBe(before.zoom);expect(panned.x).not.toBe(before.x);
   await page.setViewportSize({width:700,height:390});
@@ -50,13 +41,13 @@ test('T15: touch-style pan changes center and viewport resize keeps center and z
 test('T15: zoom percentage is the fit-image control and removed navigation modes stay absent',async({page})=>{
   await page.setViewportSize({width:390,height:700});await openApp(page);
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
-  for(const id of ['moveImageButton','twoPointButton','viewLeft','viewRight','viewUp','viewDown','maskMoveLeft','maskMoveRight','maskMoveUp','maskMoveDown','maskWider','maskNarrower','maskTaller','maskShorter']){
+  for(const id of ['coverButton','continuousCover','moveImageButton','twoPointButton','viewLeft','viewRight','viewUp','viewDown','maskMoveLeft','maskMoveRight','maskMoveUp','maskMoveDown','maskWider','maskNarrower','maskTaller','maskShorter']){
     await expect(page.locator('#'+id)).toHaveCount(0);
   }
   await page.locator('#viewZoomIn').click();await page.locator('#viewZoomIn').click();
   await expect(page.locator('#viewFit')).toHaveText(/1[5-6]\d%/);
   const box=await page.locator('#maskSvg').boundingBox();
-  await page.mouse.move(box.x+box.width*.55,box.y+box.height*.72);await page.mouse.down();await page.mouse.move(box.x+box.width*.35,box.y+box.height*.62,{steps:4});await page.mouse.up();
+  await page.keyboard.down('Shift');await page.mouse.move(box.x+box.width*.55,box.y+box.height*.72);await page.mouse.down();await page.mouse.move(box.x+box.width*.35,box.y+box.height*.62,{steps:4});await page.mouse.up();await page.keyboard.up('Shift');
   const changed=await page.locator('#maskSvg').evaluate(svg=>({z:+svg.dataset.viewZoom,x:+svg.dataset.viewCenterX,y:+svg.dataset.viewCenterY}));
   expect(changed.z).toBeGreaterThan(1);
   await page.locator('#viewFit').click();
@@ -68,7 +59,7 @@ test('T15: 320px and short landscape keep workflow actions reachable without hor
   await page.setViewportSize({width:320,height:480});await openApp(page);
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  for(const id of ['createButton','studyButton','saveButton','coverButton','viewZoomOut','viewFit','viewZoomIn']){
+  for(const id of ['createButton','studyButton','saveButton','viewZoomOut','viewFit','viewZoomIn']){
     const box=await page.locator('#'+id).boundingBox();expect(box.height,id).toBeGreaterThanOrEqual(48);
   }
   await page.locator('#saveButton').click();
@@ -79,10 +70,21 @@ test('T15: 320px and short landscape keep workflow actions reachable without hor
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
-test('T15: Escape exits cover creation without creating a rectangle',async({page})=>{
+test('T15: Escape cancels an unfinished cover drag without creating a rectangle',async({page})=>{
   await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
-  await page.locator('#coverButton').click();await expect(page.locator('#coverButton')).toHaveAttribute('aria-pressed','true');
-  await page.keyboard.press('Escape');await expect(page.locator('#coverButton')).toHaveAttribute('aria-pressed','false');
-  const point=await imagePoint(page,30,20);await page.mouse.click(point.x,point.y);
+  const a=await imagePoint(page,20,18),b=await imagePoint(page,60,42);
+  await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:2});
+  await page.keyboard.press('Escape');await page.mouse.up();
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(0);
+});
+
+
+test('T15: loaded create layout is vertically compact and keeps zoom with image metadata',async({page})=>{
+  await page.setViewportSize({width:1200,height:800});await openApp(page);
+  await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
+  await expect(page.locator('.input-note')).toBeHidden();
+  const tools=await page.locator('#editControls').boundingBox(),status=await page.locator('.input-status-row').boundingBox(),header=await page.locator('#loadedSection').boundingBox();
+  expect(status.height).toBeLessThanOrEqual(36);expect(header.y-(tools.y+tools.height)).toBeLessThan(55);
+  const meta=await page.locator('.image-meta-row').boundingBox(),zoom=await page.locator('#viewControls').boundingBox();
+  expect(Math.abs((zoom.y+zoom.height/2)-(meta.y+meta.height/2))).toBeLessThanOrEqual(3);
 });
