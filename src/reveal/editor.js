@@ -384,12 +384,12 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   }
   function pointerDown(event){
     if(event.button!==0)return;
+    if(mode==='create'&&tool==='cover'){
+      const point=imagePoint(event);if(!point)return;event.preventDefault();gesture={kind:'cover',pointerId:event.pointerId,start:point,current:point};svg.setPointerCapture(event.pointerId);return;
+    }
     const handle=event.target?.closest?.('.mask-resize-handle'),maskNode=event.target?.closest?.('.mask-rect');
     if(mode==='create'&&handle?.dataset.maskId&&beginDirectEdit(event,handle.dataset.maskId,'mask-resize',handle.dataset.resizeCorner))return;
     if(mode==='create'&&maskNode?.dataset.maskId&&beginDirectEdit(event,maskNode.dataset.maskId,'mask-move'))return;
-    if(mode==='create'&&tool==='cover'&&event.target===svg){
-      const point=imagePoint(event);if(!point)return;event.preventDefault();gesture={kind:'cover',pointerId:event.pointerId,start:point,current:point};svg.setPointerCapture(event.pointerId);return;
-    }
     if(event.target===svg&&(mode==='create'||mode==='study')){
       const box=svg.getBoundingClientRect();if(!(box.width>0&&box.height>0))return;
       event.preventDefault();gesture={kind:'pan',pointerId:event.pointerId,startClientX:event.clientX,startClientY:event.clientY,currentClientX:event.clientX,currentClientY:event.clientY,startView:studyView.getViewState(selectedId),box:{width:box.width,height:box.height},distanceCssPx:0,cancelled:false};svg.setPointerCapture(event.pointerId);
