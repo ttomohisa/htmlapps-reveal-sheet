@@ -1,8 +1,9 @@
 /** Shared image-overlay renderer and per-page view state for editing and study. */
-function createStudyView({core,dom,onAction}) {
-  const svg=dom.getElementById('maskSvg'),image=dom.getElementById('previewImage');
+function createStudyView({core,dom,onAction,translate=key=>key}) {
+  const svg=dom.getElementById('maskSvg'),image=dom.getElementById('previewImage'),surface=image.closest('.preview-surface');
   const viewStates=new Map();
   let state={document:null,pageId:null,session:null,mode:'edit',selectedMaskId:null,selectedMaskIds:[]};
+  let lastSurfaceBox=null;
   const defaultView=()=>({zoom:1,centerX:.5,centerY:.5});
   function normalizeView(value){
     const zoom=Math.max(.5,Math.min(16,Number(value?.zoom)||1)),half=.5/zoom;
@@ -17,6 +18,20 @@ function createStudyView({core,dom,onAction}) {
     svg.dataset.viewZoom=String(view.zoom);svg.dataset.viewCenterX=String(view.centerX);svg.dataset.viewCenterY=String(view.centerY);
   }
   function setViewState(pageId,value){if(!pageId)return defaultView();const view=normalizeView(value);viewStates.set(pageId,view);if(pageId===state.pageId)applyView();return {...view};}
+  function rememberSurfaceBox(){
+    if(!surface)return;
+    const rect=surface.getBoundingClientRect();
+    if(!(rect.width>0&&rect.height>0))return;
+    const next={width:rect.width,height:rect.height};
+    if(lastSurfaceBox&&state.pageId){
+      const resized=core.resizeView(getViewState(state.pageId),lastSurfaceBox,next);
+      viewStates.set(state.pageId,resized);applyView();
+    }
+    lastSurfaceBox=next;
+  }
+  const ResizeObserverCtor=dom.defaultView?.ResizeObserver;
+  const resizeObserver=surface&&typeof ResizeObserverCtor==='function'?new ResizeObserverCtor(()=>rememberSurfaceBox()):null;
+  resizeObserver?.observe(surface);
   function svgNode(name){return dom.createElementNS('http://www.w3.org/2000/svg',name);}
   function render(){
     const doc=state.document,page=doc&&doc.pages.find(p=>p.id===state.pageId);
@@ -34,16 +49,33 @@ function createStudyView({core,dom,onAction}) {
       rect.dataset.maskId=mask.id;rect.classList.add('mask-rect');if(mask.kind==='auxiliary')rect.classList.add('auxiliary');if(state.mode==='edit'&&(mask.id===state.selectedMaskId||state.selectedMaskIds?.includes(mask.id)))rect.classList.add('selected');
       const guided=state.mode==='study'&&state.session?.mode==='guided',currentGuided=guided&&!state.session.ended?state.session.queue[state.session.index]?.questionId:null;
       const interactive=state.mode==='edit'||(mask.kind==='answer'&&(!guided||mask.questionId===currentGuided));
-      if(interactive){rect.setAttribute('tabindex','0');rect.setAttribute('role','button');rect.setAttribute('aria-label',state.mode==='study'?'Covered answer':'Cover');}
+      if(interactive){rect.setAttribute('tabindex','0');rect.setAttribute('role','button');rect.setAttribute('aria-label',translate(state.mode==='study'?'coveredAnswerLabel':'coverLabel'));}
       else rect.setAttribute('aria-hidden','true');
       const activate=()=>{if(state.mode==='study'&&mask.kind==='answer'){if(guided)onAction({type:'REVEAL_CURRENT',questionId:mask.questionId});else onAction({type:'TOGGLE_QUESTION',questionId:mask.questionId});}else if(state.mode==='edit')onAction({type:'SELECT_MASK',maskId:mask.id});};
-      if(interactive){rect.addEventListener('click',event=>{event.stopPropagation();activate();});rect.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}});}
+      if(interactive){
+        let pointerGesture=null;
+        rect.addEventListener('pointerdown',event=>{
+          if(event.button!==0)return;
+          pointerGesture={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,distanceCssPx:0,cancelled:false};
+        });
+        rect.addEventListener('pointermove',event=>{
+          if(!pointerGesture||event.pointerId!==pointerGesture.pointerId)return;
+          pointerGesture.distanceCssPx=Math.max(pointerGesture.distanceCssPx,Math.hypot(event.clientX-pointerGesture.startX,event.clientY-pointerGesture.startY));
+        });
+        rect.addEventListener('pointercancel',event=>{if(pointerGesture&&event.pointerId===pointerGesture.pointerId)pointerGesture.cancelled=true;});
+        rect.addEventListener('click',event=>{
+          event.stopPropagation();
+          if(event.detail===0){pointerGesture=null;return;}
+          const tap=!pointerGesture||core.isTap(pointerGesture);pointerGesture=null;if(tap)activate();
+        });
+        rect.addEventListener('keydown',event=>{if(event.repeat)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}});
+      }
       svg.append(rect);
     }
-    applyView();
+    applyView();rememberSurfaceBox();
   }
   function mount(next){state={...state,...next};render();}
   function setSelection(maskId){state={...state,selectedMaskId:maskId};render();}
-  function destroy(){state={document:null,pageId:null,session:null,mode:'edit',selectedMaskId:null,selectedMaskIds:[]};viewStates.clear();svg.replaceChildren();image.style.transform='';svg.style.transform='';}
+  function destroy(){resizeObserver?.disconnect();state={document:null,pageId:null,session:null,mode:'edit',selectedMaskId:null,selectedMaskIds:[]};viewStates.clear();svg.replaceChildren();image.style.transform='';svg.style.transform='';lastSurfaceBox=null;}
   return Object.freeze({mount,render,setSelection,getViewState,setViewState,destroy});
 }

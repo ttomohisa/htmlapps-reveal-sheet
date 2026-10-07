@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.8.0 - 2026-10-07 (development)
+
+T15–T16: mobile/touch workflow and bilingual accessibility hardening. This is still a development milestone, not the v1.0 release.
+
+- Added the final gesture contract: taps use a 6 CSS px threshold, cancelled gestures never activate, and panning while zoomed does not accidentally reveal or select covers.
+- Preserved normalized center and relative zoom across viewport resize / rotation through shared ViewState handling.
+- Added explicit **Keep covering / 続けて隠す** state. Continuous creation stays in Cover mode only while enabled; normal creation returns to Move image.
+- Hardened 320 px and short-landscape layouts, bottom fixed Create/Study/Save navigation, safe-area padding, toast offset and 48 px interaction targets.
+- Kept selected-cover controls below the preview so they do not cover the image, and hid non-current workflow sections on narrow Study/Save views.
+- Added optional page description, question prompt and answer text for accessible study context. Page descriptions and prompts may be exposed while studying; plain-text answers are withheld until reveal.
+- Localized landmark, cover, selected-control and lesson accessibility labels in Japanese and English.
+- Added safe free-study answer live regions to both the main app and exported lesson player: a plain-text answer becomes accessible only after its cover/question is opened.
+- Suppressed repeated keydown assessment actions and preserved input-field/dialog shortcut boundaries.
+- Added forced-colors and reduced-motion CSS, improved focus targets and documented the limitation that text existing only inside image pixels is not automatically read.
+- Added mobile and accessibility browser suites for continuous cover creation, touch-style pan, viewport resize, 320 px / short landscape overflow, Escape cancellation, closed-answer privacy, language switching without data changes, help focus restoration, forced colors/reduced motion, lesson accessibility and optional author text.
+
+### Verification boundary
+
+Automated narrow-view tests are not physical-phone tests. Actual Android/iPhone, real assistive technology, real browser 200% zoom, software-keyboard/safe-area behavior on hardware and touch/pinch behavior remain manual / later release-candidate checks. See `docs/MOBILE_ACCESSIBILITY_QA.md`.
+
 ## 0.7.0 - 2026-10-06 (development)
 
 T13–T14: format-1 interoperability, hostile/boundary saved-data validation, and prepared export recovery. This is still a development milestone, not the v1.0 release.

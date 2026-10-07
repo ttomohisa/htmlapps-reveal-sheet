@@ -2,7 +2,7 @@
 
 [日本語](README.ja.md)
 
-Reveal Sheet turns diagrams, photos and notes that already contain answers into study sheets with opaque covers. **The current v0.7.0 development build hardens schema-v1 save compatibility and export recovery: older format-1 fixtures remain readable, hostile or unsupported saved data is rejected before replacement, save sizes are measured before download, and stale prepared output is invalidated after changes.** Self-contained lesson HTML, safe non-executing lesson re-edit, free/guided study and opt-in local persistence remain available. It is not the completed v1.0 release.
+Reveal Sheet turns diagrams, photos and notes that already contain answers into study sheets with opaque covers. **The current v0.8.0 development build finishes the mobile/touch workflow and bilingual keyboard/screen-reader accessibility layer, including safe-area layout, short viewports, forced colors, reduced motion, and closed-answer privacy.** Self-contained lesson HTML, safe re-editing and optional on-device persistence remain available. It is not the completed v1.0 release.
 
 ## Available now
 
@@ -32,6 +32,11 @@ The **Save** view prepares actual editable-JSON and lesson-HTML byte sizes befor
 **Keep this work on this device** starts OFF. Only after explicit opt-in, normalized images and sheet content are stored in IndexedDB and changes are committed after about a one-second debounce. If another tab advances the same saved generation, Reveal Sheet stops automatic saving instead of silently overwriting and offers manual export or reload-latest recovery. Quota/security failures leave the in-memory sheet and manual export available.
 
 **Keep only study progress on this device** is a separate OFF-by-default option. It stores no image bytes: only the small study-session state. Resume is offered only when document ID, revision and a SHA-256 fingerprint of the canonical document all match, and the current answer is closed on resume. Without Web Crypto, study persistence is disabled while in-memory study remains available. Saved work and study progress can be cleared separately.
+
+
+On smartphones, **Create / Study / Save** becomes a bottom fixed navigation with safe-area-aware page padding. The automated suite covers 320 px width and short landscape layouts without page-level horizontal scrolling. When zoomed in, the image can be panned; movement beyond 6 CSS px or a cancelled gesture is not treated as a tap. **Keep covering** enables continuous cover creation explicitly; otherwise one cover returns the editor to image movement.
+
+Page description, question prompt and answer are optional plain-text accessibility fields. Reveal Sheet does not OCR or automatically read text that exists only inside image pixels. A plain-text answer is withheld from visible/accessibility output until it is revealed. Major controls are usable with Tab and Enter/Space. Guided study also supports Space = reveal, 1 = Recalled, 2 = Review again, S = Skip, and Left Arrow = Previous; cover adjustment uses Arrow keys or Shift+Arrow for 10 image pixels.
 
 ## Usage
 
@@ -72,7 +77,7 @@ There are no runtime CDNs, remote fonts, analytics, ads or external APIs. CSP us
 
 ## Browser verification and limitations
 
-Chrome / Edge are primary targets. Automated Windows Chromium runs and local diagnostics are recorded in [QA_RESULTS.md](docs/QA_RESULTS.md). Narrow Playwright viewports are not physical phone tests. Real phones, macOS Safari, Firefox, OS file-sharing flows and large-memory stress tests remain unverified.
+Chrome / Edge are primary targets. Automated Windows Chromium runs and local diagnostics are recorded in [QA_RESULTS.md](docs/QA_RESULTS.md). The suite now covers 320 px / short landscape layouts, forced colors and reduced motion, but Playwright viewports are not physical-device tests. Real phones, real screen readers, actual 200% browser zoom, macOS Safari, Firefox, OS file-sharing flows and large-memory stress tests remain unverified. Manual checks are separated in [docs/MOBILE_ACCESSIBILITY_QA.md](docs/MOBILE_ACCESSIBILITY_QA.md).
 
 ## Single HTML / offline behavior
 
@@ -97,7 +102,7 @@ Set `APP_VARIANT=self-extract` to run the same E2E suite against the self-extrac
 
 ## Roadmap
 
-Next is v0.8.0 / T15–T16: finish smartphone interaction and fixed UI, then bilingual keyboard/screen-reader/accessibility behavior. PDF, OCR, AI and cloud sync remain outside the initial release scope.
+Next is v0.9.0 / T17–T18: release-candidate network/CSP/hostile-input auditing followed by device, large-resource, resume and documentation verification. Device checks that cannot be performed remain explicitly pending. PDF, OCR, AI and cloud sync remain outside the initial release scope.
 
 ## License
 
