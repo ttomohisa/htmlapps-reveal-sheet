@@ -7,6 +7,7 @@ This file separates automated evidence from checks that require real hardware or
 - App version: 1.0.0
 - Save schema: 1
 - Base for this candidate: PR #8 head plus T19/T20 release work
+- Dependency: merge PR #8 before this release-candidate PR
 - Merge: user action only
 
 ## Automated release gates
