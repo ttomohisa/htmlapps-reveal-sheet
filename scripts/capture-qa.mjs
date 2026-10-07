@@ -34,8 +34,8 @@ try {
  await page.locator('.page-card-title').fill('Desk lamp labels');await page.locator('.page-card-title').press('Enter');
  await page.screenshot({path:output+'/screenshot-en.png'});
  await page.locator('#languageButton').click();await page.screenshot({path:output+'/screenshot.png'});
- await page.setViewportSize({width:390,height:844});await page.locator('#studyButton').click();await page.locator('#guidedModeButton').click();
- await page.screenshot({path:output+'/screenshot-mobile.png',fullPage:true});
+ await page.setViewportSize({width:390,height:760});await page.locator('#studyButton').click();await page.locator('#guidedModeButton').click();
+ await page.screenshot({path:output+'/screenshot-mobile.png'});
  let commit='unknown';try{commit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();}catch{}
  const appVersion=JSON.parse(readFileSync('app.config.json','utf8')).version;
  const result={commit,appVersion,date:new Date().toISOString(),platform:os.platform(),release:os.release(),node:process.version,chromium:browser.version(),mode:process.env.APP_TEST_MODE||'file',externalRequests:requests,pageErrors:errors,realPhoneTest:false};
