@@ -57,12 +57,12 @@ test('T08: language switch preserves guided view state and keeps the current ans
 test('T08: page switch keeps the raw image and cover layer hidden until preview decode completes',async({page})=>{
   await openApp(page);
   await page.locator('#imageInput').setInputFiles([imagePath('static.png'),imagePath('static.jpg')]);
-  await expect(page.locator('#pageList button')).toHaveCount(2);await expect(page.locator('#previewImage')).toBeVisible();
+  await expect(page.locator('#pageList .page-item')).toHaveCount(2);await expect(page.locator('#previewImage')).toBeVisible();
   await page.evaluate(()=>{
     const image=document.querySelector('#previewImage'),original=image.decode.bind(image);
     image.decode=()=>new Promise((resolve,reject)=>{window.releasePreviewDecode=()=>original().then(resolve,reject);});
   });
-  await page.locator('#pageList button').first().click();
+  await page.locator('#pageList .page-item').first().click();
   await expect.poll(()=>page.evaluate(()=>typeof window.releasePreviewDecode)).toBe('function');
   await expect(page.locator('#previewImage')).toBeHidden();
   await expect(page.locator('#maskSvg')).toBeHidden();

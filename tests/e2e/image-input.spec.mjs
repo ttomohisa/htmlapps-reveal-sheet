@@ -4,12 +4,12 @@ const loaded=page=>expect(page.locator('#previewImage')).toBeVisible();
 test('T02: selection order, static types, failures and undo',async({page})=>{
  await openApp(page);
  await page.locator('#imageInput').setInputFiles([imagePath('static.jpg'),imagePath('unsupported.gif'),imagePath('static.png'),imagePath('static.webp')]);
- await expect(page.locator('#pageList button')).toHaveCount(3);
+ await expect(page.locator('#pageList .page-item')).toHaveCount(3);
  await loaded(page);
  await expect(page.locator('#failureList')).toContainText('unsupported.gif');
- await expect(page.locator('#pageList button').first()).toContainText('Page 1');
- await page.locator('#undoButton').click();await expect(page.locator('#pageList button')).toHaveCount(2);
- await page.locator('#redoButton').click();await expect(page.locator('#pageList button')).toHaveCount(3);
+ await expect(page.locator('#pageList .page-item').first()).toContainText('Page 1');
+ await page.locator('#undoButton').click();await expect(page.locator('#pageList .page-item')).toHaveCount(2);
+ await page.locator('#redoButton').click();await expect(page.locator('#pageList .page-item')).toHaveCount(3);
  await expect(page.locator('#studyButton')).toBeDisabled();
 });
 for(let orientation=1;orientation<=8;orientation++)test('T02: normalized pixels match EXIF '+orientation,async({page})=>{
@@ -32,35 +32,35 @@ test('T02: invalid image leaves existing page intact and makes no external reque
  const requests=[];page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url());});
  await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await loaded(page);
  await page.locator('#imageInput').setInputFiles([imagePath('animated.png'),imagePath('animated.webp'),imagePath('truncated.png'),imagePath('oversize-header.png')]);
- await expect(page.locator('#failureList li')).toHaveCount(4);await expect(page.locator('#pageList button')).toHaveCount(1);await loaded(page);expect(requests).toEqual([]);
+ await expect(page.locator('#failureList li')).toHaveCount(4);await expect(page.locator('#pageList .page-item')).toHaveCount(1);await loaded(page);expect(requests).toEqual([]);
 });
 test('T02: URL/HTML paste is ignored, file paste is accepted',async({page})=>{
  await openApp(page);
  await page.evaluate(()=>{const d=new DataTransfer();d.setData('text/html','<img src="https://example.invalid/secret">');d.setData('text/plain','https://example.invalid/secret');document.dispatchEvent(new ClipboardEvent('paste',{clipboardData:d,bubbles:true}));});
- await expect(page.locator('#pageList button')).toHaveCount(0);
+ await expect(page.locator('#pageList .page-item')).toHaveCount(0);
  const data=await import('node:fs').then(fs=>Array.from(fs.readFileSync(imagePath('static.png'))));
  await page.evaluate(bytes=>{const d=new DataTransfer();d.items.add(new File([new Uint8Array(bytes)],'pasted.png',{type:'image/png'}));document.dispatchEvent(new ClipboardEvent('paste',{clipboardData:d,bubbles:true}));},data);
- await expect(page.locator('#pageList button')).toHaveCount(1);await loaded(page);
+ await expect(page.locator('#pageList .page-item')).toHaveCount(1);await loaded(page);
 });
 test('T02: cancelling retains completed pages and disposes pending decode',async({page})=>{
  await openApp(page);
  await page.evaluate(()=>{const original=window.createImageBitmap;let calls=0;window.createImageBitmap=async(...args)=>{if(++calls===2)await new Promise(r=>{window.finishPendingDecode=r;});return original(...args);};});
  await page.locator('#imageInput').setInputFiles([imagePath('static.png'),imagePath('static.jpg'),imagePath('static.webp')]);
- await expect(page.locator('#pageList button')).toHaveCount(1);
+ await expect(page.locator('#pageList .page-item')).toHaveCount(1);
  await expect.poll(()=>page.evaluate(()=>typeof window.finishPendingDecode)).toBe('function');
  await page.locator('#cancelButton').click();await page.evaluate(()=>window.finishPendingDecode());
- await expect(page.locator('#cancelButton')).toBeHidden();await expect(page.locator('#pageList button')).toHaveCount(1);await loaded(page);
+ await expect(page.locator('#cancelButton')).toBeHidden();await expect(page.locator('#pageList .page-item')).toHaveCount(1);await loaded(page);
 });
 test('T02: replacing document discards old decode; confirmation cancel retains pages',async({page})=>{
  await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await loaded(page);
- await page.locator('#newButton').click();await page.locator('#appConfirmCancel').click();await expect(page.locator('#pageList button')).toHaveCount(1);
+ await page.locator('#newButton').click();await page.locator('#appConfirmCancel').click();await expect(page.locator('#pageList .page-item')).toHaveCount(1);
  await page.evaluate(()=>{const original=window.createImageBitmap;window.createImageBitmap=async(...args)=>{await new Promise(r=>{window.finishPendingDecode=r;});return original(...args);};});
  await page.locator('#imageInput').setInputFiles(imagePath('static.jpg'));await expect.poll(()=>page.evaluate(()=>typeof window.finishPendingDecode)).toBe('function');
  await page.locator('#newButton').click();await page.locator('#appConfirmOk').click();await page.evaluate(()=>window.finishPendingDecode());
- await expect(page.locator('#pageList button')).toHaveCount(0);await expect(page.locator('#previewImage')).toBeHidden();await expect(page.locator('#undoButton')).toBeDisabled();
+ await expect(page.locator('#pageList .page-item')).toHaveCount(0);await expect(page.locator('#previewImage')).toBeHidden();await expect(page.locator('#undoButton')).toBeDisabled();
 });
 test('T02: language switch retains page and view; no persistent content is written',async({page})=>{
  await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await loaded(page);
- await page.locator('#languageButton').click();await expect(page.locator('#pageList button')).toHaveCount(1);await loaded(page);
+ await page.locator('#languageButton').click();await expect(page.locator('#pageList .page-item')).toHaveCount(1);await loaded(page);
  expect(await page.evaluate(()=>{try{return Object.keys(localStorage).filter(k=>k.includes('reveal'));}catch{return [];}})).toEqual([]);
 });

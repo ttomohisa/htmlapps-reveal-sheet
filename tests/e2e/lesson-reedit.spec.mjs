@@ -25,16 +25,16 @@ test('T12: lesson HTML is re-opened as data without executing hostile outer mark
   await expect(page.locator('#appConfirmDialog')).toBeVisible();
   expect(requests).toEqual([]);expect(await page.evaluate(()=>window.__lessonOuterExecuted)).toBeUndefined();expect(await page.evaluate(()=>window.__domParserCalls)).toBe(0);
   await page.locator('#appConfirmOk').click();
-  await expect(page.locator('#pageList button')).toHaveCount(1);await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);await expect(page.locator('#previewImage')).toBeVisible();
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);await expect(page.locator('#previewImage')).toBeVisible();
 });
 
 test('T12: duplicate lesson data tag is rejected before replacement and current sheet survives',async({page},testInfo)=>{
   await openApp(page);const lesson=await makeLesson(page,testInfo);
   const start=lesson.html.indexOf(START),end=lesson.html.indexOf('</script>',start+START.length),block=lesson.html.slice(start,end+9),duplicate=lesson.html.replace('</body>',block+'</body>');
-  await page.locator('#createButton').click();await expect(page.locator('#pageList button')).toHaveCount(1);
+  await page.locator('#createButton').click();await expect(page.locator('#pageList .page-item')).toHaveCount(1);
   await page.locator('#sheetInput').setInputFiles({name:'duplicate.reveal.html',mimeType:'text/html',buffer:Buffer.from(duplicate)});
   await expect(page.locator('#appConfirmDialog')).toBeHidden();await expect(page.locator('#inputStatus')).toContainText(/could not|開けません|invalid/i);
-  await expect(page.locator('#pageList button')).toHaveCount(1);await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
 });
 
 test('T12: malformed lesson HTML never uses outer markup as a fallback',async({page},testInfo)=>{
@@ -42,5 +42,5 @@ test('T12: malformed lesson HTML never uses outer markup as a fallback',async({p
   const cut=lesson.html.slice(0,end);
   await page.locator('#sheetInput').setInputFiles({name:'cut.reveal.html',mimeType:'text/html',buffer:Buffer.from(cut)});
   await expect(page.locator('#appConfirmDialog')).toBeHidden();await expect(page.locator('#inputStatus')).toContainText(/could not|開けません|invalid/i);
-  await expect(page.locator('#pageList button')).toHaveCount(1);
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
 });

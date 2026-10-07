@@ -52,7 +52,7 @@ test('T17: HTTP app, exported lesson and hostile lesson import make no post-load
     await page.locator('#createButton').click();await page.locator('#sheetInput').setInputFiles({name:'hostile.reveal.html',mimeType:'text/html',buffer:Buffer.from(hostile)});
     await expect(page.locator('#appConfirmDialog')).toBeVisible();
     expect(await page.evaluate(()=>globalThis.__outerExecuted)).toBeUndefined();expect(await page.evaluate(()=>globalThis.__dataSvgExecuted)).toBeUndefined();expect(postLoadHttpRequests).toEqual([]);
-    await page.locator('#appConfirmOk').click();await expect(page.locator('#pageList button')).toHaveCount(1);await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);expect(postLoadHttpRequests).toEqual([]);
+    await page.locator('#appConfirmOk').click();await expect(page.locator('#pageList .page-item')).toHaveCount(1);await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);expect(postLoadHttpRequests).toEqual([]);
   }finally{await server.close();}
 });
 
@@ -66,6 +66,6 @@ test('T17: a data-SVG payload disguised as a stored PNG is rejected atomically',
     value.document.assets[0].byteLength=svg.length;value.document.assets[0].dataBase64=svg.toString('base64');
     await page.locator('#sheetInput').setInputFiles({name:'svg-as-png.reveal.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(value))});
     await expect(page.locator('#appConfirmDialog')).toBeHidden();await expect(page.locator('#inputStatus')).toContainText(/could not open|開けません|invalid/i);
-    await expect(page.locator('#pageList button')).toHaveCount(1);await expect(page.locator('#previewImage')).toBeVisible();
+    await expect(page.locator('#pageList .page-item')).toHaveCount(1);await expect(page.locator('#previewImage')).toBeVisible();
   }finally{await server.close();}
 });
