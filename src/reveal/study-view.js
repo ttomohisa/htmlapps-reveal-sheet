@@ -88,7 +88,7 @@ function createStudyView({core,dom,onAction,translate=key=>key}) {
           const handle=svgNode('circle');handle.classList.add('mask-resize-handle');handle.dataset.maskId=mask.id;handle.dataset.resizeCorner=corner;
           handle.setAttribute('cx',String(cx));handle.setAttribute('cy',String(cy));handle.setAttribute('r',String(radius));handle.setAttribute('aria-hidden','true');svg.append(handle);
         }
-        const actionSize=Math.max(20,Math.min(34,Math.max(asset.width,asset.height)*.03)),gap=Math.max(3,actionSize*.18),total=actionSize*2+gap;
+        const actionSize=Math.max(8,Math.min(34,Math.max(asset.width,asset.height)*.04)),gap=Math.max(2,actionSize*.18),total=actionSize*2+gap;
         const actionX=Math.max(2,Math.min(asset.width-total-2,px.x+px.w-total));
         let actionY=px.y-actionSize-gap;if(actionY<2)actionY=Math.min(asset.height-actionSize-2,px.y+px.h+gap);
         addInlineAction(mask,'duplicate',actionX,actionY,actionSize);addInlineAction(mask,'delete',actionX+actionSize+gap,actionY,actionSize);
