@@ -3,9 +3,9 @@
   "name": "Reveal Sheet",
   "nameJa": "めくる暗記シート",
   "slug": "reveal-sheet",
-  "version": "0.7.0",
-  "description": "Create image-based study sheets, export self-contained lesson HTML, safely reopen lesson files, and validate portable save formats without executing received HTML.",
-  "descriptionJa": "画像から暗記教材を作り、学習専用HTMLとして持ち出し、受信HTMLを実行せず保存形式を検証して安全に再編集できるめくる暗記シート。",
+  "version": "0.8.0",
+  "description": "Create accessible image-based study sheets with mobile-first editing, self-contained lesson HTML, safe re-editing, bilingual keyboard support, and optional local persistence.",
+  "descriptionJa": "スマホ操作・日英・キーボード・読み上げに配慮し、教材HTML保存と安全な再編集、任意の端末内保存に対応するめくる暗記シート。",
   "defaultLanguage": "auto",
   "repository": {
     "owner": "ttomohisa",
