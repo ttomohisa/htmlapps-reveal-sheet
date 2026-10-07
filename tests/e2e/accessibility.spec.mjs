@@ -4,7 +4,7 @@ import {pathToFileURL} from 'node:url';
 import {openApp,imagePath} from '../helpers/app.mjs';
 
 async function imagePoint(page,x,y){return page.locator('#maskSvg').evaluate((svg,point)=>{const p=svg.createSVGPoint();p.x=point.x;p.y=point.y;const out=p.matrixTransform(svg.getScreenCTM());return{x:out.x,y:out.y};},{x,y});}
-async function addCover(page){await page.locator('#coverButton').click();const a=await imagePoint(page,16,16),b=await imagePoint(page,58,38);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);await page.mouse.up();await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);}
+async function addCover(page){const a=await imagePoint(page,16,16),b=await imagePoint(page,58,38);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);await page.mouse.up();await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);}
 
 function guidedFixture(){
   const value=JSON.parse(readFileSync('tests/fixtures/sheets/v0.4.0.reveal.json','utf8'));

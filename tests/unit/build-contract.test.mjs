@@ -19,7 +19,7 @@ test('T01: a new document contains no assets, session or original filenames', ()
   assert.deepEqual(toPlain(doc.masks), []);
   assert.equal(doc.revision, 1);
   assert.equal(doc.title, 'Untitled sheet');
-  assert.deepEqual(toPlain(doc.defaults), {mode:'free',otherAnswers:'hidden'});
+  assert.deepEqual(toPlain(doc.defaults), {mode:'free',otherAnswers:'hidden',coverColor:'#16624f'});
   assert.equal(Object.hasOwn(doc,'ratings'),false);
 });
 test('T01: exact declared assembly markers and no runtime dependencies', () => {
@@ -46,4 +46,13 @@ test('T01: lesson player template keeps one fixed non-executing data tag',()=>{
   assert.equal(source.split('__REVEAL_PLAYER_RUNTIME_CSP_HASH__').length-1,1);
   assert.equal(source.split('__REVEAL_PLAYER_RUNTIME_SHA256__').length-1,1);
   assert.equal(source.split('__APP_ICON_DATA_URI__').length-1,2);
+});
+
+
+test('T01: cover color is validated while legacy schema-v1 defaults remain valid',()=>{
+  const core=loadFactory('src/reveal/core.js','createRevealCore')(),ctx=testContext();
+  const fresh=core.newDocument(ctx);
+  const changed=core.applyCommand(fresh,{type:'SET_COVER_COLOR',coverColor:'#8040AA'},ctx).document;
+  assert.equal(changed.defaults.coverColor,'#8040aa');
+  assert.throws(()=>core.applyCommand(fresh,{type:'SET_COVER_COLOR',coverColor:'red'},ctx),{code:'INVALID_SHEET'});
 });

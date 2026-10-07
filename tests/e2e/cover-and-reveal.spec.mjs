@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {readFileSync} from 'node:fs';
 import {openApp,imagePath} from '../helpers/app.mjs';
 
 async function screenPointForImage(page,x,y){
@@ -16,7 +17,6 @@ test('T03: draw one cover, undo it, and reveal it freely without moving the imag
   await expect(page.locator('#previewImage')).toBeVisible();
   const before=await page.locator('#previewImage').boundingBox();
 
-  await page.locator('#coverButton').click();
   await expect(page.locator('#maskSvg')).toBeVisible();
   const start=await screenPointForImage(page,30,28);
   const end=await screenPointForImage(page,66,44);
@@ -56,7 +56,6 @@ test('T03: selected cover moves and resizes directly on the image',async({page})
   await openApp(page);
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
   await expect(page.locator('#previewImage')).toBeVisible();
-  await page.locator('#coverButton').click();
   const first=await screenPointForImage(page,24,20),second=await screenPointForImage(page,54,40);
   await page.mouse.move(first.x,first.y);await page.mouse.down();await page.mouse.move(second.x,second.y);await page.mouse.up();
   const rect=page.locator('#maskSvg .mask-rect');await expect(rect).toHaveCount(1);
@@ -71,4 +70,18 @@ test('T03: selected cover moves and resizes directly on the image',async({page})
   expect(Number(await rect.getAttribute('width'))).toBeGreaterThan(beforeWidth);
 
   await page.locator('#maskDelete').click();await expect(rect).toHaveCount(0);
+});
+
+
+test('T03: cover color changes editor rendering and survives editable export',async({page})=>{
+  await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
+  await page.locator('#coverColor').fill('#a04372');
+  const a=await screenPointForImage(page,20,18),b=await screenPointForImage(page,55,38);
+  await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);await page.mouse.up();
+  await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
+  expect(await page.locator('#maskSvg .mask-rect').evaluate(node=>getComputedStyle(node).fill)).toBe('rgb(160, 67, 114)');
+  await page.locator('#saveButton').click();
+  const dl=page.waitForEvent('download');await page.locator('#downloadJsonButton').click();const download=await dl;
+  const saved=JSON.parse(readFileSync(await download.path(),'utf8'));
+  expect(saved.document.defaults.coverColor).toBe('#a04372');
 });
