@@ -7,7 +7,7 @@ async function dragPage(page,from,to){
   await page.mouse.move(gb.x+gb.width/2,gb.y+gb.height/2);await page.mouse.down();
   await expect(source).toHaveClass(/dragging/);
   expect(await source.evaluate(node=>getComputedStyle(node).transform)).not.toBe('none');
-  await page.mouse.move(tb.x+tb.width*.72,tb.y+tb.height*.48,{steps:6});await expect(cards.locator('.reorder-shift')).toHaveCount(1);await page.mouse.up();
+  await page.mouse.move(tb.x+tb.width*.72,tb.y+tb.height*.48,{steps:6});await expect(page.locator('#pageList .page-item.reorder-shift')).toHaveCount(1);await page.mouse.up();
 }
 
 test('T05: page cards edit title/description, drag reorder, trash delete and Undo',async({page})=>{
@@ -47,7 +47,7 @@ test('T05: card editing replaces the old page action row and stays compact',asyn
   const card=page.locator('#pageList .page-item').first(),title=card.locator('.page-card-title'),drag=card.locator('.page-drag-handle'),trash=card.locator('.page-delete-button');
   const tb=await title.boundingBox(),db=await drag.boundingBox(),xb=await trash.boundingBox();
   expect(Math.abs((tb.y+tb.height/2)-(db.y+db.height/2))).toBeLessThanOrEqual(3);expect(Math.abs((tb.y+tb.height/2)-(xb.y+xb.height/2))).toBeLessThanOrEqual(3);
-  await expect(card.locator('.page-description-summary')).toContainText(/Add description|説明を追加/);const cb=await card.boundingBox(),sb=await card.locator('.page-description-summary').boundingBox();expect(sb.right).toBeLessThanOrEqual(cb.right-1);expect(sb.bottom).toBeLessThanOrEqual(cb.bottom+1);
+  await expect(card.locator('.page-description-summary')).toContainText(/Add description|説明を追加/);const cb=await card.boundingBox(),sb=await card.locator('.page-description-summary').boundingBox();expect(sb.x+sb.width).toBeLessThanOrEqual(cb.x+cb.width-1);expect(sb.y+sb.height).toBeLessThanOrEqual(cb.y+cb.height+1);
 });
 
 test('T05: page-card drag reorder also works in the horizontal mobile list',async({page})=>{
