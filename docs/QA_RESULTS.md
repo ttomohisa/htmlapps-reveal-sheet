@@ -6,20 +6,20 @@ This record contains verified CI evidence through v0.9.0 / T01–T18. It does no
 
 ## Verified v0.9.0 release candidate — 2026-10-07
 
-Tested application source commit: **0dc242be775d6c8cac70396f118f2f24d01829a4**.
+Tested application source commit: **527f2d9a02f8200f2e93cefe819542b901890bc2**.
 
-- Application workflow **37576625555**: success.
-- Standalone validation workflow **37576625572**: success.
-- PR preview workflow **37576625546**: success.
-- QA artifact: `reveal-qa-0dc242be775d6c8cac70396f118f2f24d01829a4`, ID **11462624244**.
+- Application workflow **37582287340**: success.
+- Standalone validation workflow **37582287373**: success.
+- PR preview workflow **37582287356**: success.
+- QA artifact: `reveal-qa-527f2d9a02f8200f2e93cefe819542b901890bc2`, ID **11465390311**.
 
 Environment: GitHub-hosted Windows runner, Node 24 and the repository-pinned Playwright / Chromium development browser. These are hosted automated checks, not physical Android/iPhone, user-PC Edge, Safari, Firefox or real assistive-technology tests.
 
 | Verification | Result |
 |---|---|
 | Pure unit tests | 123 passed, 0 failed |
-| Normal HTML opened via file URL | 80 passed |
-| Self-extracting HTML opened via file URL | 80 passed |
+| Normal HTML opened via file URL | 82 passed |
+| Self-extracting HTML opened via file URL | 82 passed |
 | PowerShell syntax / assembly-negative fixtures | Passed |
 | Repository build and standalone contracts | Passed |
 | Normal/root-copy bytes and self-extract restoration | Passed |
@@ -27,15 +27,23 @@ Environment: GitHub-hosted Windows runner, Node 24 and the repository-pinned Pla
 | QA capture step | Passed |
 | Readable HTML size | 0.36 MB |
 | Self-extract HTML size | 0.12 MB |
-| Readable HTML SHA-256 in application workflow | `bd1f70f0ce50e14116bfaf9cb1450bc17a0370c14e1d0899ae70ccb632cd0cd6` |
+| Readable HTML SHA-256 in application workflow | `5aef3262502c9330594aab6ef78989f5f14337f76790010d58544751cdf2cbd5` |
 
 T17 automated checks recompute the exact executable inline runtime of an exported lesson and verify that its SHA-256 matches both the lesson CSP allow-list and the audit metadata. The lesson no longer permits `script-src 'unsafe-inline'`. An HTTP-served app audit excludes only the initial app document request and records no later HTTP(S) request while adding local input, exporting a lesson and importing hostile outer HTML. The exported lesson also opens directly with zero HTTP(S) requests.
 
 Hostile outer `link`, image, iframe, script and data-SVG markup is not inserted or executed. Oversized HTML is rejected before bytes are read; disguised stored-image payloads are rejected atomically. The readable and self-extracting variants run the same browser audit.
 
-T18 unit coverage accepts exactly 30 pages / 1,000 covers and rejects the next structural item. A 10-page / 100-question sheet completed 20 add-delete-export unit cycles in **143 ms** on the hosted runner; the raw heap delta was **-474,368 bytes** and the resulting editable JSON was **24,689 bytes**. These numbers are observations from one hosted run, not performance guarantees.
+T18 unit coverage accepts exactly 30 pages / 1,000 covers and rejects the next structural item. A 10-page / 100-question sheet completed 20 add-delete-export unit cycles in **140 ms** on the hosted runner; the raw heap delta was **-453,776 bytes** and the resulting editable JSON was **24,689 bytes**. These numbers are observations from one hosted run, not performance guarantees.
 
 Browser coverage repeatedly round-trips a 10-page / 100-question sheet, imports a 30-page / 1,000-cover sheet, rejects a 31-page replacement and preserves the already loaded 30-page sheet so manual save remains available. Per-browser upper-bound timing/memory observations are attached to the QA artifact rather than treated as capacity guarantees.
+
+### Review-driven editing UX verification
+
+Hands-on review after the initial v0.9.0 candidate found the cover/view controls too indirect. The candidate now removes the separate Move image mode, Two points creation mode, four view-direction buttons and the move/size button matrix. Placed covers move by direct drag and resize from four corner handles; empty-image dragging pans a zoomed view. Keyboard alternatives remain available.
+
+The zoom controls are one grouped **Zoom out / current percentage / Zoom in** control. The percentage is itself the fit/reset action and returns the view to 100% with center `(0.5, 0.5)`. Desktop page-name, page-description and page-action input rows are aligned by browser regression.
+
+The final browser suite explicitly verifies direct cover move/resize, absence of the removed controls, percentage reset to 100%, narrow-screen reachability and desktop page-control alignment. During regression, overlapping cover creation exposed an interaction-priority bug: while Add cover was active, dragging over an existing cover could move it instead of creating a new overlapping cover. Add-cover mode now takes priority, and the pre-existing overlap-warning regression passes again.
 
 ### v0.9.0 issues found and corrected during verification
 
