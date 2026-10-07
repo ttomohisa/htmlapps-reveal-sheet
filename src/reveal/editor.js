@@ -387,7 +387,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     const handle=event.target?.closest?.('.mask-resize-handle'),maskNode=event.target?.closest?.('.mask-rect');
     if(mode==='create'&&handle?.dataset.maskId&&beginDirectEdit(event,handle.dataset.maskId,'mask-resize',handle.dataset.resizeCorner))return;
     if(mode==='create'&&maskNode?.dataset.maskId&&beginDirectEdit(event,maskNode.dataset.maskId,'mask-move'))return;
-    if(event.target!==svg)return;
+    const background=event.target===svg||event.target?.classList?.contains('mask-hit-surface');if(!background)return;
     if(mode==='create'&&!event.shiftKey){
       const point=imagePoint(event);if(!point)return;event.preventDefault();gesture={kind:'cover',pointerId:event.pointerId,start:point,current:point};svg.setPointerCapture(event.pointerId);return;
     }

@@ -39,6 +39,7 @@ function createStudyView({core,dom,onAction,translate=key=>key}) {
     if(!page){svg.removeAttribute('viewBox');image.style.transform='';svg.style.transform='';return;}
     const asset=doc.assets.find(a=>a.id===page.imageId);if(!asset)return;
     svg.setAttribute('viewBox',`0 0 ${asset.width} ${asset.height}`);
+    const hit=svgNode('rect');hit.classList.add('mask-hit-surface');hit.setAttribute('x','0');hit.setAttribute('y','0');hit.setAttribute('width',String(asset.width));hit.setAttribute('height',String(asset.height));hit.setAttribute('aria-hidden','true');svg.append(hit);
     const visible=state.mode==='study'?core.visibilityFor(doc,state.session):null;
     const pageMasks=doc.masks.filter(mask=>mask.pageId===page.id).sort((a,b)=>(a.kind==='auxiliary'?1:0)-(b.kind==='auxiliary'?1:0));
     for(const mask of pageMasks){
