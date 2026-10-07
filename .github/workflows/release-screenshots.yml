@@ -1,4 +1,5 @@
 name: Refresh v1 release screenshots
+# One-shot release asset capture; removed after assets are committed.
 
 on:
   push:
