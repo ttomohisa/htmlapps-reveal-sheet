@@ -95,7 +95,7 @@ test('T16: optional author text is editable and obeys reveal/accessibility timin
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
   const pageCard=page.locator('#pageList .page-item[aria-current="page"]');await pageCard.locator('.page-description-summary').click();await pageCard.locator('.page-card-description-input').fill('PAGE_CONTEXT_731');await pageCard.locator('.page-card-description-input').blur();
   await addCover(page);
-  await expect(page.locator('#questionTextPanel')).toBeVisible();
+  await expect(page.locator('#questionTextPanel')).toBeVisible();await expect(page.locator('[data-i18n="questionEditorTitle"]')).toBeVisible();
   await page.locator('#questionPromptInput').fill('AUTHOR_PROMPT_731');await page.locator('#questionPromptInput').blur();
   await page.locator('#questionAnswerInput').fill('AUTHOR_SECRET_731');await page.locator('#questionAnswerInput').blur();
 

@@ -104,25 +104,45 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     if(!page){panel.hidden=true;list.replaceChildren();selectedMaskIds.clear();return;}
     const pageMasks=doc.masks.filter(mask=>mask.pageId===page.id);
     selectedMaskIds=new Set([...selectedMaskIds].filter(id=>pageMasks.some(mask=>mask.id===id)));
-    panel.hidden=mode!=='create';
+    panel.hidden=mode!=='create'||pageMasks.length===0;
     $('questionCountEdit').textContent=String(doc.questions.filter(question=>question.pageId===page.id).length);
     list.replaceChildren();
     pageMasks.forEach((mask,index)=>{
       const button=env.document.createElement('button');button.type='button';button.className='cover-list-item';button.dataset.maskId=mask.id;
       button.setAttribute('aria-pressed',String(selectedMaskIds.has(mask.id)));
-      button.textContent=t(mask.kind==='auxiliary'?'coverAuxItem':'coverAnswerItem',{number:index+1});
+      const number=env.document.createElement('span');number.className='cover-list-number';number.textContent=String(index+1);
+      const role=env.document.createElement('span');role.className='cover-list-role';
+      const question=mask.kind==='answer'?doc.questions.find(item=>item.id===mask.questionId):null;
+      role.textContent=t(mask.kind==='auxiliary'?'coverRoleAuxiliary':question?.maskIds.length>1?'coverRoleGrouped':'coverRoleAnswer');
+      button.append(number,role);
       button.addEventListener('click',()=>{if(selectedMaskIds.has(mask.id))selectedMaskIds.delete(mask.id);else selectedMaskIds.add(mask.id);selectedMaskId=mask.id;refreshCopy();});
       list.append(button);
     });
     const chosen=pageMasks.filter(mask=>selectedMaskIds.has(mask.id));
     const answerQuestions=[...new Set(chosen.filter(mask=>mask.kind==='answer').map(mask=>mask.questionId))];
-    $('groupButton').disabled=busy||chosen.some(mask=>mask.kind!=='answer')||answerQuestions.length<2;
+    const canGroup=!busy&&!chosen.some(mask=>mask.kind!=='answer')&&answerQuestions.length>=2;
     const groupedQuestion=chosen.length===1&&chosen[0].kind==='answer'?doc.questions.find(question=>question.id===chosen[0].questionId&&question.maskIds.length>1):null;
-    $('ungroupButton').disabled=busy||!groupedQuestion;
-    $('makeAuxiliaryButton').disabled=busy||chosen.length!==1||chosen[0].kind!=='answer';
-    $('makeAnswerButton').disabled=busy||chosen.length!==1||chosen[0].kind!=='auxiliary';
-    $('duplicateSelectionButton').disabled=busy||chosen.length===0;
-    const question=currentQuestion(),textPanel=$('questionTextPanel');textPanel.hidden=mode!=='create'||!question;
+    const selectionPanel=$('coverSelectionPanel');selectionPanel.hidden=mode!=='create'||chosen.length===0;
+    $('groupButton').hidden=!canGroup;$('groupButton').disabled=!canGroup;
+    $('ungroupButton').hidden=!groupedQuestion;$('ungroupButton').disabled=busy||!groupedQuestion;
+    const singleAnswer=chosen.length===1&&chosen[0].kind==='answer',singleAuxiliary=chosen.length===1&&chosen[0].kind==='auxiliary';
+    $('makeAuxiliaryButton').hidden=!singleAnswer;$('makeAuxiliaryButton').disabled=busy||!singleAnswer;
+    $('makeAnswerButton').hidden=!singleAuxiliary;$('makeAnswerButton').disabled=busy||!singleAuxiliary;
+    $('duplicateSelectionButton').hidden=chosen.length<2;$('duplicateSelectionButton').disabled=busy||chosen.length<2;
+    if(chosen.length===1){
+      if(chosen[0].kind==='auxiliary'){
+        $('coverSelectionTitle').textContent=t('selectionAuxiliaryTitle');$('coverSelectionDetail').textContent=t('selectionAuxiliaryDetail');
+      }else if(groupedQuestion){
+        $('coverSelectionTitle').textContent=t('selectionGroupedTitle',{count:groupedQuestion.maskIds.length});$('coverSelectionDetail').textContent=t('selectionGroupedDetail');
+      }else{
+        $('coverSelectionTitle').textContent=t('selectionAnswerTitle');$('coverSelectionDetail').textContent=t('selectionAnswerDetail');
+      }
+    }else if(chosen.length>1){
+      $('coverSelectionTitle').textContent=t('selectionManyTitle',{count:chosen.length});$('coverSelectionDetail').textContent=t(canGroup?'selectionCanGroup':'selectionManyDetail');
+    }else{
+      $('coverSelectionTitle').textContent='';$('coverSelectionDetail').textContent='';
+    }
+    const question=currentQuestion(),textPanel=$('questionTextPanel');textPanel.hidden=mode!=='create'||!question||chosen.length!==1;
     if(question){
       if(env.document.activeElement!==$('questionPromptInput'))$('questionPromptInput').value=question.prompt;
       if(env.document.activeElement!==$('questionAnswerInput'))$('questionAnswerInput').value=question.answer;

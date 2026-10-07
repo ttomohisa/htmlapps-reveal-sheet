@@ -11,15 +11,22 @@ test('T06: group two covers as one question and keep an auxiliary cover closed',
   await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
   await addCover(page,[10,10],[35,28]);await addCover(page,[45,10],[70,28]);await addCover(page,[80,10],[105,28]);
   await expect(page.locator('#coverList button')).toHaveCount(3);
+  await expect(page.locator('#coverPanelTitle')).toHaveText(/Question setup|問題の設定/);
+  await expect(page.locator('#coverSelectionPanel')).toBeHidden();
 
   await page.locator('#coverList button').nth(0).click();
   await page.locator('#coverList button').nth(1).click();
-  await expect(page.locator('#groupButton')).toBeEnabled();
+  await expect(page.locator('#coverSelectionPanel')).toBeVisible();
+  await expect(page.locator('#coverSelectionTitle')).toContainText(/2|two/i);
+  await expect(page.locator('#groupButton')).toBeVisible();await expect(page.locator('#groupButton')).toBeEnabled();
+  await expect(page.locator('#makeAuxiliaryButton')).toBeHidden();
   await page.locator('#groupButton').click();
   await expect(page.locator('#questionCountEdit')).toHaveText('2');
+  await expect(page.locator('#ungroupButton')).toBeVisible();
 
   await page.locator('#coverList button').nth(2).click();
-  await page.locator('#makeAuxiliaryButton').click();
+  await expect(page.locator('#makeAuxiliaryButton')).toBeVisible();await page.locator('#makeAuxiliaryButton').click();
+  await expect(page.locator('#makeAnswerButton')).toBeVisible();
   await expect(page.locator('#questionCountEdit')).toHaveText('1');
 
   await page.locator('#studyButton').click();
