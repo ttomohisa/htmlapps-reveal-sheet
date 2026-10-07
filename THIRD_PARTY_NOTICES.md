@@ -2,7 +2,7 @@
 
 ## Runtime
 
-No third-party JavaScript, CSS, model, font or WASM package is embedded at runtime. `dependencies.json` and `dependencies.lock.json` retain the template's empty lock contract.
+Reveal Sheet v1.0.0 embeds no third-party JavaScript, CSS, model, font or WASM package at runtime. `dependencies.json` and `dependencies.lock.json` retain the template's empty lock contract.
 
 ## Template
 
