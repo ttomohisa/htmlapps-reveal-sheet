@@ -31,7 +31,7 @@ test('T07: guided study requires reveal before rating and summarizes one pass',a
 
 test('T07: other-answer setting starts a new guided session and auxiliary cover stays closed',async({page})=>{
   await openApp(page);await makeThreeQuestions(page);
-  await page.locator('#coverList button').nth(2).click();await page.locator('#makeAuxiliaryButton').click();
+  await expect(page.locator('#makeAuxiliaryButton')).toBeVisible();await page.locator('#makeAuxiliaryButton').click();
   await page.locator('#studyButton').click();await page.locator('#guidedModeButton').click();
   await page.locator('#guidedSettings > summary').click();await page.locator('#otherAnswersVisible').check();
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(2);

@@ -12,7 +12,9 @@ test('T06: group two covers as one question and keep an auxiliary cover closed',
   await addCover(page,[10,10],[35,28]);await addCover(page,[45,10],[70,28]);await addCover(page,[80,10],[105,28]);
   await expect(page.locator('#coverList button')).toHaveCount(3);
   await expect(page.locator('#coverPanelTitle')).toHaveText(/Question setup|問題の設定/);
-  await expect(page.locator('#coverSelectionPanel')).toBeHidden();
+  await expect(page.locator('#coverSelectionPanel')).toBeVisible();
+  await expect(page.locator('#coverSelectionTitle')).toContainText(/Answer cover|答え用の覆い/);
+  await page.locator('#coverList button').nth(2).click();
 
   await page.locator('#coverList button').nth(0).click();
   await page.locator('#coverList button').nth(1).click();
