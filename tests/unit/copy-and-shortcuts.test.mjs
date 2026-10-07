@@ -24,14 +24,14 @@ test('T16 main UI translation keys stay complete across Japanese and English',()
   const missingInJa=[...enKeys].filter(key=>!jaKeys.has(key));
   assert.deepEqual(missingInEn,[]);
   assert.deepEqual(missingInJa,[]);
-  for(const key of ['continueCover','coverToolsLabel','studyPanelLabel','questionsLabel','guidedQuestionsLabel','imageCoversLabel','coversLabel','previewCoversLabel','coverLabel','coveredAnswerLabel','helpAccessibilityTitle','helpAccessibilityBody']){
+  for(const key of ['coverColor','editorGuide','zoomControlsLabel','zoomIn','zoomOut','fitView','studyPanelLabel','questionsLabel','guidedQuestionsLabel','imageCoversLabel','coversLabel','previewCoversLabel','coverLabel','coveredAnswerLabel','helpAccessibilityTitle','helpAccessibilityBody']){
     assert.equal(jaKeys.has(key),true,key+' missing in ja');
     assert.equal(enKeys.has(key),true,key+' missing in en');
   }
 });
 
 test('T16 user-facing landmark and overlay labels are localized rather than fixed English',()=>{
-  for(const key of ['coverToolsLabel','studyPanelLabel','questionsLabel','guidedQuestionsLabel','imageCoversLabel','coversLabel','previewCoversLabel']){
+  for(const key of ['zoomControlsLabel','studyPanelLabel','questionsLabel','guidedQuestionsLabel','imageCoversLabel','coversLabel','previewCoversLabel']){
     assert.match(index,new RegExp('data-i18n-aria-label="'+key+'"'));
   }
   assert.match(player,/translate:t/);
