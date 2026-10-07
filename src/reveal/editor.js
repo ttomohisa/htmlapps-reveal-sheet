@@ -115,7 +115,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       const question=mask.kind==='answer'?doc.questions.find(item=>item.id===mask.questionId):null;
       role.textContent=t(mask.kind==='auxiliary'?'coverRoleAuxiliary':question?.maskIds.length>1?'coverRoleGrouped':'coverRoleAnswer');
       button.append(number,role);
-      button.addEventListener('click',()=>{if(selectedMaskIds.has(mask.id))selectedMaskIds.delete(mask.id);else selectedMaskIds.add(mask.id);selectedMaskId=mask.id;refreshCopy();});
+      button.addEventListener('click',()=>{if(selectedMaskIds.has(mask.id)){selectedMaskIds.delete(mask.id);if(selectedMaskId===mask.id)selectedMaskId=[...selectedMaskIds][0]||null;}else{selectedMaskIds.add(mask.id);selectedMaskId=mask.id;}refreshCopy();});
       list.append(button);
     });
     const chosen=pageMasks.filter(mask=>selectedMaskIds.has(mask.id));
@@ -448,7 +448,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function rectFromPoints(a,b){const asset=currentAsset();if(!asset)return null;const x=Math.min(a.x,b.x),y=Math.min(a.y,b.y),w=Math.abs(a.x-b.x),h=Math.abs(a.y-b.y);if(w<1||h<1)return null;return{x:x/asset.width,y:y/asset.height,w:w/asset.width,h:h/asset.height};}
   function clearDraft(){draftRect?.remove();draftRect=null;gesture=null;}
   function drawDraft(a,b){const rect=rectFromPoints(a,b);if(!rect)return;const asset=currentAsset(),px=core.rectToPixels(rect,asset.width,asset.height);if(!draftRect){draftRect=env.document.createElementNS('http://www.w3.org/2000/svg','rect');draftRect.classList.add('mask-draft');svg.append(draftRect);}draftRect.setAttribute('x',String(px.x));draftRect.setAttribute('y',String(px.y));draftRect.setAttribute('width',String(px.w));draftRect.setAttribute('height',String(px.h));}
-  function addCover(rect){const before=new Set(doc.masks.map(m=>m.id)),result=core.applyCommand(doc,{type:'ADD_ANSWER_MASK',pageId:selectedId,rect},ctx),added=result.document.masks.find(m=>!before.has(m.id));commit(result,added?.id||null);status('coverAdded');clearDraft();refreshCopy();}
+  function addCover(rect){const before=new Set(doc.masks.map(m=>m.id)),result=core.applyCommand(doc,{type:'ADD_ANSWER_MASK',pageId:selectedId,rect},ctx),added=result.document.masks.find(m=>!before.has(m.id));commit(result,added?.id||null);selectedMaskIds=added?new Set([added.id]):new Set();status('coverAdded');clearDraft();refreshCopy();}
   function directEditRect(active,point){
     const asset=currentAsset();if(!asset||!point)return active.startRect;
     const start=active.startRect,minW=1/asset.width,minH=1/asset.height,nx=point.x/asset.width,ny=point.y/asset.height;
@@ -524,11 +524,11 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function handleViewAction(action){if(action.type==='SELECT_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);refreshCopy();return;}if(mode==='create'&&action.type==='DUPLICATE_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);duplicateSelected();return;}if(mode==='create'&&action.type==='DELETE_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);deleteSelected();return;}if(mode!=='study')return;if(action.type==='TOGGLE_QUESTION'&&studySession?.mode==='free'){studySession=core.toggleFree(studySession,action.questionId);scheduleStudySave();refreshCopy();return;}if(action.type==='REVEAL_CURRENT'&&studySession?.mode==='guided'&&action.questionId===currentGuidedId()){revealGuided();}}
   function editSelected(kind,amount=1){const mask=currentMask(),asset=currentAsset();if(!mask||!asset||mode!=='create')return;const dx=amount/asset.width,dy=amount/asset.height;let r={...mask.rect};if(kind==='left')r.x-=dx;if(kind==='right')r.x+=dx;if(kind==='up')r.y-=dy;if(kind==='down')r.y+=dy;if(kind==='wider')r.w+=dx;if(kind==='narrower')r.w-=dx;if(kind==='taller')r.h+=dy;if(kind==='shorter')r.h-=dy;try{const result=core.applyCommand(doc,{type:'SET_MASK_RECT',maskId:mask.id,rect:r},ctx);commit(result,mask.id);status('coverChanged');refreshCopy();}catch(error){if(error.code!=='INVALID_SHEET')throw error;}}
   function deleteSelected(){const mask=currentMask();if(!mask)return;const result=core.applyCommand(doc,{type:'DELETE_MASK',maskId:mask.id},ctx);commit(result,null);status('coverDeleted');refreshCopy();}
-  function duplicateSelected(){const mask=currentMask();if(!mask)return;const before=new Set(doc.masks.map(m=>m.id)),result=core.applyCommand(doc,{type:'DUPLICATE_MASK',maskId:mask.id},ctx),added=result.document.masks.find(m=>!before.has(m.id));commit(result,added?.id||null);status('coverAdded');refreshCopy();}
+  function duplicateSelected(){const mask=currentMask();if(!mask)return;const before=new Set(doc.masks.map(m=>m.id)),result=core.applyCommand(doc,{type:'DUPLICATE_MASK',maskId:mask.id},ctx),added=result.document.masks.find(m=>!before.has(m.id));commit(result,added?.id||null);selectedMaskIds=added?new Set([added.id]):new Set();status('coverAdded');refreshCopy();}
   function groupSelected(){
     const page=currentPage();if(!page||busy)return;const chosen=doc.masks.filter(mask=>mask.pageId===page.id&&selectedMaskIds.has(mask.id));
     const questionIds=[...new Set(chosen.filter(mask=>mask.kind==='answer').map(mask=>mask.questionId))];if(chosen.some(mask=>mask.kind!=='answer')||questionIds.length<2)return;
-    const result=core.applyCommand(doc,{type:'GROUP_QUESTIONS',questionIds},ctx);commit(result,null);selectedMaskIds.clear();status('groupedCovers');refreshCopy();
+    const keepId=chosen[0].id,result=core.applyCommand(doc,{type:'GROUP_QUESTIONS',questionIds},ctx);commit(result,keepId);selectedMaskIds=new Set([keepId]);status('groupedCovers');refreshCopy();
   }
   function ungroupSelected(){
     const page=currentPage();if(!page||busy)return;const chosen=doc.masks.filter(mask=>mask.pageId===page.id&&selectedMaskIds.has(mask.id));if(chosen.length!==1||chosen[0].kind!=='answer')return;
