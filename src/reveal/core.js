@@ -10,7 +10,7 @@ function createRevealCore() {
   function error(code) { const value = new Error(code); value.code = code; return value; }
   function newDocument(ctx, title = 'Untitled sheet') {
     return { id: ctx.newId('document'), revision: 1, title,
-      defaults: { mode: 'free', otherAnswers: 'hidden' },
+      defaults: { mode: 'free', otherAnswers: 'hidden', coverColor:'#16624f' },
       pages: [], assets: [], questions: [], masks: [] };
   }
   function appendAsset(doc, asset, ctx, title) {
@@ -49,6 +49,11 @@ function createRevealCore() {
   }
   function applyCommand(doc,command,ctx) {
     if(!command || typeof command.type!=='string')throw error('INVALID_SHEET');
+    if(command.type==='SET_COVER_COLOR'){
+      const coverColor=String(command.coverColor||'').toLowerCase();if(!/^#[0-9a-f]{6}$/.test(coverColor))throw error('INVALID_SHEET');
+      if((doc.defaults.coverColor||'#16624f').toLowerCase()===coverColor&&Object.hasOwn(doc.defaults,'coverColor'))return mutation(doc);
+      return mutation({...doc,revision:doc.revision+1,defaults:{...doc.defaults,coverColor}});
+    }
     if(command.type==='ADD_ANSWER_MASK') {
       const {page,asset}=pageAsset(doc,command.pageId);
       if(doc.masks.length>=limits.maxMasks || doc.questions.length>=limits.maxQuestions || doc.masks.filter(x=>x.pageId===page.id).length>=limits.maxMasksPerPage)
@@ -175,12 +180,18 @@ function createRevealCore() {
       const next={...doc,revision:doc.revision+1,pages,questions};if(totalUserTextBytes(next)>1024*1024)throw error('LIMIT_EXCEEDED');
       return mutation(next,{affectedQuestionIds:affected});
     }
+    if(command.type==='MOVE_PAGE_TO') {
+      const index=doc.pages.findIndex(item=>item.id===command.pageId),target=Number(command.targetIndex);
+      if(index<0||!Number.isInteger(target)||target<0||target>=doc.pages.length)throw error('INVALID_SHEET');
+      if(index===target)return mutation(doc);
+      const pages=[...doc.pages],[page]=pages.splice(index,1);pages.splice(target,0,page);
+      return mutation({...doc,revision:doc.revision+1,pages});
+    }
     if(command.type==='MOVE_PAGE') {
       const index=doc.pages.findIndex(item=>item.id===command.pageId),delta=Number(command.delta);
       if(index<0||!Number.isInteger(delta)||![-1,1].includes(delta))throw error('INVALID_SHEET');
       const target=index+delta;if(target<0||target>=doc.pages.length)return mutation(doc);
-      const pages=[...doc.pages],[page]=pages.splice(index,1);pages.splice(target,0,page);
-      return mutation({...doc,revision:doc.revision+1,pages});
+      return applyCommand(doc,{type:'MOVE_PAGE_TO',pageId:command.pageId,targetIndex:target},ctx);
     }
     if(command.type==='DELETE_PAGE') {
       const page=doc.pages.find(item=>item.id===command.pageId);if(!page)throw error('INVALID_SHEET');
@@ -343,7 +354,9 @@ function createRevealCore() {
     const doc=value.document;
     if(!exactKeys(doc,['id','revision','title','defaults','pages','assets','questions','masks']))return fail('$.document');
     if(!validId(doc.id)||!validPositiveInt(doc.revision)||!validText(doc.title,120))return fail('$.document.identity');
-    if(!exactKeys(doc.defaults,['mode','otherAnswers'])||!['free','guided'].includes(doc.defaults.mode)||!['hidden','visible'].includes(doc.defaults.otherAnswers))return fail('$.document.defaults');
+    const legacyDefaults=exactKeys(doc.defaults,['mode','otherAnswers']),colorDefaults=exactKeys(doc.defaults,['mode','otherAnswers','coverColor']);
+    if((!legacyDefaults&&!colorDefaults)||!['free','guided'].includes(doc.defaults.mode)||!['hidden','visible'].includes(doc.defaults.otherAnswers))return fail('$.document.defaults');
+    if(colorDefaults&&(typeof doc.defaults.coverColor!=='string'||!/^#[0-9A-Fa-f]{6}$/.test(doc.defaults.coverColor)))return fail('$.document.defaults.coverColor');
     if(!Array.isArray(doc.pages)||doc.pages.length<1)return fail('$.document.pages');
     if(doc.pages.length>limits.maxPages)return fail('$.document.pages','LIMIT_EXCEEDED');
     if(!Array.isArray(doc.assets)||doc.assets.length<1)return fail('$.document.assets');

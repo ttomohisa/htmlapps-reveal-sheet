@@ -24,14 +24,16 @@ test('T01/T02: loaded image begins within the narrow viewport, not below introdu
  const box=await page.locator('#previewImage').boundingBox();expect(box.y).toBeLessThan(600);
 });
 
-test('T01: hero copy and local badge follow the shared app intro layout',async({page})=>{
+test('T01: header and hero follow the current Browser Kitty compact app frame',async({page})=>{
  await page.setViewportSize({width:1360,height:780});await openApp(page);await page.locator('#languageButton').click();
- await expect(page.locator('#heroTitle')).toHaveText('図やノートをめくる教材に');
- await expect(page.locator('.local-badge')).toContainText('完全ローカル処理');
- expect(await page.locator('.page-intro').evaluate(node=>getComputedStyle(node).display)).toBe('flex');
- const desktop=await page.evaluate(()=>{const intro=document.querySelector('.page-intro').getBoundingClientRect(),badge=document.querySelector('.local-badge').getBoundingClientRect(),title=document.querySelector('#heroTitle').getBoundingClientRect();return{introRight:intro.right,badgeRight:badge.right,badgeLeft:badge.left,titleRight:title.right};});
- expect(desktop.badgeLeft).toBeGreaterThan(desktop.titleRight);
- expect(desktop.badgeRight).toBeLessThanOrEqual(desktop.introRight+1);
+ await expect(page.locator('#heroTitle')).toHaveText('図やノートをめくる教材に');await expect(page.locator('.local-badge')).toContainText('完全ローカル処理');
+ const desktop=await page.evaluate(()=>{const header=document.querySelector('.header-inner').getBoundingClientRect(),main=document.querySelector('.main').getBoundingClientRect(),mark=document.querySelector('.brand-mark').getBoundingClientRect(),intro=document.querySelector('.page-intro').getBoundingClientRect(),badge=document.querySelector('.local-badge').getBoundingClientRect(),title=document.querySelector('#heroTitle').getBoundingClientRect(),titleStyle=getComputedStyle(document.querySelector('#heroTitle'));return{headerWidth:header.width,mainWidth:main.width,markWidth:mark.width,markHeight:mark.height,introRight:intro.right,badgeRight:badge.right,badgeLeft:badge.left,titleRight:title.right,titleSize:parseFloat(titleStyle.fontSize),introDisplay:getComputedStyle(document.querySelector('.page-intro')).display};});
+ expect(desktop.headerWidth).toBeCloseTo(1120,0);expect(desktop.mainWidth).toBeCloseTo(1120,0);expect(desktop.markWidth).toBeCloseTo(38,0);expect(desktop.markHeight).toBeCloseTo(38,0);expect(desktop.titleSize).toBeLessThanOrEqual(28);expect(desktop.introDisplay).toBe('flex');expect(desktop.badgeLeft).toBeGreaterThan(desktop.titleRight);expect(desktop.badgeRight).toBeLessThanOrEqual(desktop.introRight+1);
  await page.setViewportSize({width:390,height:780});
- expect(await page.locator('.page-intro').evaluate(node=>getComputedStyle(node).display)).toBe('block');
+ expect(await page.locator('.page-intro').evaluate(node=>getComputedStyle(node).display)).toBe('flex');expect(await page.locator('.page-intro').evaluate(node=>getComputedStyle(node).flexDirection)).toBe('column');expect(parseFloat(await page.locator('#heroTitle').evaluate(node=>getComputedStyle(node).fontSize))).toBeLessThanOrEqual(22.1);
+});
+
+
+test('T01: obsolete development capability sentence is absent from the app frame',async({page})=>{
+ await openApp(page);await page.locator('#languageButton').click();await expect(page.locator('#developmentNote')).toHaveCount(0);expect(await page.locator('body').innerText()).not.toContain('編集・学習・教材HTMLに加え');
 });

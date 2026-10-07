@@ -1,6 +1,6 @@
 # Reveal Sheet mobile & accessibility QA
 
-This checklist belongs to the v0.8.0 / T15–T16 milestone. Automated evidence and physical/manual evidence are deliberately separated.
+This checklist began with the v0.8.0 / T15–T16 milestone and is updated with the v0.9.0 review-driven direct-edit UX. Automated evidence and physical/manual evidence are deliberately separated.
 
 ## Automated on Windows Chromium
 
@@ -11,10 +11,12 @@ This checklist belongs to the v0.8.0 / T15–T16 milestone. Automated evidence a
 | Touch-style pan | Zoomed image pan changes ViewState without triggering a cover action | Passed |
 | Resize / rotation model | Normalized center and zoom are preserved by `resizeView` / ResizeObserver path | Passed |
 | Cover tap discrimination | >6 CSS px movement and cancelled gestures do not activate | Passed |
-| Continuous cover mode | Explicit toggle keeps Cover mode only when enabled; normal mode returns to Move image | Passed |
-| Touch targets | Primary workflow and cover adjustment actions meet the automated 48 px target checks | Passed |
+| Continuous cover mode | Explicit toggle keeps Add cover active only when enabled; normal creation returns to neutral direct-edit state | Passed |
+| Direct cover editing | Selected covers move by direct drag and resize from four corner handles; keyboard alternatives remain available | Passed |
+| Zoom controls | Zoom out / percentage / Zoom in are grouped; the percentage resets to the 100% centered whole-image view | Passed |
+| Touch targets | Primary workflow, Add cover and zoom actions meet the automated 48 px target checks | Passed |
 | Fixed bottom navigation | Safe-area-aware body/toast offset is present in narrow layout CSS | Passed by CSS + browser layout regression |
-| Escape cancellation | Unfinished two-point cover is cancelled without creating a rectangle | Passed |
+| Escape cancellation | Escape exits Add cover mode without creating a rectangle | Passed |
 | Japanese / English keys | Main translation key sets match and accessibility label keys exist in both languages | Passed |
 | Closed guided answer | Plain-text answer absent from visible/accessibility text until reveal | Passed |
 | Closed free-study answer | Plain-text answer live output is empty until the answer is opened | Passed |

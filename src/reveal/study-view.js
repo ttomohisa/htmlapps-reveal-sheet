@@ -33,12 +33,22 @@ function createStudyView({core,dom,onAction,translate=key=>key}) {
   const resizeObserver=surface&&typeof ResizeObserverCtor==='function'?new ResizeObserverCtor(()=>rememberSurfaceBox()):null;
   resizeObserver?.observe(surface);
   function svgNode(name){return dom.createElementNS('http://www.w3.org/2000/svg',name);}
+  function addInlineAction(mask,kind,x,y,size){
+    const group=svgNode('g');group.classList.add('mask-inline-action',kind);group.dataset.maskId=mask.id;group.dataset.maskAction=kind;group.setAttribute('tabindex','0');group.setAttribute('focusable','true');group.setAttribute('role','button');group.setAttribute('aria-label',translate(kind==='duplicate'?'duplicateCover':'deleteCover'));
+    const hit=svgNode('rect');hit.classList.add('mask-inline-action-hit');hit.setAttribute('x',String(x));hit.setAttribute('y',String(y));hit.setAttribute('width',String(size));hit.setAttribute('height',String(size));group.append(hit);
+    const icon=svgNode('path');icon.classList.add('mask-inline-action-icon');icon.setAttribute('transform',`translate(${x},${y}) scale(${size/24})`);icon.setAttribute('d',kind==='duplicate'?'M8 8h10v10H8z M6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1':'M4 7h16 M9 7V4h6v3 M7 7l1 13h8l1-13 M10 10v7 M14 10v7');group.append(icon);
+    const activate=event=>{event?.preventDefault();event?.stopPropagation();onAction({type:kind==='duplicate'?'DUPLICATE_MASK':'DELETE_MASK',maskId:mask.id});};
+    group.addEventListener('pointerdown',event=>{event.preventDefault();event.stopPropagation();});
+    group.addEventListener('click',activate);group.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){activate(event);}});
+    svg.append(group);
+  }
   function render(){
     const doc=state.document,page=doc&&doc.pages.find(p=>p.id===state.pageId);
     svg.replaceChildren();
     if(!page){svg.removeAttribute('viewBox');image.style.transform='';svg.style.transform='';return;}
     const asset=doc.assets.find(a=>a.id===page.imageId);if(!asset)return;
     svg.setAttribute('viewBox',`0 0 ${asset.width} ${asset.height}`);
+    const hit=svgNode('rect');hit.classList.add('mask-hit-surface');hit.setAttribute('x','0');hit.setAttribute('y','0');hit.setAttribute('width',String(asset.width));hit.setAttribute('height',String(asset.height));hit.setAttribute('aria-hidden','true');svg.append(hit);
     const visible=state.mode==='study'?core.visibilityFor(doc,state.session):null;
     const pageMasks=doc.masks.filter(mask=>mask.pageId===page.id).sort((a,b)=>(a.kind==='auxiliary'?1:0)-(b.kind==='auxiliary'?1:0));
     for(const mask of pageMasks){
@@ -71,6 +81,18 @@ function createStudyView({core,dom,onAction,translate=key=>key}) {
         rect.addEventListener('keydown',event=>{if(event.repeat)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}});
       }
       svg.append(rect);
+      if(state.mode==='edit'&&mask.id===state.selectedMaskId){
+        const radius=Math.max(1.5,Math.min(32,Math.max(asset.width,asset.height)*.012));
+        const corners=[['nw',px.x,px.y],['ne',px.x+px.w,px.y],['sw',px.x,px.y+px.h],['se',px.x+px.w,px.y+px.h]];
+        for(const [corner,cx,cy] of corners){
+          const handle=svgNode('circle');handle.classList.add('mask-resize-handle');handle.dataset.maskId=mask.id;handle.dataset.resizeCorner=corner;
+          handle.setAttribute('cx',String(cx));handle.setAttribute('cy',String(cy));handle.setAttribute('r',String(radius));handle.setAttribute('aria-hidden','true');svg.append(handle);
+        }
+        const actionSize=Math.max(8,Math.min(34,Math.max(asset.width,asset.height)*.04)),gap=Math.max(2,actionSize*.18),total=actionSize*2+gap;
+        const actionX=Math.max(2,Math.min(asset.width-total-2,px.x+px.w-total));
+        let actionY=px.y-actionSize-gap;if(actionY<2)actionY=Math.min(asset.height-actionSize-2,px.y+px.h+gap);
+        addInlineAction(mask,'duplicate',actionX,actionY,actionSize);addInlineAction(mask,'delete',actionX+actionSize+gap,actionY,actionSize);
+      }
     }
     applyView();rememberSurfaceBox();
   }

@@ -10,12 +10,12 @@ async function seedCurrentSheet(page){
   await openApp(page);
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
   await expect(page.locator('#previewImage')).toBeVisible();
-  await expect(page.locator('#pageList button')).toHaveCount(1);
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
 }
 async function expectRejectedAndPreserved(page){
   await expect(page.locator('#appConfirmDialog')).toBeHidden();
   await expect(page.locator('#inputStatus')).toContainText(/開けません|could not open|newer|新しい/i);
-  await expect(page.locator('#pageList button')).toHaveCount(1);
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
   await expect(page.locator('#previewImage')).toBeVisible();
 }
 
@@ -70,7 +70,7 @@ test('T13: an older schema-v1 guided fixture opens without losing its study defa
   await page.locator('#sheetInput').setInputFiles(resolve('tests/fixtures/sheets/v0.4.0.reveal.json'));
   await expect(page.locator('#appConfirmDialog')).toBeVisible();
   await page.locator('#appConfirmOk').click();
-  await expect(page.locator('#pageList button')).toHaveCount(1);
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
   await page.locator('#studyButton').click();
   await expect(page.locator('#guidedPanel')).toBeVisible();

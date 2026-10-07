@@ -2,7 +2,60 @@
 
 ## Scope and status
 
-This record contains verified CI evidence through v0.8.0 / T01–T16. It does not mark all 48 formal acceptance items complete. Page management, grouped/auxiliary covers, free/guided study, review sessions, targeted study-time editing, per-page view state, opt-in on-device persistence, self-contained lesson HTML, non-executing re-edit, schema-v1 interoperability, prepared export recovery, mobile/touch interaction and bilingual accessibility hardening are implemented. Physical phones, real screen readers, Safari, Firefox and maximum-resource stress tests remain untested.
+This record contains verified CI evidence through v0.9.0 / T01–T18. It does not mark all 48 formal acceptance items complete. The release-candidate automated matrix now includes runtime-network/CSP/hostile-input auditing, repeated standard-size round trips and the configured 30-page / 1,000-cover boundary in addition to the earlier editing, study, persistence, lesson, mobile/touch and bilingual accessibility work. Physical phones, real screen readers, Safari, Firefox, background/screen-lock behavior and OS save-cancel/file-handoff behavior remain untested.
+
+## Verified v0.9.0 release candidate — 2026-10-07
+
+Tested application source commit: **527f2d9a02f8200f2e93cefe819542b901890bc2**.
+
+- Application workflow **37582287340**: success.
+- Standalone validation workflow **37582287373**: success.
+- PR preview workflow **37582287356**: success.
+- QA artifact: `reveal-qa-527f2d9a02f8200f2e93cefe819542b901890bc2`, ID **11465390311**.
+
+Environment: GitHub-hosted Windows runner, Node 24 and the repository-pinned Playwright / Chromium development browser. These are hosted automated checks, not physical Android/iPhone, user-PC Edge, Safari, Firefox or real assistive-technology tests.
+
+| Verification | Result |
+|---|---|
+| Pure unit tests | 123 passed, 0 failed |
+| Normal HTML opened via file URL | 82 passed |
+| Self-extracting HTML opened via file URL | 82 passed |
+| PowerShell syntax / assembly-negative fixtures | Passed |
+| Repository build and standalone contracts | Passed |
+| Normal/root-copy bytes and self-extract restoration | Passed |
+| PR Preview create/probe | Passed |
+| QA capture step | Passed |
+| Readable HTML size | 0.36 MB |
+| Self-extract HTML size | 0.12 MB |
+| Readable HTML SHA-256 in application workflow | `5aef3262502c9330594aab6ef78989f5f14337f76790010d58544751cdf2cbd5` |
+
+T17 automated checks recompute the exact executable inline runtime of an exported lesson and verify that its SHA-256 matches both the lesson CSP allow-list and the audit metadata. The lesson no longer permits `script-src 'unsafe-inline'`. An HTTP-served app audit excludes only the initial app document request and records no later HTTP(S) request while adding local input, exporting a lesson and importing hostile outer HTML. The exported lesson also opens directly with zero HTTP(S) requests.
+
+Hostile outer `link`, image, iframe, script and data-SVG markup is not inserted or executed. Oversized HTML is rejected before bytes are read; disguised stored-image payloads are rejected atomically. The readable and self-extracting variants run the same browser audit.
+
+T18 unit coverage accepts exactly 30 pages / 1,000 covers and rejects the next structural item. A 10-page / 100-question sheet completed 20 add-delete-export unit cycles in **140 ms** on the hosted runner; the raw heap delta was **-453,776 bytes** and the resulting editable JSON was **24,689 bytes**. These numbers are observations from one hosted run, not performance guarantees.
+
+Browser coverage repeatedly round-trips a 10-page / 100-question sheet, imports a 30-page / 1,000-cover sheet, rejects a 31-page replacement and preserves the already loaded 30-page sheet so manual save remains available. Per-browser upper-bound timing/memory observations are attached to the QA artifact rather than treated as capacity guarantees.
+
+### Review-driven editing UX verification
+
+Hands-on review after the initial v0.9.0 candidate found the cover/view controls too indirect. The candidate now removes the separate Move image mode, Two points creation mode, four view-direction buttons and the move/size button matrix. Placed covers move by direct drag and resize from four corner handles; empty-image dragging pans a zoomed view. Keyboard alternatives remain available.
+
+The zoom controls are one grouped **Zoom out / current percentage / Zoom in** control. The percentage is itself the fit/reset action and returns the view to 100% with center `(0.5, 0.5)`. Desktop page-name, page-description and page-action input rows are aligned by browser regression.
+
+The final browser suite explicitly verifies direct cover move/resize, absence of the removed controls, percentage reset to 100%, narrow-screen reachability and desktop page-control alignment. During regression, overlapping cover creation exposed an interaction-priority bug: while Add cover was active, dragging over an existing cover could move it instead of creating a new overlapping cover. Add-cover mode now takes priority, and the pre-existing overlap-warning regression passes again.
+
+### v0.9.0 issues found and corrected during verification
+
+- The first resource-cycle unit fixture reused IDs already present in its synthetic document; the fixture was corrected to generate collision-free IDs.
+- The release-candidate browser test exposed that structural resource-limit failures were being downgraded from `LIMIT_EXCEEDED` to generic `INVALID_SHEET` during saved-data import. `project-io.js` now preserves the resource-limit classification for both JSON and lesson HTML, and a unit regression locks that behavior.
+- The existing build-contract unit still expected the pre-hash player JavaScript marker; it was updated to the fixed runtime/CSP-hash marker contract.
+
+### Unperformed release-candidate paths
+
+Physical Windows Edge file/HTTPS startup, Android Chrome, iPhone Safari, real screen readers, real 200% browser zoom, physical background/screen-lock recovery and OS save-cancel/file-handoff behavior remain **unperformed**. Automated viewport emulation is not used as evidence for these items. See `docs/QA_MATRIX.md` and `docs/MOBILE_ACCESSIBILITY_QA.md`.
+
+Configured input ceilings are safety rejection bounds, not a claim that every phone or desktop can successfully process the maximum.
 
 ## Verified v0.8.0 milestone — 2026-10-07
 

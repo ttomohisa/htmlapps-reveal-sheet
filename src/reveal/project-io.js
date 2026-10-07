@@ -5,9 +5,11 @@ function createProjectIO({core,imageIO,env}) {
   let invalidatedExportGeneration=-1;
   const validExportGeneration=generation=>Number.isSafeInteger(generation)&&generation>=0&&generation>invalidatedExportGeneration;
   function cleanDocument(doc){
+    const defaults={mode:doc.defaults.mode,otherAnswers:doc.defaults.otherAnswers};
+    if(typeof doc.defaults.coverColor==='string')defaults.coverColor=doc.defaults.coverColor;
     return {
       id:doc.id,revision:doc.revision,title:doc.title,
-      defaults:{mode:doc.defaults.mode,otherAnswers:doc.defaults.otherAnswers},
+      defaults,
       pages:doc.pages.map(page=>({id:page.id,title:page.title,description:page.description,imageId:page.imageId,questionOrder:[...page.questionOrder]})),
       assets:doc.assets.map(asset=>({id:asset.id,mime:asset.mime,width:asset.width,height:asset.height,byteLength:asset.byteLength,dataBase64:asset.dataBase64})),
       questions:doc.questions.map(question=>({id:question.id,pageId:question.pageId,revision:question.revision,maskIds:[...question.maskIds],prompt:question.prompt,answer:question.answer})),
@@ -19,6 +21,10 @@ function createProjectIO({core,imageIO,env}) {
   }
   function assertSupportedEditable(value){
     if(value.kind!=='editable')fail('INVALID_SHEET');
+  }
+  function validationFailureCode(checked){
+    const code=checked?.errors?.[0]?.code;
+    return code==='UNSUPPORTED_SCHEMA'||code==='LIMIT_EXCEEDED'?code:'INVALID_SHEET';
   }
   function serialize(doc,kind='editable',appVersion='0.2.0'){
     const value=envelope(doc,kind,appVersion);
@@ -72,7 +78,7 @@ function createProjectIO({core,imageIO,env}) {
     try{value=JSON.parse(json);}catch{fail('INVALID_SHEET');}
     if(value&&value.format==='reveal-sheet'&&value.schemaVersion!==1)fail('UNSUPPORTED_SCHEMA');
     const checked=core.validateEnvelope(value);
-    if(!checked.ok)fail(checked.errors?.[0]?.code==='UNSUPPORTED_SCHEMA'?'UNSUPPORTED_SCHEMA':'INVALID_SHEET');
+    if(!checked.ok)fail(validationFailureCode(checked));
     if(value.kind!=='lesson')fail('INVALID_SHEET');
     return envelope(value.document,'lesson',value.appVersion);
   }
@@ -122,7 +128,7 @@ function createProjectIO({core,imageIO,env}) {
     try{value=JSON.parse(text);}catch{fail('INVALID_SHEET');}
     if(value&&value.format==='reveal-sheet'&&value.schemaVersion!==1)fail('UNSUPPORTED_SCHEMA');
     const checked=core.validateEnvelope(value);
-    if(!checked.ok)fail(checked.errors?.[0]?.code==='UNSUPPORTED_SCHEMA'?'UNSUPPORTED_SCHEMA':'INVALID_SHEET');
+    if(!checked.ok)fail(validationFailureCode(checked));
     assertSupportedEditable(value);
     for(const asset of value.document.assets){
       if(isAbort(signal))fail('CANCELLED');

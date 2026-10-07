@@ -20,7 +20,7 @@ test('T14: editable save keeps filename rules and reports save start rather than
   await page.locator('#downloadJsonButton').click();
   const second=await secondPromise;
   expect(second.suggestedFilename()).toBe('_CON.reveal.json');
-  await expect(page.locator('#pageList button')).toHaveCount(1);
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
 });
 
 test('T14: a language switch in the same turn invalidates an in-progress export before download',async({page})=>{
@@ -40,7 +40,7 @@ test('T14: a language switch in the same turn invalidates an in-progress export 
   await expect(page.locator('#downloadJsonButton')).toBeEnabled();
   await expect(page.locator('#inputStatus')).toContainText(/破棄|discarded/i);
   expect(downloads).toBe(0);
-  await expect(page.locator('#pageList button')).toHaveCount(1);
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
 });
 
 test('T14: Blob preparation failure keeps the sheet and the user can retry',async({page})=>{
@@ -59,7 +59,7 @@ test('T14: Blob preparation failure keeps the sheet and the user can retry',asyn
   });
   await page.locator('#saveButton').click();
   await expect(page.locator('#inputStatus')).toContainText(/準備できません|Could not prepare/i);
-  await expect(page.locator('#pageList button')).toHaveCount(1);
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
 
   await page.evaluate(()=>{window.Blob=window.__RevealOriginalBlob;delete window.__RevealOriginalBlob;});
   await page.locator('#saveButton').click();

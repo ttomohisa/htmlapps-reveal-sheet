@@ -4,7 +4,7 @@ import {pathToFileURL} from 'node:url';
 import {openApp,imagePath} from '../helpers/app.mjs';
 
 async function imagePoint(page,x,y){return page.locator('#maskSvg').evaluate((svg,point)=>{const p=svg.createSVGPoint();p.x=point.x;p.y=point.y;const out=p.matrixTransform(svg.getScreenCTM());return{x:out.x,y:out.y};},{x,y});}
-async function addCover(page){await page.locator('#coverButton').click();const a=await imagePoint(page,16,16),b=await imagePoint(page,58,38);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);await page.mouse.up();await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);}
+async function addCover(page){await page.locator('#maskSvg').scrollIntoViewIfNeeded();const a=await imagePoint(page,16,16),b=await imagePoint(page,58,38);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);await page.mouse.up();await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);}
 
 function guidedFixture(){
   const value=JSON.parse(readFileSync('tests/fixtures/sheets/v0.4.0.reveal.json','utf8'));
@@ -93,9 +93,9 @@ test('T16: exported lesson keeps plain-text answer hidden from assistive output 
 test('T16: optional author text is editable and obeys reveal/accessibility timing',async({page})=>{
   await openApp(page);
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
-  await page.locator('#pageDescriptionInput').fill('PAGE_CONTEXT_731');await page.locator('#pageDescriptionInput').blur();
+  const pageCard=page.locator('#pageList .page-item[aria-current="page"]');await pageCard.locator('.page-description-summary').click();await pageCard.locator('.page-card-description-input').fill('PAGE_CONTEXT_731');await pageCard.locator('.page-card-description-input').blur();
   await addCover(page);
-  await expect(page.locator('#questionTextPanel')).toBeVisible();
+  await expect(page.locator('#questionTextPanel')).toBeVisible();await expect(page.locator('[data-i18n="questionEditorTitle"]')).toBeVisible();
   await page.locator('#questionPromptInput').fill('AUTHOR_PROMPT_731');await page.locator('#questionPromptInput').blur();
   await page.locator('#questionAnswerInput').fill('AUTHOR_SECRET_731');await page.locator('#questionAnswerInput').blur();
 

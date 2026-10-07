@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.9.0 - 2026-10-07 (release candidate)
+
+T17–T18: feature freeze, runtime-network/CSP/hostile-input audit, configured resource-bound verification and release-candidate recovery checks. This is still a release candidate, not the v1.0 release.
+
+- Replaced the exported lesson player's `script-src 'unsafe-inline'` policy with a build-time SHA-256 allow-list for the exact executable inline runtime; the same runtime digest remains recorded as hex metadata for audit.
+- Added browser verification that recomputes the exported lesson runtime hash, matches it to CSP and metadata, and confirms direct-file lesson startup requires no HTTP(S) requests.
+- Added an HTTP-served app audit that excludes only the initial document request and records zero later HTTP(S) requests while importing hostile outer HTML.
+- Re-tested external image/CSS/iframe/script markup, data-SVG markup, oversized lesson HTML and disguised stored-image payloads without executing or adopting incoming markup.
+- Added configured-boundary checks for 30 pages / 1,000 covers and explicit rejection of the next item.
+- Added repeated 10-page / 100-question editable-data round trips plus an upper-bound browser observation and recovery check that preserves current work after an over-limit replacement attempt.
+- Added `docs/QA_MATRIX.md` to separate automated evidence from physical-device/manual items. Android/iPhone, real screen readers, real 200% zoom, background/screen-lock and OS save-cancel/file-handoff behavior remain unperformed until actually tested.
+- Updated the security document to describe the implemented lesson player, hostile input path, opt-in IndexedDB persistence and current privacy boundary rather than the obsolete v0.1 behavior.
+
+### Review UX corrections
+
+- Simplified cover editing after hands-on review: removed the separate Move image mode, Two points creation mode, view-direction buttons and move/size button matrix.
+- Placed covers now move directly by dragging on the image and resize from four visible corner handles. Keyboard alternatives remain: Arrow = 1 image px, Shift+Arrow = 10 px, Alt+Arrow = resize.
+- Empty-image dragging pans the zoomed view without a separate mode.
+- Combined Zoom out / current percentage / Zoom in into one control; the percentage is clickable and returns to the 100% whole-image view.
+- Aligned page-name, page-description and page-action controls along the same input row on desktop.
+
+### Page-card and app-frame review corrections
+
+- Replaced Earlier / Later page buttons with direct page-card reordering. The grip handle uses pointer dragging on desktop/mobile, shows a lifted/shadowed grabbed state and insertion marker, and keeps arrow-key reordering as a non-drag alternative.
+- Moved page-name editing into each card. Optional page descriptions now use a compact one-line summary that expands to the textarea only when needed.
+- Replaced the large Page delete action with a trash SVG button on each card while preserving confirmation and Undo.
+- Removed edit-only image dimensions/byte size from Study mode.
+- Removed the loaded development-capability sentence from the editor.
+- Aligned the header and Hero dimensions with the current Browser Kitty Mini League Desk app frame: 1120px content frame, compact 38px brand mark, compact header actions, 22–28px Hero title and matching responsive stacking.
+
+### Verification boundary
+
+Configured limits are rejection rules, not guaranteed capacity on every device. GitHub-hosted Chromium evidence will be recorded in `docs/QA_RESULTS.md`; physical-device items remain explicitly unperformed until real hardware testing.
+
 ## 0.8.0 - 2026-10-07 (development)
 
 T15–T16: mobile/touch workflow and bilingual accessibility hardening. This is still a development milestone, not the v1.0 release.

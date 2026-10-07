@@ -29,17 +29,31 @@ function Expand-RevealTemplate {
     $playerSources += $source
   }
   $playerJs = $playerSources -join "`n"
+  # Hash the exact executable inline script text. Use LF explicitly so the
+  # CSP hash is stable across Windows PowerShell and pwsh.
+  $playerRuntime = @(
+    "'use strict';",
+    $playerJs,
+    "const LESSON_ENVELOPE=JSON.parse(document.getElementById('reveal-sheet-data').textContent);",
+    "const lessonCore=createRevealCore();",
+    "const lessonProjectIO=createProjectIO({core:lessonCore,imageIO:{verifyStoredAsset:async()=>{}},env:window});",
+    "const lessonPersistence=createPersistence({core:lessonCore,env:window});",
+    "const lessonPlayer=createPlayer({core:lessonCore,projectIO:lessonProjectIO,persistence:lessonPersistence,env:window,envelope:LESSON_ENVELOPE});",
+    "lessonPlayer.start().catch(error=>{document.getElementById('lessonWaiting').hidden=true;const node=document.getElementById('lessonError');node.hidden=false;node.textContent='Could not start this Reveal Sheet lesson.';console.error(error);});"
+  ) -join "`n"
   $hashAlgorithm = [System.Security.Cryptography.SHA256]::Create()
   try {
-    $playerHashBytes = $hashAlgorithm.ComputeHash([Text.Encoding]::UTF8.GetBytes($playerJs))
+    $playerHashBytes = $hashAlgorithm.ComputeHash([Text.Encoding]::UTF8.GetBytes($playerRuntime))
   } finally {
     $hashAlgorithm.Dispose()
   }
   $playerHash = ($playerHashBytes | ForEach-Object { $_.ToString("x2") }) -join ""
+  $playerCspHash = "sha256-" + [Convert]::ToBase64String($playerHashBytes)
   $playerMarkers = @{
-    "/* REVEAL:PLAYER_JS */" = $playerJs
+    "/* REVEAL:PLAYER_RUNTIME */" = $playerRuntime
     "/* REVEAL:PLAYER_SHARED_CSS */" = $css
     "__REVEAL_PLAYER_RUNTIME_SHA256__" = $playerHash
+    "__REVEAL_PLAYER_RUNTIME_CSP_HASH__" = $playerCspHash
   }
   foreach ($key in $playerMarkers.Keys) {
     if (([regex]::Matches($playerTemplate, [regex]::Escape($key))).Count -ne 1) { throw "Expected one Reveal player marker: $key" }

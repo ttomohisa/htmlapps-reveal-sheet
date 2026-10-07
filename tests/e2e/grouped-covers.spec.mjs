@@ -3,7 +3,7 @@ import {openApp,imagePath} from '../helpers/app.mjs';
 
 async function imagePoint(page,x,y){return page.locator('#maskSvg').evaluate((svg,point)=>{const p=svg.createSVGPoint();p.x=point.x;p.y=point.y;const out=p.matrixTransform(svg.getScreenCTM());return{x:out.x,y:out.y};},{x,y});}
 async function addCover(page,a,b){
-  await page.locator('#coverButton').click();const p1=await imagePoint(page,...a),p2=await imagePoint(page,...b);
+  const p1=await imagePoint(page,...a),p2=await imagePoint(page,...b);
   await page.mouse.move(p1.x,p1.y);await page.mouse.down();await page.mouse.move(p2.x,p2.y);await page.mouse.up();
 }
 
@@ -11,15 +11,25 @@ test('T06: group two covers as one question and keep an auxiliary cover closed',
   await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
   await addCover(page,[10,10],[35,28]);await addCover(page,[45,10],[70,28]);await addCover(page,[80,10],[105,28]);
   await expect(page.locator('#coverList button')).toHaveCount(3);
+  await expect(page.locator('#coverPanelTitle')).toHaveText(/Question setup|問題の設定/);
+  await expect(page.locator('#coverSelectionPanel')).toBeVisible();
+  await expect(page.locator('#coverSelectionTitle')).toContainText(/Answer cover|答え用の覆い/);
+  await page.locator('#coverList button').nth(2).click();
 
   await page.locator('#coverList button').nth(0).click();
   await page.locator('#coverList button').nth(1).click();
-  await expect(page.locator('#groupButton')).toBeEnabled();
+  await expect(page.locator('#coverSelectionPanel')).toBeVisible();
+  await expect(page.locator('#coverSelectionTitle')).toContainText(/2|two/i);
+  await expect(page.locator('#groupButton')).toBeVisible();await expect(page.locator('#groupButton')).toBeEnabled();
+  await expect(page.locator('#makeAuxiliaryButton')).toBeHidden();
   await page.locator('#groupButton').click();
   await expect(page.locator('#questionCountEdit')).toHaveText('2');
+  await expect(page.locator('#ungroupButton')).toBeVisible();
+  await page.locator('#coverList button').filter({has:page.locator('.cover-list-number',{hasText:'1'})}).click();
 
   await page.locator('#coverList button').nth(2).click();
-  await page.locator('#makeAuxiliaryButton').click();
+  await expect(page.locator('#makeAuxiliaryButton')).toBeVisible();await page.locator('#makeAuxiliaryButton').click();
+  await expect(page.locator('#makeAnswerButton')).toBeVisible();
   await expect(page.locator('#questionCountEdit')).toHaveText('1');
 
   await page.locator('#studyButton').click();
@@ -35,7 +45,7 @@ test('T06: group two covers as one question and keep an auxiliary cover closed',
 
 test('T06: overlapping separate questions warn and opening one leaves the other cover visible',async({page})=>{
   await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
-  await addCover(page,[20,15],[70,45]);await addCover(page,[45,28],[95,58]);
+  await addCover(page,[20,15],[70,45]);await addCover(page,[78,30],[45,58]);
   await expect(page.locator('#overlapWarning')).toBeVisible();
   await page.locator('#studyButton').click();
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(2);

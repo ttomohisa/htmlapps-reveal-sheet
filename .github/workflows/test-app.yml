@@ -59,5 +59,7 @@ jobs:
             test-results/
             dist/
             reveal-sheet.html
+            docs/QA_MATRIX.md
+            docs/QA_RESULTS.md
           retention-days: 14
           if-no-files-found: error

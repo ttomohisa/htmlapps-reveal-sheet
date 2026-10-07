@@ -11,7 +11,6 @@ async function imagePoint(page,x,y){
   },{x,y});
 }
 async function addOneCover(page){
-  await page.locator('#coverButton').click();
   const a=await imagePoint(page,24,20),b=await imagePoint(page,60,42);
   await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);await page.mouse.up();
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
@@ -43,10 +42,10 @@ test('T04: save image-embedded editable JSON and reopen without choosing the ima
 
   await page.locator('#createButton').click();
   await page.locator('#newButton').click();await page.locator('#appConfirmOk').click();
-  await expect(page.locator('#pageList button')).toHaveCount(0);
+  await expect(page.locator('#pageList .page-item')).toHaveCount(0);
 
   await page.locator('#sheetInput').setInputFiles(downloadedPath);
-  await expect(page.locator('#pageList button')).toHaveCount(1);
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
   await expect(page.locator('#previewImage')).toBeVisible();
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
   await expect(page.locator('#studyButton')).toBeEnabled();
@@ -55,9 +54,9 @@ test('T04: save image-embedded editable JSON and reopen without choosing the ima
 test('T04: invalid editable JSON leaves the current sheet intact',async({page})=>{
   await openApp(page);
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
-  await expect(page.locator('#pageList button')).toHaveCount(1);
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
   await page.locator('#sheetInput').setInputFiles({name:'broken.reveal.json',mimeType:'application/json',buffer:Buffer.from('{"format":"reveal-sheet","schemaVersion":1}')});
-  await expect(page.locator('#pageList button')).toHaveCount(1);
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
   await expect(page.locator('#inputStatus')).toContainText(/could not|開けません|invalid/i);
   await expect(page.locator('#previewImage')).toBeVisible();
 });
@@ -65,7 +64,7 @@ test('T04: invalid editable JSON leaves the current sheet intact',async({page})=
 test('T04: a valid replacement is confirmed only after validation',async({page})=>{
   await openApp(page);
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
-  await expect(page.locator('#pageList button')).toHaveCount(1);
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
 
   const requests=[];page.on('request',request=>{if(/^https?:/i.test(request.url()))requests.push(request.url());});
   const png=readFileSync(imagePath('static.png'));
@@ -84,6 +83,6 @@ test('T04: a valid replacement is confirmed only after validation',async({page})
   await page.locator('#sheetInput').setInputFiles({name:'valid.reveal.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(value))});
   await page.locator('#appConfirmOk').click();
   await expect(page.locator('#sheetTitle')).toHaveText('Imported sheet');
-  await expect(page.locator('#pageList button')).toContainText('Imported page');
+  await expect(page.locator('#pageList input.page-card-title')).toHaveValue('Imported page');
   expect(requests).toEqual([]);
 });

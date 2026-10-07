@@ -2,13 +2,13 @@
 
 [日本語](README.ja.md)
 
-Reveal Sheet turns diagrams, photos and notes that already contain answers into study sheets with opaque covers. **The current v0.8.0 development build finishes the mobile/touch workflow and bilingual keyboard/screen-reader accessibility layer, including safe-area layout, short viewports, forced colors, reduced motion, and closed-answer privacy.** Self-contained lesson HTML, safe re-editing and optional on-device persistence remain available. It is not the completed v1.0 release.
+Reveal Sheet turns diagrams, photos and notes that already contain answers into study sheets with opaque covers. **The current v0.9.0 release-candidate build freezes features and audits runtime networking, lesson CSP/hash integrity, hostile saved input, configured resource ceilings and recovery paths.** Mobile/touch, bilingual accessibility, self-contained lesson HTML, safe re-editing and optional on-device persistence remain available. It is not the completed v1.0 release.
 
 ## Available now
 
 Add multiple JPEG, static PNG or static WebP images using the file picker, desktop drag-and-drop, or an image-file paste event. Images are normalized to orientation-fixed PNGs without resizing. Failed images are separated from accepted pages.
 
-Create rectangular covers by dragging or selecting two corners. Covers can also be moved or resized with buttons and arrow keys, duplicated, deleted, undone and redone. Pages can be renamed, moved earlier/later and deleted.
+Create rectangular covers by dragging on the image. Select a cover to move it directly by dragging or resize it with the four corner handles; duplicate, delete, Undo and Redo remain available. Arrow keys provide one-pixel keyboard movement, Shift+Arrow moves by 10 image pixels, and Alt+Arrow resizes. Page cards contain the editable page name and a collapsible optional description. Reorder cards by dragging their grip handle (or with the handle’s arrow-key alternative) and delete a page from its trash icon.
 
 Select multiple answer covers and use **Reveal together** to make them one question. Groups can be split again. **Keep covered while studying** makes a cover auxiliary: it does not count as a question and stays opaque while answers are revealed. Overlaps between separate questions or auxiliary covers are warned about in the editor.
 
@@ -34,14 +34,14 @@ The **Save** view prepares actual editable-JSON and lesson-HTML byte sizes befor
 **Keep only study progress on this device** is a separate OFF-by-default option. It stores no image bytes: only the small study-session state. Resume is offered only when document ID, revision and a SHA-256 fingerprint of the canonical document all match, and the current answer is closed on resume. Without Web Crypto, study persistence is disabled while in-memory study remains available. Saved work and study progress can be cleared separately.
 
 
-On smartphones, **Create / Study / Save** becomes a bottom fixed navigation with safe-area-aware page padding. The automated suite covers 320 px width and short landscape layouts without page-level horizontal scrolling. When zoomed in, the image can be panned; movement beyond 6 CSS px or a cancelled gesture is not treated as a tap. **Keep covering** enables continuous cover creation explicitly; otherwise one cover returns the editor to image movement.
+On smartphones, **Create / Study / Save** becomes a bottom fixed navigation with safe-area-aware page padding. The automated suite covers 320 px width and short landscape layouts without page-level horizontal scrolling. Drag empty image space to create covers continuously; drag an existing cover to move it, use its corner handles to resize, and use Shift+drag to pan while zoomed. There is no separate cover-creation or Move image mode.
 
-Page description, question prompt and answer are optional plain-text accessibility fields. Reveal Sheet does not OCR or automatically read text that exists only inside image pixels. A plain-text answer is withheld from visible/accessibility output until it is revealed. Major controls are usable with Tab and Enter/Space. Guided study also supports Space = reveal, 1 = Recalled, 2 = Review again, S = Skip, and Left Arrow = Previous; cover adjustment uses Arrow keys or Shift+Arrow for 10 image pixels.
+Page description, question prompt and answer are optional plain-text accessibility fields. Reveal Sheet does not OCR or automatically read text that exists only inside image pixels. A plain-text answer is withheld from visible/accessibility output until it is revealed. Major controls are usable with Tab and Enter/Space. Guided study also supports Space = reveal, 1 = Recalled, 2 = Review again, S = Skip, and Left Arrow = Previous. For a selected cover, Arrow moves by one image pixel, Shift+Arrow by 10, and Alt+Arrow resizes.
 
 ## Usage
 
 1. Open `reveal-sheet.html` or `dist/index.html` and choose **Add images**.
-2. Use **Cover** and drag, or **Two points**, to cover an answer.
+2. Drag over an empty part of the image to cover an answer. Repeat for additional answers. Select an existing cover to move it directly or resize it from a corner handle.
 3. Select multiple covers when needed and choose **Reveal together**. Convert hint covers to **Keep covered while studying**.
 4. Choose **Study**, then use Reveal freely or One at a time. In guided study, reveal the answer before self-assessing and use the result screen for focused review sessions.
 5. Use **Edit this question** when a study item needs correction, then **Return to study** to continue.
@@ -77,7 +77,7 @@ There are no runtime CDNs, remote fonts, analytics, ads or external APIs. CSP us
 
 ## Browser verification and limitations
 
-Chrome / Edge are primary targets. Automated Windows Chromium runs and local diagnostics are recorded in [QA_RESULTS.md](docs/QA_RESULTS.md). The suite now covers 320 px / short landscape layouts, forced colors and reduced motion, but Playwright viewports are not physical-device tests. Real phones, real screen readers, actual 200% browser zoom, macOS Safari, Firefox, OS file-sharing flows and large-memory stress tests remain unverified. Manual checks are separated in [docs/MOBILE_ACCESSIBILITY_QA.md](docs/MOBILE_ACCESSIBILITY_QA.md).
+Chrome / Edge are primary targets. Automated Windows Chromium runs and local diagnostics are recorded in [QA_RESULTS.md](docs/QA_RESULTS.md). The suite covers 320 px / short landscape layouts, forced colors, reduced motion, a 10-page / 100-question repeated round-trip, and a configured-boundary 30-page / 1,000-cover import observation. These automated checks are not physical-device certification. Real phones, real screen readers, actual 200% browser zoom, macOS Safari, Firefox and OS file-sharing/save-cancel behavior remain unverified. Manual checks are separated in [docs/MOBILE_ACCESSIBILITY_QA.md](docs/MOBILE_ACCESSIBILITY_QA.md) and [docs/QA_MATRIX.md](docs/QA_MATRIX.md).
 
 ## Single HTML / offline behavior
 
@@ -102,7 +102,7 @@ Set `APP_VARIANT=self-extract` to run the same E2E suite against the self-extrac
 
 ## Roadmap
 
-Next is v0.9.0 / T17–T18: release-candidate network/CSP/hostile-input auditing followed by device, large-resource, resume and documentation verification. Device checks that cannot be performed remain explicitly pending. PDF, OCR, AI and cloud sync remain outside the initial release scope.
+Next is v1.0.0 / T19–T20: saved-format compatibility across development fixtures, full release regression, final artifacts, README screenshots and handoff. Physical-device checks that cannot be performed remain explicitly pending and are not counted as passed. PDF, OCR, AI and cloud sync remain outside the initial release scope.
 
 ## License
 
