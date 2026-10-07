@@ -41,3 +41,15 @@ test('T05: deleting the last page returns to a true empty state and Undo restore
   await expect(page.locator('#pageList button')).toHaveCount(1);
   await expect(page.locator('#previewImage')).toBeVisible();
 });
+
+
+test('T05: page metadata controls share a clean top alignment on desktop',async({page})=>{
+  await page.setViewportSize({width:1100,height:800});await openApp(page);
+  await page.locator('#imageInput').setInputFiles([imagePath('static.png'),imagePath('static.jpg')]);
+  await expect(page.locator('#pageControls')).toBeVisible();
+  const title=await page.locator('#pageTitleInput').boundingBox();
+  const description=await page.locator('#pageDescriptionInput').boundingBox();
+  const action=await page.locator('#pagePrevButton').boundingBox();
+  expect(Math.abs(title.y-description.y)).toBeLessThanOrEqual(2);
+  expect(Math.abs(title.y-action.y)).toBeLessThanOrEqual(2);
+});

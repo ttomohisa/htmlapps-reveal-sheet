@@ -47,6 +47,23 @@ test('T15: touch-style pan changes center and viewport resize keeps center and z
   expect(rotated).toEqual(panned);
 });
 
+test('T15: zoom percentage is the fit-image control and removed navigation modes stay absent',async({page})=>{
+  await page.setViewportSize({width:390,height:700});await openApp(page);
+  await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
+  for(const id of ['moveImageButton','twoPointButton','viewLeft','viewRight','viewUp','viewDown','maskMoveLeft','maskMoveRight','maskMoveUp','maskMoveDown','maskWider','maskNarrower','maskTaller','maskShorter']){
+    await expect(page.locator('#'+id)).toHaveCount(0);
+  }
+  await page.locator('#viewZoomIn').click();await page.locator('#viewZoomIn').click();
+  await expect(page.locator('#viewFit')).toHaveText(/1[5-6]\d%/);
+  const box=await page.locator('#maskSvg').boundingBox();
+  await page.mouse.move(box.x+box.width*.55,box.y+box.height*.72);await page.mouse.down();await page.mouse.move(box.x+box.width*.35,box.y+box.height*.62,{steps:4});await page.mouse.up();
+  const changed=await page.locator('#maskSvg').evaluate(svg=>({z:+svg.dataset.viewZoom,x:+svg.dataset.viewCenterX,y:+svg.dataset.viewCenterY}));
+  expect(changed.z).toBeGreaterThan(1);
+  await page.locator('#viewFit').click();
+  await expect(page.locator('#viewFit')).toHaveText('100%');
+  expect(await page.locator('#maskSvg').evaluate(svg=>({z:+svg.dataset.viewZoom,x:+svg.dataset.viewCenterX,y:+svg.dataset.viewCenterY}))).toEqual({z:1,x:.5,y:.5});
+});
+
 test('T15: 320px and short landscape keep workflow actions reachable without horizontal page scroll',async({page})=>{
   await page.setViewportSize({width:320,height:480});await openApp(page);
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
