@@ -46,6 +46,7 @@ test('T05: card editing replaces the old page action row and stays compact',asyn
   await expect(page.locator('#pageList .page-item')).toHaveCount(2);await expect(page.locator('#pageList .page-item').first().locator('.page-card-title')).toBeVisible();
   await expect(page.locator('#pageControls')).toHaveCount(0);await expect(page.locator('#pagePrevButton')).toHaveCount(0);await expect(page.locator('#pageNextButton')).toHaveCount(0);
   const card=page.locator('#pageList .page-item').first(),title=card.locator('.page-card-title'),drag=card.locator('.page-drag-handle'),trash=card.locator('.page-delete-button');
+  await expect(card).toBeVisible();await expect(title).toBeVisible();await expect(drag).toBeVisible();await expect(trash).toBeVisible();
   const tb=await title.boundingBox(),db=await drag.boundingBox(),xb=await trash.boundingBox();
   expect(Math.abs((tb.y+tb.height/2)-(db.y+db.height/2))).toBeLessThanOrEqual(3);expect(Math.abs((tb.y+tb.height/2)-(xb.y+xb.height/2))).toBeLessThanOrEqual(3);
   await expect(card.locator('.page-description-summary')).toContainText(/Add description|説明を追加/);const cb=await card.boundingBox(),sb=await card.locator('.page-description-summary').boundingBox();expect(sb.x+sb.width).toBeLessThanOrEqual(cb.x+cb.width-1);expect(sb.y+sb.height).toBeLessThanOrEqual(cb.y+cb.height+1);
