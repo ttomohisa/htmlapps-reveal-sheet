@@ -3,12 +3,17 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {openApp} from '../helpers/app.mjs';
 
+async function imagePoint(page,x,y){return page.locator('#maskSvg').evaluate((svg,point)=>{const p=svg.createSVGPoint();p.x=point.x;p.y=point.y;const out=p.matrixTransform(svg.getScreenCTM());return{x:out.x,y:out.y};},{x,y});}
+
 test('T19: old editable JSON can be edited, exported as v1 lesson HTML and safely re-imported',async({page},testInfo)=>{
  await openApp(page);await expect(page.locator('body')).toContainText('v1.0.0');
  const oldPath=resolve('tests/fixtures/sheets/v0.2.0.reveal.json');
  await page.locator('#sheetInput').setInputFiles(oldPath);await expect(page.locator('#pageList .page-item')).toHaveCount(1);
  const title=page.locator('#pageList .page-item').first().locator('.page-card-title');
  await title.fill('Edited in v1.0.0');await title.press('Enter');
+ const a=await imagePoint(page,.2,.2),b=await imagePoint(page,.8,.8);
+ await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:3});await page.mouse.up();
+ await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
  await page.locator('#saveButton').click();await expect(page.locator('#downloadHtmlButton')).toBeEnabled();
  const dl=page.waitForEvent('download');await page.locator('#downloadHtmlButton').click();const download=await dl;
  const lessonPath=testInfo.outputPath('compat.reveal.html');await download.saveAs(lessonPath);
