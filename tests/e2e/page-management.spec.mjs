@@ -2,9 +2,9 @@ import {test,expect} from '@playwright/test';
 import {openApp,imagePath} from '../helpers/app.mjs';
 
 async function dragPage(page,from,to){
-  const cards=page.locator('#pageList .page-item'),source=cards.nth(from),target=cards.nth(to);
-  const sb=await source.boundingBox(),tb=await target.boundingBox();
-  await page.mouse.move(sb.x+sb.width*.72,sb.y+sb.height*.48);await page.mouse.down();
+  const cards=page.locator('#pageList .page-item'),source=cards.nth(from),target=cards.nth(to),grip=source.locator('.page-card-meta');
+  const gb=await grip.boundingBox(),tb=await target.boundingBox();
+  await page.mouse.move(gb.x+gb.width/2,gb.y+gb.height/2);await page.mouse.down();
   await expect(source).toHaveClass(/dragging/);
   expect(await source.evaluate(node=>getComputedStyle(node).transform)).not.toBe('none');
   await page.mouse.move(tb.x+tb.width*.72,tb.y+tb.height*.48,{steps:6});await page.mouse.up();
@@ -29,7 +29,7 @@ test('T05: page cards edit title/description, drag reorder, trash delete and Und
 
   await cards.nth(1).locator('.page-delete-button').click();await expect(page.locator('#appConfirmDialog')).toBeVisible();await page.locator('#appConfirmCancel').click();await expect(cards).toHaveCount(3);
   await cards.nth(1).locator('.page-delete-button').click();await page.locator('#appConfirmOk').click();await expect(cards).toHaveCount(2);
-  await page.locator('#undoButton').click();await expect(cards).toHaveCount(3);await expect(page.locator('#pageList input.page-card-title').filter({hasValue:'Middle page'})).toHaveCount(1);
+  await page.locator('#undoButton').click();await expect(cards).toHaveCount(3);expect(await page.locator('#pageList input.page-card-title').evaluateAll(nodes=>nodes.some(node=>node.value==='Middle page'))).toBe(true);
 });
 
 test('T05: deleting the last page from its trash icon returns to empty and Undo restores it',async({page})=>{
