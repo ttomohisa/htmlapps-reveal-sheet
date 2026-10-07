@@ -43,6 +43,7 @@ test('T05: deleting the last page from its trash icon returns to empty and Undo 
 test('T05: card editing replaces the old page action row and stays compact',async({page})=>{
   await page.setViewportSize({width:1100,height:800});await openApp(page);
   await page.locator('#imageInput').setInputFiles([imagePath('static.png'),imagePath('static.jpg')]);
+  await expect(page.locator('#pageList .page-item')).toHaveCount(2);await expect(page.locator('#pageList .page-item').first().locator('.page-card-title')).toBeVisible();
   await expect(page.locator('#pageControls')).toHaveCount(0);await expect(page.locator('#pagePrevButton')).toHaveCount(0);await expect(page.locator('#pageNextButton')).toHaveCount(0);
   const card=page.locator('#pageList .page-item').first(),title=card.locator('.page-card-title'),drag=card.locator('.page-drag-handle'),trash=card.locator('.page-delete-button');
   const tb=await title.boundingBox(),db=await drag.boundingBox(),xb=await trash.boundingBox();
