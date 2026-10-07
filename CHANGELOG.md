@@ -21,6 +21,15 @@ T17–T18: feature freeze, runtime-network/CSP/hostile-input audit, configured r
 - Combined Zoom out / current percentage / Zoom in into one control; the percentage is clickable and returns to the 100% whole-image view.
 - Aligned page-name, page-description and page-action controls along the same input row on desktop.
 
+### Page-card and app-frame review corrections
+
+- Replaced Earlier / Later page buttons with direct page-card reordering. The grip handle uses pointer dragging on desktop/mobile, shows a lifted/shadowed grabbed state and insertion marker, and keeps arrow-key reordering as a non-drag alternative.
+- Moved page-name editing into each card. Optional page descriptions now use a compact one-line summary that expands to the textarea only when needed.
+- Replaced the large Page delete action with a trash SVG button on each card while preserving confirmation and Undo.
+- Removed edit-only image dimensions/byte size from Study mode.
+- Removed the loaded development-capability sentence from the editor.
+- Aligned the header and Hero dimensions with the current Browser Kitty Mini League Desk app frame: 1120px content frame, compact 38px brand mark, compact header actions, 22–28px Hero title and matching responsive stacking.
+
 ### Verification boundary
 
 Configured limits are rejection rules, not guaranteed capacity on every device. GitHub-hosted Chromium evidence will be recorded in `docs/QA_RESULTS.md`; physical-device items remain explicitly unperformed until real hardware testing.

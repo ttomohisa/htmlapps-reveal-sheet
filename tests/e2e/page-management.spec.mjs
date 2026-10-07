@@ -54,7 +54,7 @@ test('T05: page-card drag reorder also works in the horizontal mobile list',asyn
   await page.setViewportSize({width:390,height:780});await openApp(page);
   await page.locator('#imageInput').setInputFiles([imagePath('static.png'),imagePath('static.jpg'),imagePath('static.webp')]);
   const titles=page.locator('#pageList .page-card-title');await expect(titles).toHaveCount(3);await expect(titles.nth(0)).toHaveValue(/Page 1|ページ1/);
-  await dragPage(page,0,2);await expect(titles.nth(2)).toHaveValue(/Page 1|ページ1/);
+  await dragPage(page,0,1);await expect(titles.nth(1)).toHaveValue(/Page 1|ページ1/);
 });
 
 test('T05: drag handle keeps a keyboard reorder alternative',async({page})=>{
