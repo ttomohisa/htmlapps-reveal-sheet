@@ -1,6 +1,6 @@
 // Capture actual generated UI, never a recreated UI or a production test hook.
 import { chromium } from 'playwright';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 import { openApp } from '../tests/helpers/app.mjs';
@@ -22,16 +22,23 @@ try {
   for(const [y,label,tx,ty] of [[294,'Shade',426,294],[426,'Arm',443,426],[584,'Base',468,584]]){
    x.beginPath();x.moveTo(tx,ty);x.lineTo(665,y);x.stroke();x.fillStyle='#fff';x.fillRect(682,y-33,325,66);x.fillStyle='#26332e';x.fillText(label,708,y+10);
   }
-  x.font='17px sans-serif';x.fillStyle='#68746b';x.fillText('Image input preview — covers are added in a later development stage.',64,704);
+  x.font='17px sans-serif';x.fillStyle='#68746b';x.fillText('Cover the labels, then reveal them while studying.',64,704);
   return c.toDataURL('image/png').split(',')[1];
  });
  await page.locator('#imageInput').setInputFiles({name:'practice-diagram.png',mimeType:'image/png',buffer:Buffer.from(data,'base64')});
  await page.locator('#previewImage').waitFor({state:'visible'});
+ const imagePoint=async(x,y)=>page.locator('#maskSvg').evaluate((svg,point)=>{const p=svg.createSVGPoint();p.x=point.x;p.y=point.y;const out=p.matrixTransform(svg.getScreenCTM());return{x:out.x,y:out.y};},{x,y});
+ for(const [a,b] of [[[680,252],[1012,334]],[[680,553],[1012,635]]]){
+  const p1=await imagePoint(...a),p2=await imagePoint(...b);await page.mouse.move(p1.x,p1.y);await page.mouse.down();await page.mouse.move(p2.x,p2.y,{steps:4});await page.mouse.up();
+ }
+ await page.locator('.page-card-title').fill('Desk lamp labels');await page.locator('.page-card-title').press('Enter');
  await page.screenshot({path:output+'/screenshot-en.png'});
  await page.locator('#languageButton').click();await page.screenshot({path:output+'/screenshot.png'});
- await page.setViewportSize({width:390,height:844});await page.screenshot({path:output+'/screenshot-mobile.png',fullPage:true});
+ await page.setViewportSize({width:390,height:844});await page.locator('#studyButton').click();await page.locator('#guidedModeButton').click();
+ await page.screenshot({path:output+'/screenshot-mobile.png',fullPage:true});
  let commit='unknown';try{commit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();}catch{}
- const result={commit,date:new Date().toISOString(),platform:os.platform(),release:os.release(),node:process.version,chromium:browser.version(),mode:process.env.APP_TEST_MODE||'file',externalRequests:requests,pageErrors:errors,realPhoneTest:false};
+ const appVersion=JSON.parse(readFileSync('app.config.json','utf8')).version;
+ const result={commit,appVersion,date:new Date().toISOString(),platform:os.platform(),release:os.release(),node:process.version,chromium:browser.version(),mode:process.env.APP_TEST_MODE||'file',externalRequests:requests,pageErrors:errors,realPhoneTest:false};
  writeFileSync(output+'/environment.json',JSON.stringify(result,null,2));
  if(requests.length||errors.length)throw new Error('Unexpected external request or page error during capture');
 } finally {await browser.close();}
