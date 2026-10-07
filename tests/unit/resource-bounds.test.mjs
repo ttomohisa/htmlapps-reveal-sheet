@@ -34,6 +34,15 @@ test('T18 configured page and cover ceilings accept the boundary and reject the 
   assert.throws(()=>core.applyCommand(atLimit.document,{type:'ADD_ANSWER_MASK',pageId:'page_1',rect:{x:.4,y:.4,w:.1,h:.1}},testContext()),error=>error?.code==='LIMIT_EXCEEDED');
 });
 
+test('T18 over-limit saved structure keeps LIMIT_EXCEEDED classification on import',async()=>{
+  const io=createProjectIO({core,imageIO:{verifyStoredAsset:async()=>{}},env:{Blob,TextDecoder,TextEncoder}});
+  const over=makeEnvelope(30,1000);
+  over.document.pages.push({id:'page_31',title:'Page 31',description:'',imageId:'asset_1',questionOrder:[]});
+  const bytes=Buffer.from(JSON.stringify(over));
+  const file={name:'over.reveal.json',type:'application/json',size:bytes.length,arrayBuffer:async()=>bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)};
+  await assert.rejects(io.readJson(file),error=>error?.code==='LIMIT_EXCEEDED');
+});
+
 test('T18 standard 10-page/100-question sheet survives repeated add-delete-export cycles',async()=>{
   const io=createProjectIO({core,imageIO:{verifyStoredAsset:async()=>{}},env:{Blob,TextDecoder,TextEncoder}});
   let doc=makeEnvelope(10,100).document;

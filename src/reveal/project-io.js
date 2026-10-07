@@ -20,6 +20,10 @@ function createProjectIO({core,imageIO,env}) {
   function assertSupportedEditable(value){
     if(value.kind!=='editable')fail('INVALID_SHEET');
   }
+  function validationFailureCode(checked){
+    const code=checked?.errors?.[0]?.code;
+    return code==='UNSUPPORTED_SCHEMA'||code==='LIMIT_EXCEEDED'?code:'INVALID_SHEET';
+  }
   function serialize(doc,kind='editable',appVersion='0.2.0'){
     const value=envelope(doc,kind,appVersion);
     const checked=core.validateEnvelope(value);
@@ -72,7 +76,7 @@ function createProjectIO({core,imageIO,env}) {
     try{value=JSON.parse(json);}catch{fail('INVALID_SHEET');}
     if(value&&value.format==='reveal-sheet'&&value.schemaVersion!==1)fail('UNSUPPORTED_SCHEMA');
     const checked=core.validateEnvelope(value);
-    if(!checked.ok)fail(checked.errors?.[0]?.code==='UNSUPPORTED_SCHEMA'?'UNSUPPORTED_SCHEMA':'INVALID_SHEET');
+    if(!checked.ok)fail(validationFailureCode(checked));
     if(value.kind!=='lesson')fail('INVALID_SHEET');
     return envelope(value.document,'lesson',value.appVersion);
   }
@@ -122,7 +126,7 @@ function createProjectIO({core,imageIO,env}) {
     try{value=JSON.parse(text);}catch{fail('INVALID_SHEET');}
     if(value&&value.format==='reveal-sheet'&&value.schemaVersion!==1)fail('UNSUPPORTED_SCHEMA');
     const checked=core.validateEnvelope(value);
-    if(!checked.ok)fail(checked.errors?.[0]?.code==='UNSUPPORTED_SCHEMA'?'UNSUPPORTED_SCHEMA':'INVALID_SHEET');
+    if(!checked.ok)fail(validationFailureCode(checked));
     assertSupportedEditable(value);
     for(const asset of value.document.assets){
       if(isAbort(signal))fail('CANCELLED');
