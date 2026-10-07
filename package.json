@@ -3,7 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": {"node": ">=22"},
-  "scripts": {"test": "npm run test:unit","test:unit": "node scripts/run-unit-tests.mjs","test:e2e": "playwright test"},
-  "devDependencies": {"@playwright/test": "1.63.0"}
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "npm run test:unit",
+    "test:unit": "node scripts/run-unit-tests.mjs",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
 }
