@@ -87,3 +87,10 @@ test('T03: cover color changes editor rendering and survives editable export',as
   const saved=JSON.parse(readFileSync(await download.path(),'utf8'));
   expect(saved.document.defaults.coverColor).toBe('#a04372');
 });
+
+
+test('T03: study mode hides edit-only image dimensions and byte size',async({page})=>{
+  await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
+  const a=await screenPointForImage(page,20,18),b=await screenPointForImage(page,55,38);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);await page.mouse.up();await expect(page.locator('#studyButton')).toBeEnabled();
+  await page.locator('#studyButton').click();await expect(page.locator('#imageMeta')).toBeHidden();await expect(page.locator('.image-meta-row')).toBeHidden();
+});

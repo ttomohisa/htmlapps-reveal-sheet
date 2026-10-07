@@ -83,9 +83,8 @@ button:disabled,input:disabled { cursor:not-allowed; }
 .reveal-nav button:disabled { color:#6b726e;background:#f3f4f1; }
 @media(max-width:767px) {
  .main,.header-inner { width:100%; }
- .brand-meta { display:none; }
- .page-intro { margin:0;padding-bottom:16px; }
- .page-intro h1 { font-size:clamp(22px,7vw,26px); }
+ .page-intro { margin:0;padding-bottom:20px; }
+ .page-intro h1 { font-size:clamp(22px,3vw,28px); }
  .local-badge { margin-top:0; }
  .reveal-shell { padding:12px; }
  .reveal-grid { grid-template-columns:minmax(0,1fr);gap:12px; }

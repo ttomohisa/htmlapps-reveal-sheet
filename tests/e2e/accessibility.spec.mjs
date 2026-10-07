@@ -93,7 +93,7 @@ test('T16: exported lesson keeps plain-text answer hidden from assistive output 
 test('T16: optional author text is editable and obeys reveal/accessibility timing',async({page})=>{
   await openApp(page);
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
-  await page.locator('#pageDescriptionInput').fill('PAGE_CONTEXT_731');await page.locator('#pageDescriptionInput').blur();
+  const pageCard=page.locator('#pageList .page-item[aria-current="page"]');await pageCard.locator('.page-description-summary').click();await pageCard.locator('.page-card-description-input').fill('PAGE_CONTEXT_731');await pageCard.locator('.page-card-description-input').blur();
   await addCover(page);
   await expect(page.locator('#questionTextPanel')).toBeVisible();
   await page.locator('#questionPromptInput').fill('AUTHOR_PROMPT_731');await page.locator('#questionPromptInput').blur();

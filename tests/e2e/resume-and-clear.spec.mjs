@@ -6,7 +6,7 @@ async function addCover(page,a,b){await page.locator('#maskSvg').scrollIntoViewI
 async function enable(page,id){await page.locator(id).click();await expect(page.locator('#appConfirmDialog')).toBeVisible();await page.locator('#appConfirmOk').click();await expect(page.locator(id)).toBeChecked();}
 async function makeTwo(page){await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();await addCover(page,[10,10],[32,28]);await addCover(page,[52,10],[74,28]);}
 async function enterGuided(page){await page.locator('#studyButton').click();await page.locator('#guidedModeButton').click();await expect(page.locator('#guidedPanel')).toBeVisible();}
-async function restoreDraftAfterReload(page){await page.reload();await page.locator('#addButton').waitFor({state:'visible'});await expect(page.locator('#appConfirmDialog')).toBeVisible();await page.locator('#appConfirmOk').click();await expect(page.locator('#pageList button')).toHaveCount(1);}
+async function restoreDraftAfterReload(page){await page.reload();await page.locator('#addButton').waitFor({state:'visible'});await expect(page.locator('#appConfirmDialog')).toBeVisible();await page.locator('#appConfirmOk').click();await expect(page.locator('#pageList .page-item')).toHaveCount(1);}
 
 test('T10: study progress opt-in is separate and resume starts with the current answer closed',async({page})=>{
   await openApp(page);await enable(page,'#draftOptIn');await makeTwo(page);await expect(page.locator('#draftSaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
@@ -27,7 +27,7 @@ test('T10: study progress opt-in is separate and resume starts with the current 
 test('T10: changed document identity does not apply an older study record',async({page})=>{
   await openApp(page);await makeTwo(page);await enable(page,'#studyOptIn');await enterGuided(page);
   await page.locator('#revealCurrentButton').click();await page.locator('#recalledButton').click();await expect(page.locator('#studySaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
-  await page.locator('#createButton').click();await page.locator('#pageTitleInput').fill('Changed content');await page.locator('#pageTitleInput').press('Enter');
+  await page.locator('#createButton').click();await page.locator('#pageList .page-item[aria-current="page"] .page-card-title').fill('Changed content');await page.locator('#pageList .page-item[aria-current="page"] .page-card-title').press('Enter');
   await page.locator('#studyButton').click();
   await expect(page.locator('#appConfirmDialog')).toBeHidden();await expect(page.locator('#freeStudyPanel')).toBeVisible();
   await page.locator('#guidedModeButton').click();await expect(page.locator('#guidedQuestionList button').first()).toHaveAttribute('data-rating','unanswered');
