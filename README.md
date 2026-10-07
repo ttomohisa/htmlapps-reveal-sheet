@@ -2,7 +2,7 @@
 
 [日本語](README.ja.md)
 
-Reveal Sheet turns diagrams, photos and notes that already contain answers into study sheets with opaque covers. **The current v0.8.0 development build finishes the mobile/touch workflow and bilingual keyboard/screen-reader accessibility layer, including safe-area layout, short viewports, forced colors, reduced motion, and closed-answer privacy.** Self-contained lesson HTML, safe re-editing and optional on-device persistence remain available. It is not the completed v1.0 release.
+Reveal Sheet turns diagrams, photos and notes that already contain answers into study sheets with opaque covers. **The current v0.9.0 release-candidate build freezes features and audits runtime networking, lesson CSP/hash integrity, hostile saved input, configured resource ceilings and recovery paths.** Mobile/touch, bilingual accessibility, self-contained lesson HTML, safe re-editing and optional on-device persistence remain available. It is not the completed v1.0 release.
 
 ## Available now
 
@@ -77,7 +77,7 @@ There are no runtime CDNs, remote fonts, analytics, ads or external APIs. CSP us
 
 ## Browser verification and limitations
 
-Chrome / Edge are primary targets. Automated Windows Chromium runs and local diagnostics are recorded in [QA_RESULTS.md](docs/QA_RESULTS.md). The suite now covers 320 px / short landscape layouts, forced colors and reduced motion, but Playwright viewports are not physical-device tests. Real phones, real screen readers, actual 200% browser zoom, macOS Safari, Firefox, OS file-sharing flows and large-memory stress tests remain unverified. Manual checks are separated in [docs/MOBILE_ACCESSIBILITY_QA.md](docs/MOBILE_ACCESSIBILITY_QA.md).
+Chrome / Edge are primary targets. Automated Windows Chromium runs and local diagnostics are recorded in [QA_RESULTS.md](docs/QA_RESULTS.md). The suite covers 320 px / short landscape layouts, forced colors, reduced motion, a 10-page / 100-question repeated round-trip, and a configured-boundary 30-page / 1,000-cover import observation. These automated checks are not physical-device certification. Real phones, real screen readers, actual 200% browser zoom, macOS Safari, Firefox and OS file-sharing/save-cancel behavior remain unverified. Manual checks are separated in [docs/MOBILE_ACCESSIBILITY_QA.md](docs/MOBILE_ACCESSIBILITY_QA.md) and [docs/QA_MATRIX.md](docs/QA_MATRIX.md).
 
 ## Single HTML / offline behavior
 
@@ -102,7 +102,7 @@ Set `APP_VARIANT=self-extract` to run the same E2E suite against the self-extrac
 
 ## Roadmap
 
-Next is v0.9.0 / T17–T18: release-candidate network/CSP/hostile-input auditing followed by device, large-resource, resume and documentation verification. Device checks that cannot be performed remain explicitly pending. PDF, OCR, AI and cloud sync remain outside the initial release scope.
+Next is v1.0.0 / T19–T20: saved-format compatibility across development fixtures, full release regression, final artifacts, README screenshots and handoff. Physical-device checks that cannot be performed remain explicitly pending and are not counted as passed. PDF, OCR, AI and cloud sync remain outside the initial release scope.
 
 ## License
 
