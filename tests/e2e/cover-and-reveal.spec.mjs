@@ -52,22 +52,23 @@ test('T03: draw one cover, undo it, and reveal it freely without moving the imag
   expect(studyBefore.height).toBe(before.height);
 });
 
-test('T03: two-point cover and size controls provide non-drag alternatives',async({page})=>{
+test('T03: selected cover moves and resizes directly on the image',async({page})=>{
   await openApp(page);
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
   await expect(page.locator('#previewImage')).toBeVisible();
-  await page.locator('#twoPointButton').click();
-  await expect(page.locator('#maskSvg')).toBeVisible();
-  const first=await screenPointForImage(page,24,20);
-  const second=await screenPointForImage(page,54,40);
-  await page.mouse.click(first.x,first.y);
-  await page.mouse.click(second.x,second.y);
-  await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
-  const before=await page.locator('#maskSvg .mask-rect').getAttribute('x');
-  await page.locator('#maskMoveRight').click();
-  const after=await page.locator('#maskSvg .mask-rect').getAttribute('x');
-  expect(Number(after)).toBeGreaterThan(Number(before));
-  await page.locator('#maskWider').click();
-  await page.locator('#maskDelete').click();
-  await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(0);
+  await page.locator('#coverButton').click();
+  const first=await screenPointForImage(page,24,20),second=await screenPointForImage(page,54,40);
+  await page.mouse.move(first.x,first.y);await page.mouse.down();await page.mouse.move(second.x,second.y);await page.mouse.up();
+  const rect=page.locator('#maskSvg .mask-rect');await expect(rect).toHaveCount(1);
+  await expect(page.locator('#maskSvg .mask-resize-handle')).toHaveCount(4);
+
+  const beforeX=Number(await rect.getAttribute('x')),box=await rect.boundingBox();
+  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x+box.width/2+24,box.y+box.height/2+12,{steps:4});await page.mouse.up();
+  expect(Number(await rect.getAttribute('x'))).toBeGreaterThan(beforeX);
+
+  const beforeWidth=Number(await rect.getAttribute('width')),handle=page.locator('.mask-resize-handle[data-resize-corner="se"]'),handleBox=await handle.boundingBox();
+  await page.mouse.move(handleBox.x+handleBox.width/2,handleBox.y+handleBox.height/2);await page.mouse.down();await page.mouse.move(handleBox.x+handleBox.width/2+28,handleBox.y+handleBox.height/2+14,{steps:4});await page.mouse.up();
+  expect(Number(await rect.getAttribute('width'))).toBeGreaterThan(beforeWidth);
+
+  await page.locator('#maskDelete').click();await expect(rect).toHaveCount(0);
 });

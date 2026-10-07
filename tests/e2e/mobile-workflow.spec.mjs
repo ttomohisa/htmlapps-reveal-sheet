@@ -28,7 +28,7 @@ test('T15: continuous cover creation stays in cover mode only while enabled',asy
   await page.locator('#continuousCover').uncheck();
   await dragCover(page,[72,8],[92,24]);
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(3);
-  await expect(page.locator('#moveImageButton')).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('#coverButton')).toHaveAttribute('aria-pressed','false');
 });
 
 test('T15: touch-style pan changes center and viewport resize keeps center and zoom',async({page})=>{
@@ -51,7 +51,7 @@ test('T15: 320px and short landscape keep workflow actions reachable without hor
   await page.setViewportSize({width:320,height:480});await openApp(page);
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  for(const id of ['createButton','studyButton','saveButton','moveImageButton','coverButton','twoPointButton']){
+  for(const id of ['createButton','studyButton','saveButton','coverButton','viewZoomOut','viewFit','viewZoomIn']){
     const box=await page.locator('#'+id).boundingBox();expect(box.height,id).toBeGreaterThanOrEqual(48);
   }
   await page.locator('#saveButton').click();
@@ -62,12 +62,10 @@ test('T15: 320px and short landscape keep workflow actions reachable without hor
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
-test('T15: Escape cancels an unfinished two-point cover without creating a rectangle',async({page})=>{
+test('T15: Escape exits cover creation without creating a rectangle',async({page})=>{
   await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
-  await page.locator('#twoPointButton').click();
-  const first=await imagePoint(page,10,10);await page.mouse.click(first.x,first.y);
-  await page.keyboard.press('Escape');
-  const second=await imagePoint(page,60,40);await page.mouse.click(second.x,second.y);
+  await page.locator('#coverButton').click();await expect(page.locator('#coverButton')).toHaveAttribute('aria-pressed','true');
+  await page.keyboard.press('Escape');await expect(page.locator('#coverButton')).toHaveAttribute('aria-pressed','false');
+  const point=await imagePoint(page,30,20);await page.mouse.click(point.x,point.y);
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(0);
-  await expect(page.locator('#moveImageButton')).toHaveAttribute('aria-pressed','true');
 });

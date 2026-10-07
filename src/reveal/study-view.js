@@ -71,6 +71,14 @@ function createStudyView({core,dom,onAction,translate=key=>key}) {
         rect.addEventListener('keydown',event=>{if(event.repeat)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}});
       }
       svg.append(rect);
+      if(state.mode==='edit'&&mask.id===state.selectedMaskId){
+        const radius=Math.max(1.5,Math.min(32,Math.max(asset.width,asset.height)*.012));
+        const corners=[['nw',px.x,px.y],['ne',px.x+px.w,px.y],['sw',px.x,px.y+px.h],['se',px.x+px.w,px.y+px.h]];
+        for(const [corner,cx,cy] of corners){
+          const handle=svgNode('circle');handle.classList.add('mask-resize-handle');handle.dataset.maskId=mask.id;handle.dataset.resizeCorner=corner;
+          handle.setAttribute('cx',String(cx));handle.setAttribute('cy',String(cy));handle.setAttribute('r',String(radius));handle.setAttribute('aria-hidden','true');svg.append(handle);
+        }
+      }
     }
     applyView();rememberSurfaceBox();
   }
