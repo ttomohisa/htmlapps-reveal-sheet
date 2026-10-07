@@ -19,7 +19,7 @@ test('T07: guided study requires reveal before rating and summarizes one pass',a
   await page.locator('#revealCurrentButton').click();await expect(page.locator('#recalledButton')).toBeEnabled();
   await page.locator('#recalledButton').click();await expect(page.locator('#guidedProgress')).toContainText('2 / 3');
   await page.locator('#revealCurrentButton').click();await page.locator('#againButton').click();
-  await expect(page.locator('#guidedProgress')).toContainText('3 / 3');await page.locator('#skipButton').click();
+  await expect(page.locator('#guidedProgress')).toContainText('3 / 3');await page.locator('#guidedMoreActions > summary').click();await page.locator('#skipButton').click();
 
   await expect(page.locator('#studyResults')).toBeVisible();
   await expect(page.locator('#resultTotal')).toHaveText('3');await expect(page.locator('#resultRecalled')).toHaveText('1');await expect(page.locator('#resultAgain')).toHaveText('1');await expect(page.locator('#resultSkipped')).toHaveText('1');await expect(page.locator('#resultUnanswered')).toHaveText('0');
@@ -47,6 +47,6 @@ test('T07: keyboard reveals, rates, skips and early finish keeps unanswered',asy
   await openApp(page);await makeThreeQuestions(page);await page.locator('#studyButton').click();await page.locator('#guidedModeButton').click();
   await page.keyboard.press('Space');await expect(page.locator('#recalledButton')).toBeEnabled();await page.keyboard.press('1');
   await page.keyboard.press('s');
-  await page.locator('#finishStudyButton').click();
+  await page.locator('#guidedMoreActions > summary').click();await page.locator('#finishStudyButton').click();
   await expect(page.locator('#resultRecalled')).toHaveText('1');await expect(page.locator('#resultSkipped')).toHaveText('1');await expect(page.locator('#resultUnanswered')).toHaveText('1');
 });
