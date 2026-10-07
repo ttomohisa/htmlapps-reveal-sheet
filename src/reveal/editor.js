@@ -9,7 +9,8 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   let controller=null, busy=false, failures=[], progress=null;
   let undo=[],redo=[],viewKey='',lastStatus='emptyStatus',mode='create',studySession=null,studyMode='free',previousStudySummary=null,studyEditActive=false,studyEditImpact=null;
   let filenameBase='reveal-sheet',preparedJsonExport=null,preparedLessonExport=null,exportGeneration=0,exportBusy=false,lessonPreviewSession=null,lessonPreviewPageId=null,lessonPreviewGeneration=0;
-  let gesture=null,draftRect=null;
+  let gesture=null,draftRect=null,pageDrag=null;
+  const expandedPageDescriptions=new Set();
   let draftSaveTimer=0,draftSaveChain=Promise.resolve(),localDraftGeneration=0,draftConflict=false,localAvailable=false,localDraftExists=false,lastDraftSavedAt='';
   let studySaveTimer=0,studySaveChain=Promise.resolve(),studyRecordGeneration=0,studyIdentityToken='',studyConflict=false,localStudyExists=false,lastStudySavedAt='';
   const image=$('previewImage'),svg=$('maskSvg'),surface=$('dropZone');
@@ -183,10 +184,89 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     lastStatus=key; progress=Object.keys(params).length?params:null;
     $('inputStatus').textContent=t(key,params);
   }
+  function makePageIcon(kind){
+    const ns='http://www.w3.org/2000/svg',icon=env.document.createElementNS(ns,'svg');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('fill','none');icon.setAttribute('stroke','currentColor');icon.setAttribute('stroke-width','1.8');icon.setAttribute('stroke-linecap','round');icon.setAttribute('stroke-linejoin','round');icon.setAttribute('aria-hidden','true');
+    if(kind==='drag'){
+      icon.removeAttribute('stroke');icon.setAttribute('fill','currentColor');
+      for(const [cx,cy] of [[8,7],[16,7],[8,12],[16,12],[8,17],[16,17]]){const circle=env.document.createElementNS(ns,'circle');circle.setAttribute('cx',String(cx));circle.setAttribute('cy',String(cy));circle.setAttribute('r','1.35');icon.append(circle);}
+    }else{
+      for(const d of ['M4 7h16','M9 7V4h6v3','M7 7l1 13h8l1-13','M10 11v5','M14 11v5']){const path=env.document.createElementNS(ns,'path');path.setAttribute('d',d);icon.append(path);}
+    }
+    return icon;
+  }
+  function selectPage(pageId){
+    if(!doc.pages.some(page=>page.id===pageId)||selectedId===pageId)return;
+    selectedId=pageId;selectedMaskId=null;selectedMaskIds.clear();
+    $('pageList').querySelectorAll('.page-item').forEach(card=>card.setAttribute('aria-current',card.dataset.pageId===pageId?'page':'false'));
+    const asset=currentAsset();if(asset){$('imageDimensions').textContent=`${asset.width} × ${asset.height} px`;$('imageBytes').textContent=formatBytes(asset.byteLength);}
+    refreshCoverPanel();showPreview();refreshViewControls();
+  }
+  function movePageTo(pageId,targetIndex){
+    if(busy||mode!=='create')return;
+    const result=core.applyCommand(doc,{type:'MOVE_PAGE_TO',pageId,targetIndex},ctx);
+    if(result.document!==doc){commit(result,selectedMaskId);status('pageMoved');refreshCopy();}
+  }
+  function beginPageDrag(event,pageId){
+    if(event.button!==0||busy||mode!=='create'||doc.pages.length<2)return;
+    const card=event.currentTarget.closest('.page-item'),list=$('pageList'),cards=[...list.querySelectorAll('.page-item')],fromIndex=cards.indexOf(card);if(fromIndex<0)return;
+    event.preventDefault();event.stopPropagation();
+    const axis=env.getComputedStyle(list).flexDirection.startsWith('row')?'x':'y';
+    const centers=cards.map(item=>{const box=item.getBoundingClientRect();return axis==='x'?box.left+box.width/2:box.top+box.height/2;});
+    pageDrag={pointerId:event.pointerId,pageId,handle:event.currentTarget,card,cards,centers,axis,fromIndex,targetIndex:fromIndex,startX:event.clientX,startY:event.clientY};
+    card.classList.add('dragging');event.currentTarget.setAttribute('aria-grabbed','true');env.document.body.classList.add('page-reordering');event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  function movePageDrag(event){
+    const active=pageDrag;if(!active||event.pointerId!==active.pointerId)return;
+    event.preventDefault();const dx=event.clientX-active.startX,dy=event.clientY-active.startY;active.card.style.setProperty('--page-drag-x',active.axis==='x'?dx+'px':'0px');active.card.style.setProperty('--page-drag-y',active.axis==='y'?dy+'px':'0px');
+    const coordinate=active.axis==='x'?event.clientX:event.clientY;let target=active.fromIndex,best=Infinity;
+    active.centers.forEach((center,index)=>{const distance=Math.abs(center-coordinate);if(distance<best){best=distance;target=index;}});
+    active.targetIndex=target;active.cards.forEach(card=>card.classList.remove('drop-before','drop-after'));
+    if(target!==active.fromIndex){active.cards[target].classList.add(target<active.fromIndex?'drop-before':'drop-after');}
+  }
+  function endPageDrag(event,cancelled=false){
+    const active=pageDrag;if(!active||(event&&event.pointerId!==active.pointerId))return;
+    try{active.handle.releasePointerCapture(active.pointerId);}catch{}
+    active.handle.setAttribute('aria-grabbed','false');active.card.classList.remove('dragging');active.card.style.removeProperty('--page-drag-x');active.card.style.removeProperty('--page-drag-y');active.cards.forEach(card=>card.classList.remove('drop-before','drop-after'));env.document.body.classList.remove('page-reordering');pageDrag=null;
+    if(!cancelled&&active.targetIndex!==active.fromIndex)movePageTo(active.pageId,active.targetIndex);
+  }
+  function movePageHandleKey(event,pageId){
+    if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)||busy||mode!=='create')return;
+    event.preventDefault();event.stopPropagation();const index=doc.pages.findIndex(page=>page.id===pageId),delta=(event.key==='ArrowUp'||event.key==='ArrowLeft')?-1:1,target=Math.max(0,Math.min(doc.pages.length-1,index+delta));if(target!==index)movePageTo(pageId,target);
+  }
+  function renderPageCards(){
+    const list=$('pageList');list.replaceChildren();
+    doc.pages.forEach((p,index)=>{
+      const canEdit=mode==='create'&&!busy,qCount=doc.questions.filter(question=>question.pageId===p.id).length;
+      const card=env.document.createElement('div');card.className='page-item';card.dataset.pageId=p.id;card.tabIndex=0;card.setAttribute('role','group');card.setAttribute('aria-current',p.id===selectedId?'page':'false');
+      const head=env.document.createElement('div');head.className='page-card-head';
+      if(canEdit){
+        const drag=env.document.createElement('button');drag.type='button';drag.className='page-drag-handle';drag.setAttribute('aria-label',t('pageDragLabel',{name:p.title}));drag.setAttribute('aria-grabbed','false');drag.append(makePageIcon('drag'));
+        drag.addEventListener('pointerdown',event=>beginPageDrag(event,p.id));drag.addEventListener('pointermove',movePageDrag);drag.addEventListener('pointerup',event=>endPageDrag(event,false));drag.addEventListener('pointercancel',event=>endPageDrag(event,true));drag.addEventListener('keydown',event=>movePageHandleKey(event,p.id));head.append(drag);
+        const title=env.document.createElement('input');title.type='text';title.className='page-card-title';title.maxLength=120;title.autocomplete='off';title.spellcheck=false;title.value=p.title;title.setAttribute('aria-label',t('pageNameEditLabel',{number:index+1}));title.addEventListener('focus',()=>selectPage(p.id));title.addEventListener('change',()=>renamePage(p.id,title.value));title.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();title.blur();}else if(event.key==='Escape'){event.preventDefault();title.value=p.title;title.blur();}});head.append(title);
+        const del=env.document.createElement('button');del.type='button';del.className='page-delete-button';del.setAttribute('aria-label',t('pageDeleteLabel',{name:p.title}));del.append(makePageIcon('trash'));del.addEventListener('click',event=>{event.stopPropagation();deletePage(p.id);});head.append(del);
+      }else{
+        const title=env.document.createElement('span');title.className='page-card-title page-card-title-static';title.textContent=p.title;head.append(title);
+      }
+      const meta=env.document.createElement('span');meta.className='page-card-meta';meta.textContent=t('pageQuestionSummary',{count:qCount});
+      card.append(head,meta);
+      if(canEdit){
+        const details=env.document.createElement('details');details.className='page-description-details';details.open=expandedPageDescriptions.has(p.id);
+        const summary=env.document.createElement('summary');summary.className='page-description-summary';summary.setAttribute('aria-label',t('pageDescriptionEdit'));
+        const summaryText=env.document.createElement('span');summaryText.className='page-description-summary-text';summaryText.textContent=p.description?.trim().replace(/\s+/g,' ')||t('pageDescriptionEmpty');summary.append(summaryText);
+        const input=env.document.createElement('textarea');input.className='page-card-description-input';input.rows=3;input.maxLength=2000;input.value=p.description||'';input.placeholder=t('pageDescriptionPlaceholder');input.setAttribute('aria-label',t('pageDescriptionLabel'));input.addEventListener('focus',()=>selectPage(p.id));input.addEventListener('change',()=>changePageDescription(p.id,input.value));
+        const note=env.document.createElement('small');note.className='page-description-note';note.textContent=t('pageDescriptionNote');details.append(summary,input,note);
+        summary.addEventListener('click',()=>selectPage(p.id));details.addEventListener('toggle',()=>{if(details.open)expandedPageDescriptions.add(p.id);else expandedPageDescriptions.delete(p.id);});
+        card.append(details);
+      }
+      card.addEventListener('click',event=>{if(event.target.closest('input,textarea,button,summary,details'))return;selectPage(p.id);});
+      card.addEventListener('keydown',event=>{if(event.target!==card)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();selectPage(p.id);}});
+      list.append(card);
+    });
+  }
   function refreshCopy() {
     env.document.documentElement.style.setProperty('--cover-color',doc.defaults.coverColor||'#16624f');
     env.document.body.classList.toggle('has-pages',doc.pages.length>0);env.document.body.classList.toggle('is-busy',busy);env.document.body.classList.toggle('create-mode',mode==='create');env.document.body.classList.toggle('study-mode',mode==='study');env.document.body.classList.toggle('save-mode',mode==='save');
-    $('developmentNote').textContent=t(doc.pages.length?'loadedDevelopmentNote':'developmentNote');
+    $('developmentNote').hidden=doc.pages.length>0;$('developmentNote').textContent=doc.pages.length?'':t('developmentNote');
     $('sheetTitle').textContent=doc.title;
     $('sheetCount').textContent=t('pageCount',{count:doc.pages.length});
     $('inputStatus').textContent=t(lastStatus,progress||{});
@@ -197,24 +277,12 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('undoButton').disabled=busy||mode==='study'||undo.length===0;
     $('redoButton').disabled=busy||mode==='study'||redo.length===0;
     $('emptyPreview').hidden=doc.pages.length!==0;
-    $('imageMeta').hidden=!selectedId;
+    $('imageMeta').hidden=!selectedId||mode==='study';
     $('loadedSection').hidden=doc.pages.length===0;
-    const activePage=currentPage(),activePageIndex=activePage?doc.pages.findIndex(page=>page.id===activePage.id):-1;
-    $('pageControls').hidden=!activePage||mode!=='create';
-    if(activePage&&env.document.activeElement!==$('pageTitleInput'))$('pageTitleInput').value=activePage.title;
-    if(activePage&&env.document.activeElement!==$('pageDescriptionInput'))$('pageDescriptionInput').value=activePage.description||'';
+    const activePage=currentPage();
     refreshCoverPanel();
-    $('pagePrevButton').disabled=busy||activePageIndex<=0;$('pageNextButton').disabled=busy||activePageIndex<0||activePageIndex>=doc.pages.length-1;$('pageDeleteButton').disabled=busy||!activePage;
     $('coverColor').disabled=busy||!selectedId||mode!=='create';$('coverColor').value=doc.defaults.coverColor||'#16624f';
-    $('pageList').replaceChildren();
-    for(const p of doc.pages){
-      const a=doc.assets.find(x=>x.id===p.imageId);
-      const button=env.document.createElement('button');button.type='button';button.className='page-item';button.disabled=busy;
-      button.setAttribute('aria-pressed',String(p.id===selectedId));
-      const name=env.document.createElement('span');name.className='page-name';name.textContent=p.title;
-      const details=env.document.createElement('span');details.className='page-details';details.textContent=`${a.width} × ${a.height} · ${formatBytes(a.byteLength)}`;
-      button.append(name,details);button.addEventListener('click',()=>{selectedId=p.id;selectedMaskId=null;selectedMaskIds.clear();refreshCopy();showPreview();});$('pageList').append(button);
-    }
+    renderPageCards();
     $('failureSection').hidden=failures.length===0;
     $('failureList').replaceChildren();
     for(const failure of failures){
@@ -427,7 +495,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     if(active.kind==='pan'&&selectedId)studyView.setViewState(selectedId,active.startView);
     gesture=null;draftRect?.remove();draftRect=null;renderOverlay();updateToolButtons();refreshViewControls();
   }
-  function cancelTransientInteraction(){pointerCancel();updateToolButtons();}
+  function cancelTransientInteraction(){pointerCancel();endPageDrag(null,true);updateToolButtons();}
   function handleViewAction(action){if(action.type==='SELECT_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);refreshCopy();return;}if(mode!=='study')return;if(action.type==='TOGGLE_QUESTION'&&studySession?.mode==='free'){studySession=core.toggleFree(studySession,action.questionId);scheduleStudySave();refreshCopy();return;}if(action.type==='REVEAL_CURRENT'&&studySession?.mode==='guided'&&action.questionId===currentGuidedId()){revealGuided();}}
   function editSelected(kind,amount=1){const mask=currentMask(),asset=currentAsset();if(!mask||!asset||mode!=='create')return;const dx=amount/asset.width,dy=amount/asset.height;let r={...mask.rect};if(kind==='left')r.x-=dx;if(kind==='right')r.x+=dx;if(kind==='up')r.y-=dy;if(kind==='down')r.y+=dy;if(kind==='wider')r.w+=dx;if(kind==='narrower')r.w-=dx;if(kind==='taller')r.h+=dy;if(kind==='shorter')r.h-=dy;try{const result=core.applyCommand(doc,{type:'SET_MASK_RECT',maskId:mask.id,rect:r},ctx);commit(result,mask.id);status('coverChanged');refreshCopy();}catch(error){if(error.code!=='INVALID_SHEET')throw error;}}
   function deleteSelected(){const mask=currentMask();if(!mask)return;const result=core.applyCommand(doc,{type:'DELETE_MASK',maskId:mask.id},ctx);commit(result,null);status('coverDeleted');refreshCopy();}
@@ -451,28 +519,27 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     const before=new Set(doc.masks.map(mask=>mask.id)),result=core.applyCommand(doc,{type:'DUPLICATE_SELECTION',maskIds:ids},ctx),newIds=result.document.masks.filter(mask=>!before.has(mask.id)).map(mask=>mask.id);
     commit(result,newIds[0]||null);selectedMaskIds=new Set(newIds);status('duplicatedSelection');refreshCopy();
   }
-  function renamePage(){
-    const page=currentPage();if(!page||busy)return;const title=$('pageTitleInput').value;
-    try{const result=core.applyCommand(doc,{type:'RENAME_PAGE',pageId:page.id,title},ctx);if(result.document!==doc){commit(result,selectedMaskId);status('pageRenamed');refreshCopy();}}
-    catch(error){$('pageTitleInput').value=page.title;}
+  function renamePage(pageId,title){
+    const page=doc.pages.find(item=>item.id===pageId);if(!page||busy||mode!=='create')return;
+    try{const result=core.applyCommand(doc,{type:'RENAME_PAGE',pageId,title},ctx);if(result.document!==doc){commit(result,selectedMaskId);status('pageRenamed');refreshCopy();}}
+    catch{status('error_INVALID_SHEET');refreshCopy();}
   }
-  function changePageDescription(){
-    const page=currentPage();if(!page||busy||mode!=='create')return;const description=$('pageDescriptionInput').value;
-    try{const result=core.applyCommand(doc,{type:'SET_PAGE_DESCRIPTION',pageId:page.id,description},ctx);if(result.document!==doc){commit(result,selectedMaskId);status('pageDescriptionChanged');refreshCopy();}}
-    catch(error){$('pageDescriptionInput').value=page.description;status('error_'+(error?.code||'LIMIT_EXCEEDED'));refreshCopy();}
+  function changePageDescription(pageId,description){
+    const page=doc.pages.find(item=>item.id===pageId);if(!page||busy||mode!=='create')return;
+    try{const result=core.applyCommand(doc,{type:'SET_PAGE_DESCRIPTION',pageId,description},ctx);if(result.document!==doc){commit(result,selectedMaskId);status('pageDescriptionChanged');refreshCopy();}}
+    catch(error){status('error_'+(error?.code||'LIMIT_EXCEEDED'));refreshCopy();}
   }
   function changeQuestionText(){
     const question=currentQuestion();if(!question||busy||mode!=='create')return;const prompt=$('questionPromptInput').value,answer=$('questionAnswerInput').value;
     try{const result=core.applyCommand(doc,{type:'SET_QUESTION_TEXT',questionId:question.id,prompt,answer},ctx);if(result.document!==doc){commit(result,selectedMaskId);status('questionTextChanged');refreshCopy();}}
     catch(error){$('questionPromptInput').value=question.prompt;$('questionAnswerInput').value=question.answer;status('error_'+(error?.code||'LIMIT_EXCEEDED'));refreshCopy();}
   }
-  function movePage(delta){const page=currentPage();if(!page||busy)return;const result=core.applyCommand(doc,{type:'MOVE_PAGE',pageId:page.id,delta},ctx);if(result.document!==doc){commit(result,selectedMaskId);status('pageMoved');refreshCopy();}}
-  async function deletePage(){
-    const page=currentPage();if(!page||busy)return;const index=doc.pages.findIndex(item=>item.id===page.id),count=doc.questions.filter(question=>question.pageId===page.id).length;
+  async function deletePage(pageId=selectedId){
+    const page=doc.pages.find(item=>item.id===pageId);if(!page||busy||mode!=='create')return;const index=doc.pages.findIndex(item=>item.id===page.id),count=doc.questions.filter(question=>question.pageId===page.id).length;
     const yes=await env.AppConfirm.ask({title:t('pageDeleteTitle'),message:t('pageDeleteMessage',{name:page.title,count}),confirmLabel:t('pageDeleteAction'),cancelLabel:t('cancel'),tone:'danger'});if(!yes)return;
     const imageId=page.imageId,result=core.applyCommand(doc,{type:'DELETE_PAGE',pageId:page.id},ctx),next=result.document;commit(result,null);
     if(!next.assets.some(asset=>asset.id===imageId))imageIO.release(imageId);
-    selectedId=next.pages[Math.min(index,next.pages.length-1)]?.id||null;viewKey='';status('pageDeleted');refreshCopy();showPreview(true);
+    if(selectedId===page.id||!next.pages.some(item=>item.id===selectedId))selectedId=next.pages[Math.min(index,next.pages.length-1)]?.id||null;expandedPageDescriptions.delete(page.id);viewKey='';status('pageDeleted');refreshCopy();showPreview(true);
   }
   function startStudySession(nextMode=studyMode,otherAnswers=null){studyMode=nextMode;previousStudySummary=null;studySession=core.startSession(doc,{mode:nextMode,...(nextMode==='guided'?{otherAnswers:otherAnswers||doc.defaults.otherAnswers}:{})},ctx);studyConflict=false;const pageChanged=syncGuidedPage();scheduleStudySave();refreshCopy();if(pageChanged)showPreview(true);}
   async function switchStudyMode(nextMode){if(mode!=='study'||studyMode===nextMode)return;const proceed=!studyHasProgress(studySession)||await env.AppConfirm.ask({title:t('studyRestartTitle'),message:t('studyRestartMessage'),confirmLabel:t('studyRestartAction'),cancelLabel:t('cancel')});if(!proceed){refreshCopy();return;}startStudySession(nextMode);}
@@ -596,8 +663,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   $('redoButton').addEventListener('click',()=>history('redo'));
   $('coverColor').addEventListener('change',event=>{if(mode!=='create'||busy)return;const result=core.applyCommand(doc,{type:'SET_COVER_COLOR',coverColor:event.currentTarget.value},ctx);if(result.document!==doc){commit(result,selectedMaskId);status('coverColorChanged');refreshCopy();}});
   $('maskDelete').addEventListener('click',deleteSelected);$('maskDuplicate').addEventListener('click',duplicateSelected);
-  $('pageTitleInput').addEventListener('change',renamePage);$('pageTitleInput').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();event.currentTarget.blur();}});$('pageDescriptionInput').addEventListener('change',changePageDescription);$('questionPromptInput').addEventListener('change',changeQuestionText);$('questionAnswerInput').addEventListener('change',changeQuestionText);
-  $('pagePrevButton').addEventListener('click',()=>movePage(-1));$('pageNextButton').addEventListener('click',()=>movePage(1));$('pageDeleteButton').addEventListener('click',deletePage);
+  $('questionPromptInput').addEventListener('change',changeQuestionText);$('questionAnswerInput').addEventListener('change',changeQuestionText);
   $('groupButton').addEventListener('click',groupSelected);$('ungroupButton').addEventListener('click',ungroupSelected);$('makeAuxiliaryButton').addEventListener('click',()=>convertSelected('auxiliary'));$('makeAnswerButton').addEventListener('click',()=>convertSelected('answer'));$('duplicateSelectionButton').addEventListener('click',duplicateSelection);
   $('freeModeButton').addEventListener('click',()=>switchStudyMode('free'));$('guidedModeButton').addEventListener('click',()=>switchStudyMode('guided'));$('otherAnswersHidden').addEventListener('change',event=>{if(event.target.checked)changeOtherAnswers('hidden');});$('otherAnswersVisible').addEventListener('change',event=>{if(event.target.checked)changeOtherAnswers('visible');});$('revealCurrentButton').addEventListener('click',revealGuided);$('recalledButton').addEventListener('click',()=>rateGuided('recalled'));$('againButton').addEventListener('click',()=>rateGuided('again'));$('skipButton').addEventListener('click',skipGuided);$('previousQuestionButton').addEventListener('click',previousGuided);$('finishStudyButton').addEventListener('click',finishGuided);$('reviewAgainButton').addEventListener('click',()=>reviewGuided('again'));$('reviewUncheckedButton').addEventListener('click',()=>reviewGuided('unchecked'));
   $('viewZoomIn').addEventListener('click',()=>zoomView(1.25));$('viewZoomOut').addEventListener('click',()=>zoomView(.8));$('viewFit').addEventListener('click',fitView);$('focusQuestionButton').addEventListener('click',focusCurrentQuestion);$('editCurrentQuestionButton').addEventListener('click',editCurrentQuestion);$('returnToStudyButton').addEventListener('click',returnToStudy);

@@ -42,6 +42,8 @@ test('T05 page order is ID-based, permits duplicate names, and moves without cha
   assert.equal(renamed.pages[1].title,'Same name');
   const moved=core.applyCommand(renamed,{type:'MOVE_PAGE',pageId:ids[2],delta:-1},ctx).document;
   assert.deepEqual(toPlain(moved.pages.map(p=>p.id)),[ids[0],ids[2],ids[1]]);
+  const movedToEnd=core.applyCommand(moved,{type:'MOVE_PAGE_TO',pageId:ids[0],targetIndex:2},ctx).document;
+  assert.deepEqual(toPlain(movedToEnd.pages.map(p=>p.id)),[ids[2],ids[1],ids[0]]);
 });
 
 test('T05 history keeps 100 operations and a new edit after Undo drops Redo',()=>{

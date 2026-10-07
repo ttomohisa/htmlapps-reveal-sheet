@@ -229,3 +229,8 @@ button:disabled,input:disabled { cursor:not-allowed; }
 @media(max-width:767px){.lesson-preview-layout{grid-template-columns:1fr}.lesson-preview-pages{flex-direction:row;overflow-x:auto}.lesson-preview-pages .question-item{min-width:140px;width:140px}.lesson-preview-surface{height:42vh;min-height:240px}}
 
 .has-pages.create-mode .input-note{display:none}.has-pages .input-status-row{min-height:28px;margin:5px 0}.has-pages .input-status-row p{font-size:12px}.has-pages .sheet-header{margin:4px 0 8px}@media(max-width:520px){.editor-guide{flex-basis:100%;order:5}.cover-color-control span{display:none}.image-meta-row{gap:6px}.image-meta>span:last-child{display:none}}
+
+@media(max-width:767px){
+ .page-item.drop-before::before{top:6px;bottom:6px;left:-6px;right:auto;width:3px;height:auto}
+ .page-item.drop-after::after{top:6px;bottom:6px;left:auto;right:-6px;width:3px;height:auto}
+}

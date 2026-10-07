@@ -180,12 +180,18 @@ function createRevealCore() {
       const next={...doc,revision:doc.revision+1,pages,questions};if(totalUserTextBytes(next)>1024*1024)throw error('LIMIT_EXCEEDED');
       return mutation(next,{affectedQuestionIds:affected});
     }
+    if(command.type==='MOVE_PAGE_TO') {
+      const index=doc.pages.findIndex(item=>item.id===command.pageId),target=Number(command.targetIndex);
+      if(index<0||!Number.isInteger(target)||target<0||target>=doc.pages.length)throw error('INVALID_SHEET');
+      if(index===target)return mutation(doc);
+      const pages=[...doc.pages],[page]=pages.splice(index,1);pages.splice(target,0,page);
+      return mutation({...doc,revision:doc.revision+1,pages});
+    }
     if(command.type==='MOVE_PAGE') {
       const index=doc.pages.findIndex(item=>item.id===command.pageId),delta=Number(command.delta);
       if(index<0||!Number.isInteger(delta)||![-1,1].includes(delta))throw error('INVALID_SHEET');
       const target=index+delta;if(target<0||target>=doc.pages.length)return mutation(doc);
-      const pages=[...doc.pages],[page]=pages.splice(index,1);pages.splice(target,0,page);
-      return mutation({...doc,revision:doc.revision+1,pages});
+      return applyCommand(doc,{type:'MOVE_PAGE_TO',pageId:command.pageId,targetIndex:target},ctx);
     }
     if(command.type==='DELETE_PAGE') {
       const page=doc.pages.find(item=>item.id===command.pageId);if(!page)throw error('INVALID_SHEET');
