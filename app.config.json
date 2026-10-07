@@ -3,24 +3,10 @@
   "name": "Reveal Sheet",
   "nameJa": "めくる暗記シート",
   "slug": "reveal-sheet",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "description": "Create accessible image-based study sheets with mobile-first editing, self-contained lesson HTML, safe re-editing, bilingual keyboard support, and optional local persistence.",
   "descriptionJa": "スマホ操作・日英・キーボード・読み上げに配慮し、教材HTML保存と安全な再編集、任意の端末内保存に対応するめくる暗記シート。",
   "defaultLanguage": "auto",
-  "repository": {
-    "owner": "ttomohisa",
-    "name": "htmlapps-reveal-sheet"
-  },
-  "build": {
-    "output": "dist/index.html",
-    "blockRuntimeNetwork": true,
-    "selfExtract": {
-      "enabled": true,
-      "output": "dist/index.self-extract.html"
-    },
-    "sizeBudget": {
-      "readableWarningMb": 2,
-      "selfExtractWarningMb": 1
-    }
-  }
+  "repository": {"owner": "ttomohisa","name": "htmlapps-reveal-sheet"},
+  "build": {"output": "dist/index.html","blockRuntimeNetwork": true,"selfExtract": {"enabled": true,"output": "dist/index.self-extract.html"},"sizeBudget": {"readableWarningMb": 2,"selfExtractWarningMb": 1}}
 }
