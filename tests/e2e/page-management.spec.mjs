@@ -7,7 +7,7 @@ async function dragPage(page,from,to){
   await page.mouse.move(gb.x+gb.width/2,gb.y+gb.height/2);await page.mouse.down();
   await expect(source).toHaveClass(/dragging/);
   expect(await source.evaluate(node=>getComputedStyle(node).transform)).not.toBe('none');
-  await page.mouse.move(tb.x+tb.width*.72,tb.y+tb.height*.48,{steps:6});await page.mouse.up();
+  await page.mouse.move(tb.x+tb.width*.72,tb.y+tb.height*.48,{steps:6});await expect(cards.locator('.reorder-shift')).toHaveCount(1);await page.mouse.up();
 }
 
 test('T05: page cards edit title/description, drag reorder, trash delete and Undo',async({page})=>{
@@ -47,7 +47,7 @@ test('T05: card editing replaces the old page action row and stays compact',asyn
   const card=page.locator('#pageList .page-item').first(),title=card.locator('.page-card-title'),drag=card.locator('.page-drag-handle'),trash=card.locator('.page-delete-button');
   const tb=await title.boundingBox(),db=await drag.boundingBox(),xb=await trash.boundingBox();
   expect(Math.abs((tb.y+tb.height/2)-(db.y+db.height/2))).toBeLessThanOrEqual(3);expect(Math.abs((tb.y+tb.height/2)-(xb.y+xb.height/2))).toBeLessThanOrEqual(3);
-  await expect(card.locator('.page-description-summary')).toContainText(/Add description|説明を追加/);
+  await expect(card.locator('.page-description-summary')).toContainText(/Add description|説明を追加/);const cb=await card.boundingBox(),sb=await card.locator('.page-description-summary').boundingBox();expect(sb.right).toBeLessThanOrEqual(cb.right-1);expect(sb.bottom).toBeLessThanOrEqual(cb.bottom+1);
 });
 
 test('T05: page-card drag reorder also works in the horizontal mobile list',async({page})=>{
@@ -62,4 +62,12 @@ test('T05: drag handle keeps a keyboard reorder alternative',async({page})=>{
   const cards=page.locator('#pageList .page-item');await expect(cards.nth(0).locator('input.page-card-title')).toBeVisible();const firstTitle=await cards.nth(0).locator('input.page-card-title').inputValue();
   await cards.nth(0).locator('.page-drag-handle').focus();await page.keyboard.press('ArrowDown');
   await expect(cards.nth(1).locator('input.page-card-title')).toHaveValue(firstTitle);
+});
+
+
+test('T05: save mode keeps page-card titles readable in the full card width',async({page})=>{
+  await page.setViewportSize({width:1100,height:800});await openApp(page);await page.locator('#imageInput').setInputFiles([imagePath('static.png'),imagePath('static.jpg')]);
+  await page.locator('#saveButton').click();await expect(page.locator('#savePanel')).toBeVisible();
+  const card=page.locator('#pageList .page-item').first(),title=card.locator('.page-card-title-static');await expect(title).toContainText(/Page 1|ページ1/);
+  const cb=await card.boundingBox(),tb=await title.boundingBox();expect(tb.width).toBeGreaterThan(cb.width*.65);
 });

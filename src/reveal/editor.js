@@ -145,7 +145,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function zoomView(factor){const page=currentPage();if(!page)return;const view=studyView.getViewState(page.id);setCurrentView({...view,zoom:view.zoom*factor});}
   function fitView(){const page=currentPage();if(page)setCurrentView({zoom:1,centerX:.5,centerY:.5});}
   function focusCurrentQuestion(){const qid=currentGuidedId(),page=currentPage();if(!qid||!page)return;setCurrentView(core.revealTarget(doc,qid,studyView.getViewState(page.id)));}
-  function updateToolButtons(){$('maskControls').hidden=!(currentMask()&&mode==='create');}
+  function updateToolButtons(){}
   function studyHasProgress(session){
     if(!session)return false;if(session.mode==='free')return session.confirmedQuestionIds.length>0||session.openQuestionIds.length>0;
     return session.stage==='revealed'||session.index>0||Object.values(session.ratings).some(value=>value!=='unanswered')||session.ended;
@@ -220,13 +220,17 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     event.preventDefault();const dx=event.clientX-active.startX,dy=event.clientY-active.startY;active.card.style.setProperty('--page-drag-x',active.axis==='x'?dx+'px':'0px');active.card.style.setProperty('--page-drag-y',active.axis==='y'?dy+'px':'0px');
     const coordinate=active.axis==='x'?event.clientX:event.clientY;let target=active.fromIndex,best=Infinity;
     active.centers.forEach((center,index)=>{const distance=Math.abs(center-coordinate);if(distance<best){best=distance;target=index;}});
-    active.targetIndex=target;active.cards.forEach(card=>card.classList.remove('drop-before','drop-after'));
-    if(target!==active.fromIndex){active.cards[target].classList.add(target<active.fromIndex?'drop-before':'drop-after');}
+    active.targetIndex=target;active.cards.forEach(card=>{card.classList.remove('drop-before','drop-after','reorder-shift');card.style.removeProperty('--page-shift-x');card.style.removeProperty('--page-shift-y');});
+    if(target!==active.fromIndex){
+      active.cards[target].classList.add(target<active.fromIndex?'drop-before':'drop-after');
+      const from=Math.min(active.fromIndex,target),to=Math.max(active.fromIndex,target),direction=target>active.fromIndex?-1:1;
+      active.cards.forEach((card,index)=>{if(index===active.fromIndex||index<from||index>to)return;card.classList.add('reorder-shift');card.style.setProperty('--page-shift-x',active.axis==='x'?direction*16+'px':'0px');card.style.setProperty('--page-shift-y',active.axis==='y'?direction*16+'px':'0px');});
+    }
   }
   function endPageDrag(event,cancelled=false){
     const active=pageDrag;if(!active||(event&&event.pointerId!==active.pointerId))return;
     try{active.handle.releasePointerCapture(active.pointerId);}catch{}
-    active.handle.setAttribute('aria-grabbed','false');active.card.classList.remove('dragging');active.card.style.removeProperty('--page-drag-x');active.card.style.removeProperty('--page-drag-y');active.cards.forEach(card=>card.classList.remove('drop-before','drop-after'));env.document.body.classList.remove('page-reordering');pageDrag=null;
+    active.handle.setAttribute('aria-grabbed','false');active.card.classList.remove('dragging');active.card.style.removeProperty('--page-drag-x');active.card.style.removeProperty('--page-drag-y');active.cards.forEach(card=>{card.classList.remove('drop-before','drop-after','reorder-shift');card.style.removeProperty('--page-shift-x');card.style.removeProperty('--page-shift-y');});env.document.body.classList.remove('page-reordering');pageDrag=null;
     if(!cancelled&&active.targetIndex!==active.fromIndex)movePageTo(active.pageId,active.targetIndex);
   }
   function movePageHandleKey(event,pageId){
@@ -447,13 +451,13 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   }
   function beginDirectEdit(event,maskId,kind,corner=null){
     const mask=doc.masks.find(item=>item.id===maskId),point=imagePoint(event,true);if(!mask||!point)return false;
-    selectedMaskId=mask.id;selectedMaskIds=new Set([mask.id]);event.preventDefault();
+    selectedMaskId=mask.id;selectedMaskIds=new Set([mask.id]);event.preventDefault();svg.classList.add('mask-direct-editing');
     gesture={kind,pointerId:event.pointerId,maskId:mask.id,corner,start:point,current:point,startRect:{...mask.rect},currentRect:{...mask.rect},startClientX:event.clientX,startClientY:event.clientY,distanceCssPx:0,cancelled:false,captureTarget:event.currentTarget};
     refreshCoverPanel();updateToolButtons();event.target.classList?.add('selected');event.currentTarget.setPointerCapture(event.pointerId);return true;
   }
   function pointerDown(event){
     if(event.button!==0)return;
-    if(event.target?.closest?.('#viewControls'))return;
+    if(event.target?.closest?.('#viewControls,.mask-inline-action'))return;
     const handle=event.target?.closest?.('.mask-resize-handle'),maskNode=event.target?.closest?.('.mask-rect');
     if(mode==='create'&&handle?.dataset.maskId&&beginDirectEdit(event,handle.dataset.maskId,'mask-resize',handle.dataset.resizeCorner))return;
     if(mode==='create'&&maskNode?.dataset.maskId&&beginDirectEdit(event,maskNode.dataset.maskId,'mask-move'))return;
@@ -485,7 +489,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     const active=gesture;try{active.captureTarget?.releasePointerCapture(event.pointerId);}catch{}
     if(active.kind==='pan'){gesture=null;refreshViewControls();return;}
     if(active.kind==='mask-move'||active.kind==='mask-resize'){
-      gesture=null;
+      gesture=null;svg.classList.remove('mask-direct-editing');
       if(active.distanceCssPx>0){try{const result=core.applyCommand(doc,{type:'SET_MASK_RECT',maskId:active.maskId,rect:active.currentRect},ctx);if(result.document!==doc){commit(result,active.maskId);status('coverChanged');}}catch{}}
       refreshCopy();return;
     }
@@ -494,10 +498,10 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function pointerCancel(){
     if(!gesture)return;const active=gesture;
     if(active.kind==='pan'&&selectedId)studyView.setViewState(selectedId,active.startView);
-    gesture=null;draftRect?.remove();draftRect=null;renderOverlay();updateToolButtons();refreshViewControls();
+    gesture=null;svg.classList.remove('mask-direct-editing');draftRect?.remove();draftRect=null;renderOverlay();updateToolButtons();refreshViewControls();
   }
   function cancelTransientInteraction(){pointerCancel();endPageDrag(null,true);updateToolButtons();}
-  function handleViewAction(action){if(action.type==='SELECT_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);refreshCopy();return;}if(mode!=='study')return;if(action.type==='TOGGLE_QUESTION'&&studySession?.mode==='free'){studySession=core.toggleFree(studySession,action.questionId);scheduleStudySave();refreshCopy();return;}if(action.type==='REVEAL_CURRENT'&&studySession?.mode==='guided'&&action.questionId===currentGuidedId()){revealGuided();}}
+  function handleViewAction(action){if(action.type==='SELECT_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);refreshCopy();return;}if(mode==='create'&&action.type==='DUPLICATE_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);duplicateSelected();return;}if(mode==='create'&&action.type==='DELETE_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);deleteSelected();return;}if(mode!=='study')return;if(action.type==='TOGGLE_QUESTION'&&studySession?.mode==='free'){studySession=core.toggleFree(studySession,action.questionId);scheduleStudySave();refreshCopy();return;}if(action.type==='REVEAL_CURRENT'&&studySession?.mode==='guided'&&action.questionId===currentGuidedId()){revealGuided();}}
   function editSelected(kind,amount=1){const mask=currentMask(),asset=currentAsset();if(!mask||!asset||mode!=='create')return;const dx=amount/asset.width,dy=amount/asset.height;let r={...mask.rect};if(kind==='left')r.x-=dx;if(kind==='right')r.x+=dx;if(kind==='up')r.y-=dy;if(kind==='down')r.y+=dy;if(kind==='wider')r.w+=dx;if(kind==='narrower')r.w-=dx;if(kind==='taller')r.h+=dy;if(kind==='shorter')r.h-=dy;try{const result=core.applyCommand(doc,{type:'SET_MASK_RECT',maskId:mask.id,rect:r},ctx);commit(result,mask.id);status('coverChanged');refreshCopy();}catch(error){if(error.code!=='INVALID_SHEET')throw error;}}
   function deleteSelected(){const mask=currentMask();if(!mask)return;const result=core.applyCommand(doc,{type:'DELETE_MASK',maskId:mask.id},ctx);commit(result,null);status('coverDeleted');refreshCopy();}
   function duplicateSelected(){const mask=currentMask();if(!mask)return;const before=new Set(doc.masks.map(m=>m.id)),result=core.applyCommand(doc,{type:'DUPLICATE_MASK',maskId:mask.id},ctx),added=result.document.masks.find(m=>!before.has(m.id));commit(result,added?.id||null);status('coverAdded');refreshCopy();}
@@ -663,7 +667,6 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   $('undoButton').addEventListener('click',()=>history('undo'));
   $('redoButton').addEventListener('click',()=>history('redo'));
   $('coverColor').addEventListener('change',event=>{if(mode!=='create'||busy)return;const result=core.applyCommand(doc,{type:'SET_COVER_COLOR',coverColor:event.currentTarget.value},ctx);if(result.document!==doc){commit(result,selectedMaskId);status('coverColorChanged');refreshCopy();}});
-  $('maskDelete').addEventListener('click',deleteSelected);$('maskDuplicate').addEventListener('click',duplicateSelected);
   $('questionPromptInput').addEventListener('change',changeQuestionText);$('questionAnswerInput').addEventListener('change',changeQuestionText);
   $('groupButton').addEventListener('click',groupSelected);$('ungroupButton').addEventListener('click',ungroupSelected);$('makeAuxiliaryButton').addEventListener('click',()=>convertSelected('auxiliary'));$('makeAnswerButton').addEventListener('click',()=>convertSelected('answer'));$('duplicateSelectionButton').addEventListener('click',duplicateSelection);
   $('freeModeButton').addEventListener('click',()=>switchStudyMode('free'));$('guidedModeButton').addEventListener('click',()=>switchStudyMode('guided'));$('otherAnswersHidden').addEventListener('change',event=>{if(event.target.checked)changeOtherAnswers('hidden');});$('otherAnswersVisible').addEventListener('change',event=>{if(event.target.checked)changeOtherAnswers('visible');});$('revealCurrentButton').addEventListener('click',revealGuided);$('recalledButton').addEventListener('click',()=>rateGuided('recalled'));$('againButton').addEventListener('click',()=>rateGuided('again'));$('skipButton').addEventListener('click',skipGuided);$('previousQuestionButton').addEventListener('click',previousGuided);$('finishStudyButton').addEventListener('click',finishGuided);$('reviewAgainButton').addEventListener('click',()=>reviewGuided('again'));$('reviewUncheckedButton').addEventListener('click',()=>reviewGuided('unchecked'));

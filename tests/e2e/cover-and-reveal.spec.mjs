@@ -71,7 +71,9 @@ test('T03: selected cover moves and resizes directly on the image',async({page})
   await page.mouse.move(handleBox.x+handleBox.width/2,handleBox.y+handleBox.height/2);await page.mouse.down();await page.mouse.move(handleBox.x+handleBox.width/2+28,handleBox.y+handleBox.height/2+14,{steps:4});await page.mouse.up();
   expect(Number(await rect.getAttribute('width'))).toBeGreaterThan(beforeWidth);
 
-  await page.locator('#maskDelete').click();await expect(rect).toHaveCount(0);
+  await expect(page.locator('#maskControls')).toHaveCount(0);await expect(page.locator('.mask-inline-action')).toHaveCount(2);
+  await page.locator('.mask-inline-action[data-mask-action="duplicate"]').click();await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(2);
+  await page.locator('.mask-inline-action[data-mask-action="delete"]').click();await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
 });
 
 

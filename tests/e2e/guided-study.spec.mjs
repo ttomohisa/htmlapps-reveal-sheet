@@ -12,7 +12,7 @@ async function makeThreeQuestions(page){
 test('T07: guided study requires reveal before rating and summarizes one pass',async({page})=>{
   await openApp(page);await makeThreeQuestions(page);
   await page.locator('#studyButton').click();await page.locator('#guidedModeButton').click();
-  await expect(page.locator('#guidedPanel')).toBeVisible();
+  await expect(page.locator('#guidedPanel')).toBeVisible();await expect(page.locator('#guidedSettings')).toBeVisible();await expect(page.locator('#guidedQuestionNavigator')).toBeVisible();
   await expect(page.locator('#guidedProgress')).toContainText('1 / 3');
   await expect(page.locator('#recalledButton')).toBeDisabled();await expect(page.locator('#againButton')).toBeDisabled();
 
@@ -33,7 +33,7 @@ test('T07: other-answer setting starts a new guided session and auxiliary cover 
   await openApp(page);await makeThreeQuestions(page);
   await page.locator('#coverList button').nth(2).click();await page.locator('#makeAuxiliaryButton').click();
   await page.locator('#studyButton').click();await page.locator('#guidedModeButton').click();
-  await page.locator('#otherAnswersVisible').check();
+  await page.locator('#guidedSettings > summary').click();await page.locator('#otherAnswersVisible').check();
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(2);
   await page.locator('#revealCurrentButton').click();await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
   await expect(page.locator('#maskSvg .mask-rect')).toHaveClass(/auxiliary/);
