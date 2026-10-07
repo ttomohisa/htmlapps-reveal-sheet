@@ -42,6 +42,8 @@ test('T01: lesson player template keeps one fixed non-executing data tag',()=>{
   const source=fs.readFileSync('src/player.template.html','utf8');
   assert.equal(source.split('<script id="reveal-sheet-data" type="application/json">').length-1,1);
   assert.equal(source.split('__REVEAL_LESSON_JSON__').length-1,1);
-  assert.equal(source.split('/* REVEAL:PLAYER_JS */').length-1,1);
+  assert.equal(source.split('/* REVEAL:PLAYER_RUNTIME */').length-1,1);
+  assert.equal(source.split('__REVEAL_PLAYER_RUNTIME_CSP_HASH__').length-1,1);
+  assert.equal(source.split('__REVEAL_PLAYER_RUNTIME_SHA256__').length-1,1);
   assert.equal(source.split('__APP_ICON_DATA_URI__').length-1,2);
 });

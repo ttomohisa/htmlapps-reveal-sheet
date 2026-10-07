@@ -37,7 +37,8 @@ test('T18 configured page and cover ceilings accept the boundary and reject the 
 test('T18 standard 10-page/100-question sheet survives repeated add-delete-export cycles',async()=>{
   const io=createProjectIO({core,imageIO:{verifyStoredAsset:async()=>{}},env:{Blob,TextDecoder,TextEncoder}});
   let doc=makeEnvelope(10,100).document;
-  const ctx=testContext(),beforeHeap=process.memoryUsage().heapUsed,start=performance.now();let bytes=0;
+  let idSequence=0;const ctx={newId:kind=>`${kind}_cycle_${++idSequence}`,nextRevision:()=>++idSequence};
+  const beforeHeap=process.memoryUsage().heapUsed,start=performance.now();let bytes=0;
   for(let i=0;i<20;i++){
     const added=core.applyCommand(doc,{type:'ADD_ANSWER_MASK',pageId:'page_1',rect:{x:.42,y:.42,w:.1,h:.1}},ctx);
     const addedId=added.addedQuestionIds[0];doc=added.document;
