@@ -90,3 +90,17 @@ test('T15: loaded create layout is vertically compact and keeps zoom with image 
   expect(zoom.y).toBeGreaterThanOrEqual(surface.y+4);
   expect(zoom.y+zoom.height).toBeLessThan(surface.y+surface.height/2);
 });
+
+
+test('T15: mobile study keeps the image and primary guided action in one viewport',async({page})=>{
+  await page.setViewportSize({width:390,height:760});await openApp(page);
+  await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
+  await dragCover(page,[16,16],[58,38]);await page.locator('#studyButton').click();await page.locator('#guidedModeButton').click();
+  if(await page.locator('#appConfirmDialog').isVisible())await page.locator('#appConfirmOk').click();
+  await expect(page.locator('.page-panel')).toBeHidden();await expect(page.locator('#loadedSection')).toBeHidden();
+  const preview=await page.locator('.preview-surface').boundingBox(),panel=await page.locator('#studyPanel').boundingBox(),action=await page.locator('#revealCurrentButton').boundingBox(),nav=await page.locator('.reveal-nav').boundingBox();
+  expect(preview.height).toBeGreaterThanOrEqual(150);expect(action.y+action.height).toBeLessThanOrEqual(nav.y+1);expect(panel.y).toBeGreaterThanOrEqual(preview.y+preview.height-1);
+  await expect(page.locator('#guidedMoreActions')).not.toHaveAttribute('open','');
+  await page.locator('#revealCurrentButton').click();await expect(page.locator('#revealCurrentButton')).toBeHidden();await expect(page.locator('#guidedRatingActions')).toBeVisible();
+  const ratings=await page.locator('#guidedRatingActions').boundingBox();expect(ratings.y+ratings.height).toBeLessThanOrEqual(nav.y+1);
+});
