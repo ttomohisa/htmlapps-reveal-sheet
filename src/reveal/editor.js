@@ -185,7 +185,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   }
   function refreshCopy() {
     env.document.documentElement.style.setProperty('--cover-color',doc.defaults.coverColor||'#16624f');
-    env.document.body.classList.toggle('has-pages',doc.pages.length>0);env.document.body.classList.toggle('create-mode',mode==='create');env.document.body.classList.toggle('study-mode',mode==='study');env.document.body.classList.toggle('save-mode',mode==='save');
+    env.document.body.classList.toggle('has-pages',doc.pages.length>0);env.document.body.classList.toggle('is-busy',busy);env.document.body.classList.toggle('create-mode',mode==='create');env.document.body.classList.toggle('study-mode',mode==='study');env.document.body.classList.toggle('save-mode',mode==='save');
     $('developmentNote').textContent=t(doc.pages.length?'loadedDevelopmentNote':'developmentNote');
     $('sheetTitle').textContent=doc.title;
     $('sheetCount').textContent=t('pageCount',{count:doc.pages.length});

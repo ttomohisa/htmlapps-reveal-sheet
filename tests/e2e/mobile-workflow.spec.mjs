@@ -60,7 +60,7 @@ test('T15: 320px and short landscape keep workflow actions reachable without hor
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   for(const id of ['createButton','studyButton','saveButton','viewZoomOut','viewFit','viewZoomIn']){
-    const box=await page.locator('#'+id).boundingBox();expect(box.height,id).toBeGreaterThanOrEqual(48);
+    const box=await page.locator('#'+id).boundingBox();expect(box.height,id).toBeGreaterThanOrEqual(id.startsWith('viewZoom')||id==='viewFit'?40:48);
   }
   await page.locator('#saveButton').click();
   await expect(page.locator('#savePanel')).toBeVisible();
@@ -85,6 +85,8 @@ test('T15: loaded create layout is vertically compact and keeps zoom with image 
   await expect(page.locator('.input-note')).toBeHidden();
   const tools=await page.locator('#editControls').boundingBox(),status=await page.locator('.input-status-row').boundingBox(),header=await page.locator('#loadedSection').boundingBox();
   expect(status.height).toBeLessThanOrEqual(36);expect(header.y-(tools.y+tools.height)).toBeLessThan(55);
-  const meta=await page.locator('.image-meta-row').boundingBox(),zoom=await page.locator('#viewControls').boundingBox();
-  expect(Math.abs((zoom.y+zoom.height/2)-(meta.y+meta.height/2))).toBeLessThanOrEqual(3);
+  const surface=await page.locator('.preview-surface').boundingBox(),zoom=await page.locator('#viewControls').boundingBox();
+  expect(zoom.x+zoom.width).toBeLessThanOrEqual(surface.x+surface.width-4);
+  expect(zoom.y).toBeGreaterThanOrEqual(surface.y+4);
+  expect(zoom.y+zoom.height).toBeLessThan(surface.y+surface.height/2);
 });

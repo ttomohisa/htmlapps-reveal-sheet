@@ -35,7 +35,7 @@ test('T06: group two covers as one question and keep an auxiliary cover closed',
 
 test('T06: overlapping separate questions warn and opening one leaves the other cover visible',async({page})=>{
   await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
-  await addCover(page,[20,15],[70,45]);await addCover(page,[45,28],[95,58]);
+  await addCover(page,[20,15],[70,45]);await addCover(page,[78,30],[45,58]);
   await expect(page.locator('#overlapWarning')).toBeVisible();
   await page.locator('#studyButton').click();
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(2);

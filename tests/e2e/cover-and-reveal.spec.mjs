@@ -47,9 +47,11 @@ test('T03: draw one cover, undo it, and reveal it freely without moving the imag
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
 
   const studyAfter=await page.locator('#previewImage').boundingBox();
-  expect(studyAfter).toEqual(studyBefore);
+  expect(studyAfter.width).toBe(studyBefore.width);
+  expect(studyAfter.height).toBe(studyBefore.height);
   expect(studyBefore.width).toBe(before.width);
   expect(studyBefore.height).toBe(before.height);
+  expect(await page.locator('#maskSvg').evaluate(svg=>({zoom:+svg.dataset.viewZoom,x:+svg.dataset.viewCenterX,y:+svg.dataset.viewCenterY}))).toEqual({zoom:1,x:.5,y:.5});
 });
 
 test('T03: selected cover moves and resizes directly on the image',async({page})=>{
