@@ -19,7 +19,7 @@ test('T08: targeted edit returns to the same question, preserves view, and inval
   await page.locator('#guidedQuestionNavigator > summary').click();await page.locator('#guidedQuestionList button').nth(0).click();
   await page.locator('#viewZoomIn').click();await panView(page,-.18);const before=await viewState(page);expect(before.zoom).toBeGreaterThan(1);
 
-  await page.locator('#editCurrentQuestionButton').click();await expect(page.locator('#returnToStudyButton')).toBeVisible();
+  await page.locator('#guidedMoreActions > summary').click();await page.locator('#editCurrentQuestionButton').click();await expect(page.locator('#returnToStudyButton')).toBeVisible();
   await expect(page.locator('.mask-inline-action')).toHaveCount(2);await page.keyboard.press('ArrowRight');
   await page.locator('#returnToStudyButton').click();await expect(page.locator('#guidedPanel')).toBeVisible();
   expect(await viewState(page)).toEqual(before);
@@ -31,7 +31,7 @@ test('T08: targeted edit returns to the same question, preserves view, and inval
 test('T08: deleting the current question while editing continues at the next surviving question',async({page})=>{
   await openApp(page);await makeThree(page);await guided(page);
   await page.locator('#guidedQuestionNavigator > summary').click();await page.locator('#guidedQuestionList button').nth(1).click();await expect(page.locator('#guidedProgress')).toContainText('2 / 3');
-  await page.locator('#editCurrentQuestionButton').click();await page.locator('.mask-inline-action[data-mask-action="delete"]').click();await page.locator('#returnToStudyButton').click();
+  await page.locator('#guidedMoreActions > summary').click();await page.locator('#editCurrentQuestionButton').click();await page.locator('.mask-inline-action[data-mask-action="delete"]').click();await page.locator('#returnToStudyButton').click();
   await expect(page.locator('#guidedProgress')).toContainText('2 / 2');await expect(page.locator('#guidedQuestionList button')).toHaveCount(2);await expect(page.locator('#revealCurrentButton')).toBeEnabled();
 });
 
