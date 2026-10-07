@@ -72,6 +72,8 @@ test('T03: selected cover moves and resizes directly on the image',async({page})
   expect(Number(await rect.getAttribute('width'))).toBeGreaterThan(beforeWidth);
 
   await expect(page.locator('#maskControls')).toHaveCount(0);await expect(page.locator('.mask-inline-action')).toHaveCount(2);
+  const actionBg=page.locator('.mask-inline-action-hit').first();expect(await actionBg.evaluate(node=>getComputedStyle(node).fill)).toBe('rgba(0, 0, 0, 0)');
+  const selectedBox=await rect.boundingBox(),actionBox=await page.locator('.mask-inline-action').first().boundingBox();expect(actionBox.y+actionBox.height).toBeLessThanOrEqual(selectedBox.y+2);
   await page.locator('.mask-inline-action[data-mask-action="duplicate"]').click();await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(2);
   await page.locator('.mask-inline-action[data-mask-action="delete"]').click();await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
 });

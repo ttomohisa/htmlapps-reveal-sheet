@@ -35,7 +35,7 @@ function createStudyView({core,dom,onAction,translate=key=>key}) {
   function svgNode(name){return dom.createElementNS('http://www.w3.org/2000/svg',name);}
   function addInlineAction(mask,kind,x,y,size){
     const group=svgNode('g');group.classList.add('mask-inline-action',kind);group.dataset.maskId=mask.id;group.dataset.maskAction=kind;group.setAttribute('tabindex','0');group.setAttribute('focusable','true');group.setAttribute('role','button');group.setAttribute('aria-label',translate(kind==='duplicate'?'duplicateCover':'deleteCover'));
-    const bg=svgNode('rect');bg.classList.add('mask-inline-action-bg');bg.setAttribute('x',String(x));bg.setAttribute('y',String(y));bg.setAttribute('width',String(size));bg.setAttribute('height',String(size));bg.setAttribute('rx',String(size*.28));group.append(bg);
+    const hit=svgNode('rect');hit.classList.add('mask-inline-action-hit');hit.setAttribute('x',String(x));hit.setAttribute('y',String(y));hit.setAttribute('width',String(size));hit.setAttribute('height',String(size));group.append(hit);
     const icon=svgNode('path');icon.classList.add('mask-inline-action-icon');icon.setAttribute('transform',`translate(${x},${y}) scale(${size/24})`);icon.setAttribute('d',kind==='duplicate'?'M8 8h10v10H8z M6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1':'M4 7h16 M9 7V4h6v3 M7 7l1 13h8l1-13 M10 10v7 M14 10v7');group.append(icon);
     const activate=event=>{event?.preventDefault();event?.stopPropagation();onAction({type:kind==='duplicate'?'DUPLICATE_MASK':'DELETE_MASK',maskId:mask.id});};
     group.addEventListener('pointerdown',event=>{event.preventDefault();event.stopPropagation();});
@@ -88,9 +88,9 @@ function createStudyView({core,dom,onAction,translate=key=>key}) {
           const handle=svgNode('circle');handle.classList.add('mask-resize-handle');handle.dataset.maskId=mask.id;handle.dataset.resizeCorner=corner;
           handle.setAttribute('cx',String(cx));handle.setAttribute('cy',String(cy));handle.setAttribute('r',String(radius));handle.setAttribute('aria-hidden','true');svg.append(handle);
         }
-        const actionSize=Math.max(20,Math.min(34,Math.max(asset.width,asset.height)*.03)),gap=actionSize*.18,total=actionSize*2+gap;
+        const actionSize=Math.max(20,Math.min(34,Math.max(asset.width,asset.height)*.03)),gap=Math.max(3,actionSize*.18),total=actionSize*2+gap;
         const actionX=Math.max(2,Math.min(asset.width-total-2,px.x+px.w-total));
-        let actionY=px.y+2;if(px.h<actionSize+4)actionY=px.y>=actionSize+4?px.y-actionSize-2:Math.min(asset.height-actionSize-2,px.y+px.h+2);
+        let actionY=px.y-actionSize-gap;if(actionY<2)actionY=Math.min(asset.height-actionSize-2,px.y+px.h+gap);
         addInlineAction(mask,'duplicate',actionX,actionY,actionSize);addInlineAction(mask,'delete',actionX+actionSize+gap,actionY,actionSize);
       }
     }

@@ -210,9 +210,9 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     if(event.button!==0||busy||mode!=='create'||doc.pages.length<2)return;
     const card=event.currentTarget.closest('.page-item'),list=$('pageList'),cards=[...list.querySelectorAll('.page-item')],fromIndex=cards.indexOf(card);if(fromIndex<0)return;
     event.preventDefault();event.stopPropagation();
-    const axis=env.getComputedStyle(list).flexDirection.startsWith('row')?'x':'y';
-    const centers=cards.map(item=>{const box=item.getBoundingClientRect();return axis==='x'?box.left+box.width/2:box.top+box.height/2;});
-    pageDrag={pointerId:event.pointerId,pageId,handle:event.currentTarget,card,cards,centers,axis,fromIndex,targetIndex:fromIndex,startX:event.clientX,startY:event.clientY};
+    const axis=env.getComputedStyle(list).flexDirection.startsWith('row')?'x':'y',listStyle=env.getComputedStyle(list),gap=parseFloat(axis==='x'?listStyle.columnGap:listStyle.rowGap)||parseFloat(listStyle.gap)||0;
+    const boxes=cards.map(item=>item.getBoundingClientRect()),centers=boxes.map(box=>axis==='x'?box.left+box.width/2:box.top+box.height/2),sourceBox=boxes[fromIndex],shiftDistance=(axis==='x'?sourceBox.width:sourceBox.height)+gap;
+    pageDrag={pointerId:event.pointerId,pageId,handle:event.currentTarget,card,cards,centers,axis,fromIndex,targetIndex:fromIndex,startX:event.clientX,startY:event.clientY,shiftDistance};
     card.classList.add('dragging');event.currentTarget.setAttribute('aria-grabbed','true');env.document.body.classList.add('page-reordering');event.currentTarget.setPointerCapture(event.pointerId);
   }
   function movePageDrag(event){
@@ -224,7 +224,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     if(target!==active.fromIndex){
       active.cards[target].classList.add(target<active.fromIndex?'drop-before':'drop-after');
       const from=Math.min(active.fromIndex,target),to=Math.max(active.fromIndex,target),direction=target>active.fromIndex?-1:1;
-      active.cards.forEach((card,index)=>{if(index===active.fromIndex||index<from||index>to)return;card.classList.add('reorder-shift');card.style.setProperty('--page-shift-x',active.axis==='x'?direction*16+'px':'0px');card.style.setProperty('--page-shift-y',active.axis==='y'?direction*16+'px':'0px');});
+      active.cards.forEach((card,index)=>{if(index===active.fromIndex||index<from||index>to)return;card.classList.add('reorder-shift');card.style.setProperty('--page-shift-x',active.axis==='x'?direction*active.shiftDistance+'px':'0px');card.style.setProperty('--page-shift-y',active.axis==='y'?direction*active.shiftDistance+'px':'0px');});
     }
   }
   function endPageDrag(event,cancelled=false){

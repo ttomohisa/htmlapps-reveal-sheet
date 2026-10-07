@@ -7,7 +7,7 @@ async function dragPage(page,from,to){
   await page.mouse.move(gb.x+gb.width/2,gb.y+gb.height/2);await page.mouse.down();
   await expect(source).toHaveClass(/dragging/);
   expect(await source.evaluate(node=>getComputedStyle(node).transform)).not.toBe('none');
-  await page.mouse.move(tb.x+tb.width*.72,tb.y+tb.height*.48,{steps:6});await expect(page.locator('#pageList .page-item.reorder-shift')).toHaveCount(1);await page.mouse.up();
+  await page.mouse.move(tb.x+tb.width*.72,tb.y+tb.height*.48,{steps:6});const shifted=page.locator('#pageList .page-item.reorder-shift');await expect(shifted).toHaveCount(1);const shiftValue=await shifted.first().evaluate(node=>Math.max(Math.abs(parseFloat(node.style.getPropertyValue('--page-shift-x'))||0),Math.abs(parseFloat(node.style.getPropertyValue('--page-shift-y'))||0)));expect(shiftValue).toBeGreaterThan(60);await page.mouse.up();
 }
 
 test('T05: page cards edit title/description, drag reorder, trash delete and Undo',async({page})=>{
