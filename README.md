@@ -11,7 +11,7 @@ Reveal Sheet is a browser-only study-sheet maker for diagrams, photos, screensho
 
 Selected images and saved-sheet data are processed on your device. The app does not upload them to a server and does not require an account or installation.
 
-![Reveal Sheet screenshot](assets/screenshot.png)
+![Reveal Sheet screenshot](assets/screenshot-en.png)
 
 ## Features
 
@@ -74,6 +74,8 @@ Original filenames, Undo history, current view position, and the author's study 
 On smartphones, **Create / Study / Save** is shown as a bottom navigation. The editor keeps page cards in a horizontal carousel; touching the card itself does not start a reorder, while the drag handle does.
 
 Guided study is compacted so the image and the primary action — **Reveal answer** or the rating buttons — fit together on a 390 × 760 viewport in the automated regression suite. Secondary actions such as Previous, Skip, Edit this question, and Finish study are kept under **More**.
+
+![Reveal Sheet mobile screenshot](assets/screenshot-mobile.png)
 
 ## Keyboard shortcuts
 
@@ -190,7 +192,7 @@ reveal-sheet.html             Repository standalone app
 
 ## Release status
 
-The repository is currently on **v0.9.0**, a release-candidate milestone toward v1.0.0. The main feature set is frozen while final regression, screenshots, release artifacts, and handoff checks are completed.
+The application version is **v1.0.0**, but this branch remains a release candidate until the required physical-device paths are actually verified. Automated regression, save compatibility, build artifacts, documentation, and screenshots are frozen here; unperformed Android / iPhone / Safari / Firefox checks are not reported as passed.
 
 ## Contributing
 
