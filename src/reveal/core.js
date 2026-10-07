@@ -10,7 +10,7 @@ function createRevealCore() {
   function error(code) { const value = new Error(code); value.code = code; return value; }
   function newDocument(ctx, title = 'Untitled sheet') {
     return { id: ctx.newId('document'), revision: 1, title,
-      defaults: { mode: 'free', otherAnswers: 'hidden' },
+      defaults: { mode: 'free', otherAnswers: 'hidden', coverColor:'#16624f' },
       pages: [], assets: [], questions: [], masks: [] };
   }
   function appendAsset(doc, asset, ctx, title) {
@@ -49,6 +49,11 @@ function createRevealCore() {
   }
   function applyCommand(doc,command,ctx) {
     if(!command || typeof command.type!=='string')throw error('INVALID_SHEET');
+    if(command.type==='SET_COVER_COLOR'){
+      const coverColor=String(command.coverColor||'').toLowerCase();if(!/^#[0-9a-f]{6}$/.test(coverColor))throw error('INVALID_SHEET');
+      if((doc.defaults.coverColor||'#16624f').toLowerCase()===coverColor&&Object.hasOwn(doc.defaults,'coverColor'))return mutation(doc);
+      return mutation({...doc,revision:doc.revision+1,defaults:{...doc.defaults,coverColor}});
+    }
     if(command.type==='ADD_ANSWER_MASK') {
       const {page,asset}=pageAsset(doc,command.pageId);
       if(doc.masks.length>=limits.maxMasks || doc.questions.length>=limits.maxQuestions || doc.masks.filter(x=>x.pageId===page.id).length>=limits.maxMasksPerPage)
@@ -343,7 +348,9 @@ function createRevealCore() {
     const doc=value.document;
     if(!exactKeys(doc,['id','revision','title','defaults','pages','assets','questions','masks']))return fail('$.document');
     if(!validId(doc.id)||!validPositiveInt(doc.revision)||!validText(doc.title,120))return fail('$.document.identity');
-    if(!exactKeys(doc.defaults,['mode','otherAnswers'])||!['free','guided'].includes(doc.defaults.mode)||!['hidden','visible'].includes(doc.defaults.otherAnswers))return fail('$.document.defaults');
+    const legacyDefaults=exactKeys(doc.defaults,['mode','otherAnswers']),colorDefaults=exactKeys(doc.defaults,['mode','otherAnswers','coverColor']);
+    if((!legacyDefaults&&!colorDefaults)||!['free','guided'].includes(doc.defaults.mode)||!['hidden','visible'].includes(doc.defaults.otherAnswers))return fail('$.document.defaults');
+    if(colorDefaults&&(typeof doc.defaults.coverColor!=='string'||!/^#[0-9A-Fa-f]{6}$/.test(doc.defaults.coverColor)))return fail('$.document.defaults.coverColor');
     if(!Array.isArray(doc.pages)||doc.pages.length<1)return fail('$.document.pages');
     if(doc.pages.length>limits.maxPages)return fail('$.document.pages','LIMIT_EXCEEDED');
     if(!Array.isArray(doc.assets)||doc.assets.length<1)return fail('$.document.assets');

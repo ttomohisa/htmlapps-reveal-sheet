@@ -5,9 +5,11 @@ function createProjectIO({core,imageIO,env}) {
   let invalidatedExportGeneration=-1;
   const validExportGeneration=generation=>Number.isSafeInteger(generation)&&generation>=0&&generation>invalidatedExportGeneration;
   function cleanDocument(doc){
+    const defaults={mode:doc.defaults.mode,otherAnswers:doc.defaults.otherAnswers};
+    if(typeof doc.defaults.coverColor==='string')defaults.coverColor=doc.defaults.coverColor;
     return {
       id:doc.id,revision:doc.revision,title:doc.title,
-      defaults:{mode:doc.defaults.mode,otherAnswers:doc.defaults.otherAnswers},
+      defaults,
       pages:doc.pages.map(page=>({id:page.id,title:page.title,description:page.description,imageId:page.imageId,questionOrder:[...page.questionOrder]})),
       assets:doc.assets.map(asset=>({id:asset.id,mime:asset.mime,width:asset.width,height:asset.height,byteLength:asset.byteLength,dataBase64:asset.dataBase64})),
       questions:doc.questions.map(question=>({id:question.id,pageId:question.pageId,revision:question.revision,maskIds:[...question.maskIds],prompt:question.prompt,answer:question.answer})),
