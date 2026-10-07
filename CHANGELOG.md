@@ -13,6 +13,14 @@ T17–T18: feature freeze, runtime-network/CSP/hostile-input audit, configured r
 - Added `docs/QA_MATRIX.md` to separate automated evidence from physical-device/manual items. Android/iPhone, real screen readers, real 200% zoom, background/screen-lock and OS save-cancel/file-handoff behavior remain unperformed until actually tested.
 - Updated the security document to describe the implemented lesson player, hostile input path, opt-in IndexedDB persistence and current privacy boundary rather than the obsolete v0.1 behavior.
 
+### Review UX corrections
+
+- Simplified cover editing after hands-on review: removed the separate Move image mode, Two points creation mode, view-direction buttons and move/size button matrix.
+- Placed covers now move directly by dragging on the image and resize from four visible corner handles. Keyboard alternatives remain: Arrow = 1 image px, Shift+Arrow = 10 px, Alt+Arrow = resize.
+- Empty-image dragging pans the zoomed view without a separate mode.
+- Combined Zoom out / current percentage / Zoom in into one control; the percentage is clickable and returns to the 100% whole-image view.
+- Aligned page-name, page-description and page-action controls along the same input row on desktop.
+
 ### Verification boundary
 
 Configured limits are rejection rules, not guaranteed capacity on every device. GitHub-hosted Chromium evidence will be recorded in `docs/QA_RESULTS.md`; physical-device items remain explicitly unperformed until real hardware testing.
