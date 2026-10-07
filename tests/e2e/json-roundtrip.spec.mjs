@@ -11,7 +11,6 @@ async function imagePoint(page,x,y){
   },{x,y});
 }
 async function addOneCover(page){
-  await page.locator('#coverButton').click();
   const a=await imagePoint(page,24,20),b=await imagePoint(page,60,42);
   await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);await page.mouse.up();
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);

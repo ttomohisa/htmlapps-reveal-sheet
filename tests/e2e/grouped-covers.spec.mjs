@@ -3,7 +3,7 @@ import {openApp,imagePath} from '../helpers/app.mjs';
 
 async function imagePoint(page,x,y){return page.locator('#maskSvg').evaluate((svg,point)=>{const p=svg.createSVGPoint();p.x=point.x;p.y=point.y;const out=p.matrixTransform(svg.getScreenCTM());return{x:out.x,y:out.y};},{x,y});}
 async function addCover(page,a,b){
-  await page.locator('#coverButton').click();const p1=await imagePoint(page,...a),p2=await imagePoint(page,...b);
+  const p1=await imagePoint(page,...a),p2=await imagePoint(page,...b);
   await page.mouse.move(p1.x,p1.y);await page.mouse.down();await page.mouse.move(p2.x,p2.y);await page.mouse.up();
 }
 
