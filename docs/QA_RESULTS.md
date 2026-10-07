@@ -2,7 +2,47 @@
 
 ## Scope and status
 
-This record contains verified CI evidence through v0.7.0 / T01–T14. It does not mark all 48 formal acceptance items complete. Page management, grouped/auxiliary covers, free and guided study, review sessions, targeted study-time editing, per-page view-state preservation, opt-in on-device persistence, self-contained study lesson HTML, non-executing lesson re-edit, schema-v1 compatibility/hostile-file validation, and prepared export recovery are implemented. Physical phones, Safari, Firefox, assistive technology and maximum-resource stress tests remain untested.
+This record contains verified CI evidence through v0.8.0 / T01–T16. It does not mark all 48 formal acceptance items complete. Page management, grouped/auxiliary covers, free/guided study, review sessions, targeted study-time editing, per-page view state, opt-in on-device persistence, self-contained lesson HTML, non-executing re-edit, schema-v1 interoperability, prepared export recovery, mobile/touch interaction and bilingual accessibility hardening are implemented. Physical phones, real screen readers, Safari, Firefox and maximum-resource stress tests remain untested.
+
+## Verified v0.8.0 milestone — 2026-10-07
+
+Tested application source commit: **96399dfb294cc7c178747fc591f0e4c0ff473bef**.
+
+- Application workflow **37558856579**: success.
+- Standalone validation workflow **37558856587**: success.
+- PR preview workflow **37558856581**: success.
+
+Environment: GitHub-hosted Windows runner, Node 24 and the repository-pinned Playwright / Chromium development browser. These are hosted automated checks, not physical Android/iPhone, user-PC Edge, Safari, Firefox or real assistive-technology tests.
+
+| Verification | Result |
+|---|---|
+| Pure unit tests | 117 passed, 0 failed |
+| Normal HTML opened via file URL | 76 passed |
+| Self-extracting HTML opened via file URL | 76 passed |
+| PowerShell syntax / assembly-negative fixtures | Passed |
+| Repository build and standalone contracts | Passed |
+| Normal/root-copy bytes and self-extract restoration | Passed |
+| QA capture step | Passed |
+| Readable HTML size | 0.36 MB |
+| Readable HTML SHA-256 in application workflow | `735de3a01ab3f0bf0a07a974d5bfc85f286bf30f9ed588454d5399d6ddad1086` |
+
+T15 automated checks define the final touch/viewport contract: `isTap` accepts movement up to 6 CSS px and rejects cancelled/non-finite gestures; `resizeView` preserves normalized center and relative zoom across valid viewport changes. Browser tests cover explicit continuous-cover mode, stable preview position during repeated cover creation, touch-style panning while zoomed, viewport resize/rotation preservation, 320 px width, short landscape, no page-level horizontal scroll, 48 px workflow targets and Escape cancellation for unfinished two-point covers.
+
+The narrow layout uses a bottom fixed Create / Study / Save navigation with safe-area-aware body/toast padding. Selected-cover controls remain below the image rather than covering it. Non-current editor sections are removed from narrow Study/Save layouts. Reduced-motion removes animation/transition and forced-colors receives explicit selected/focus outlines. These are automated CSS/browser regressions, not proof of physical safe-area, software keyboard or touch hardware behavior.
+
+T16 automated checks keep Japanese/English translation-key sets aligned, localize landmark/overlay labels, suppress repeated guided-study shortcut events, preserve input/dialog shortcut boundaries, and verify help/focus behavior. Optional page descriptions, question prompts and plain-text answers were added for accessible study context. Page descriptions/prompts may be exposed while studying; plain-text answers remain absent from visible text, accessible names and answer live regions until reveal in both the main app and exported lesson player.
+
+The accessibility layer explicitly states that Reveal Sheet does **not** OCR or automatically read answer text that exists only inside image pixels. Automated forced-colors/reduced-motion emulation and 320×420 help-dialog tests pass. Physical screen-reader behavior, actual browser 200% zoom, software keyboards and real-device safe areas remain manual / later release-candidate work and are listed in `docs/MOBILE_ACCESSIBILITY_QA.md`.
+
+### v0.8.0 implementation / verification notes
+
+- Continuous-cover mode was made explicit editor state so ordinary one-cover creation still returns to Move image.
+- A regression locks the image/SVG vertical position while continuous covers are added.
+- Transient pointer/two-point gestures are cancelled when workflow screens change.
+- Selected-cover controls were moved below the preview and touch targets aligned to the 48 px policy.
+- Optional page/question text was connected to revision invalidation and study rendering, then propagated to the lesson player.
+- Japanese labels for selected controls / study regions and lesson labels were completed after bilingual key tests exposed gaps.
+- Free-study plain-text answer output was added as a live region only after reveal, closing the same accessibility gap already covered in guided study.
 
 ## Verified v0.7.0 milestone — 2026-10-06
 
@@ -242,10 +282,10 @@ Feature tests were first observed failing for missing core/input functionality, 
 
 ## Acceptance mapping at this stage
 
-Verified CI paths through v0.7.0 cover the earlier T01–T12 mappings plus automated portions of AC-04, AC-05, AC-28, AC-29, AC-30, AC-31, AC-32, AC-33, AC-34, AC-35, AC-36 and AC-45: schema-v1 compatibility fixtures, hostile/boundary saved data, future-version refusal, prepared-output invalidation, filename/re-save behavior, save-start wording, self-contained lesson study/re-edit, isolated preview and external-network blocking. The current 107-unit / 66-readable / 66-self-extract suite reruns all earlier browser regressions on the v0.7.0 source. Formal acceptance items that require physical devices, maximum-resource observation, accessibility/manual review or later T15–T20 work remain open; automated coverage of one path is not full acceptance. No v1.0 release judgment is made.
+Verified CI paths through v0.8.0 cover the earlier T01–T14 mappings plus automated portions of AC-10, AC-22, AC-23, AC-24, AC-41, AC-42 and AC-43: touch gesture discrimination, viewport preservation, narrow/short layouts, fixed workflow navigation, keyboard cancellation/shortcuts, bilingual accessible labels, closed-answer privacy, optional accessible study text, help focus, forced-colors and reduced-motion. The current 117-unit / 76-readable / 76-self-extract suite reruns all earlier browser regressions on the v0.8.0 source. Physical-device, actual browser zoom, real screen-reader/software-keyboard and later T17–T20 release-candidate items remain open; automated viewport/emulation coverage is not full acceptance. No v1.0 release judgment is made.
 
 ## Not yet verified / not implemented
 
-Physical Android Chrome and iPhone Safari; macOS Safari; Firefox; Edge-specific behavior; HTTPS-hosted persistence behavior; no-JavaScript self-extractor fallback; maximum-size memory/performance stress; OS-level manual save/reopen outside CI; real screen-reader, software-keyboard, 200% zoom and forced-colors behavior. Browser storage is not claimed to be permanent and can be unavailable or cleared by the user/browser. The current automated hostile/boundary matrix does not replace the later T18 maximum-resource and real-device checks.
+Physical Android Chrome and iPhone Safari; macOS Safari; Firefox; Edge-specific behavior; HTTPS-hosted persistence behavior; no-JavaScript self-extractor fallback; maximum-size memory/performance stress; OS-level manual save/reopen outside CI; real screen-reader and software-keyboard behavior; physical safe-area / rotation / pinch behavior; actual browser 200% zoom; and manual forced-colors visual review. Browser storage is not claimed to be permanent and can be unavailable or cleared by the user/browser. `docs/MOBILE_ACCESSIBILITY_QA.md` records the manual/physical checks separately so viewport emulation is not promoted to device evidence.
 
-The next planned development stage is T15–T16 / v0.8.0: smartphone interaction/fixed UI, then bilingual keyboard/screen-reader/accessibility hardening. It must not begin until the v0.7.0 review gate is cleared by the repository owner. Continue using the owner-provided full specification, development plan and acceptance matrix. Do not infer later behavior from this milestone's UI.
+The next planned development stage is T17–T18 / v0.9.0: network/CSP/hostile-input release-candidate auditing followed by device, resource-bound, resume and documentation verification. It must not begin until the v0.8.0 review gate is cleared by the repository owner. Continue using the owner-provided full specification, development plan and acceptance matrix. Do not infer later behavior from this milestone's UI.
