@@ -1,6 +1,6 @@
 # Security and privacy
 
-Reveal Sheet v0.9.0 is a release-candidate development milestone. It accepts local JPEG, static PNG and static WebP images, validates format and resource bounds, and normalizes accepted images to PNG without resizing. Failed or hostile imports are rejected before replacing the current document.
+Reveal Sheet v1.0.0 is being frozen as a release candidate. It accepts local JPEG, static PNG and static WebP images, validates format and resource bounds, and normalizes accepted images to PNG without resizing. Failed or hostile imports are rejected before replacing the current document.
 
 ## Runtime network boundary
 
@@ -24,6 +24,6 @@ Browser storage can be cleared by the browser/OS and is not permanent backup. Us
 
 ## Resource limits and reporting
 
-Configured page/image/cover/file limits are safety rejection bounds, not guarantees that every device can process the maximum. Release-candidate observations and unperformed physical-device paths are recorded in `docs/QA_MATRIX.md` and `docs/QA_RESULTS.md`.
+Configured page/image/cover/file limits are safety rejection bounds, not guarantees that every device can process the maximum. Release observations and unperformed physical-device paths are recorded in `docs/QA_MATRIX.md` and `docs/QA_RESULTS.md`.
 
 Only use files and materials you are authorized to use. Images can visibly contain private information even when metadata is not copied. If reporting a vulnerability, do not put private source images, credentials or personal information in a public issue; use a minimal synthetic reproduction where possible.

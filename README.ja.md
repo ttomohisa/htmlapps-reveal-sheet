@@ -13,6 +13,8 @@
 
 ![Reveal Sheet screenshot](assets/screenshot.png)
 
+![Reveal Sheet mobile screenshot](assets/screenshot-mobile.png)
+
 ## Features
 
 - **画像上でそのまま覆いを作成** — 答えの範囲をドラッグして覆いを置き、移動・リサイズ・複製・削除・Undo / Redoができます。

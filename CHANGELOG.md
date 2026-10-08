@@ -2,15 +2,18 @@
 
 ## 1.0.0 - 2026-10-08 (release candidate)
 
-T19–T20 release preparation. No new product scope is added in this milestone.
+T19–T20: freeze schema-version-1 compatibility, run full release regression, align distributable artifacts and finalize user-facing release documentation/screenshots. The application version is 1.0.0, but required physical-device/browser paths remain explicitly pending until performed.
 
-- Restored the smartphone page-card list to a horizontal carousel while keeping reordering drag-handle-only, full-card displacement feedback and keyboard reordering.
-- Rewrote the Japanese and English README files around the finished-tool workflow: purpose, features, quick start, usage, privacy, limits, browser support and build instructions.
-- Updated the release screenshot capture so it uses the actual current editor: three real cover questions are created on an original synthetic desk-lamp worksheet before the desktop captures.
-- Made the capture choose Japanese and English explicitly instead of relying on browser locale or an ambiguous language-toggle state.
-- Added a smartphone guided-study capture that shows the image and primary reveal action together.
-- Advanced repository metadata to v1.0.0 for release-candidate validation.
-- Physical Android/iPhone, real screen-reader, real 200% zoom, background/screen-lock and OS save-cancel/file-handoff checks remain unperformed and are not represented as passed.
+- Added schema-version-1 milestone fixtures for v0.7.0, v0.8.0 and v0.9.0 so every saved development milestone from v0.2.0 onward is covered by the v1.0.0 compatibility suite.
+- Added release compatibility checks for readable/root-copy byte identity and self-extract restoration back to the canonical readable HTML.
+- Added an end-to-end old-JSON → edit → v1 lesson HTML → safe app re-import regression.
+- Added v1.0.0 documentation/capture contracts and refreshed the automated screenshot scene so the actual app shows real covers and guided mobile study rather than an empty editor.
+- Kept schemaVersion at 1 and did not add new product features during the release freeze.
+- Preserved the release boundary: real Android/iPhone, Safari/Firefox, screen-reader and OS file-handoff checks are not converted into automated passes.
+- Restored the mobile page-card horizontal carousel, preserving handle-only reordering and spatial movement feedback.
+- Refreshed the Japanese and English README files for readers of the finished app.
+- Captured the current application in Japanese and English with three actual answer covers, plus a mobile guided-study view with the main action visible.
+- Recorded the final release-candidate baseline in docs/QA_RESULTS.md and added a separate, reproducible CI workflow to refresh screenshots without editing the production UI.
 
 ## 0.9.0 - 2026-10-07 (release candidate)
 
