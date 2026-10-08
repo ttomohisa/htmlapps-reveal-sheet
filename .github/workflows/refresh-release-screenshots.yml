@@ -1,0 +1,76 @@
+name: Refresh release screenshots
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - scripts/capture-qa.mjs
+      - .github/workflows/refresh-release-screenshots.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked development packages
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Build and verify standalone HTML
+        shell: pwsh
+        run: ./scripts/check-repository.ps1
+
+      - name: Install development Chromium
+        run: npx playwright install chromium
+
+      - name: Capture current rendered UI
+        shell: pwsh
+        env:
+          CAPTURE_UPDATE_ASSETS: "1"
+        run: node scripts/capture-qa.mjs
+
+      - name: Verify screenshot files
+        shell: pwsh
+        run: |
+          $required = @(
+            'assets/screenshot.png',
+            'assets/screenshot-en.png',
+            'assets/screenshot-mobile.png'
+          )
+          foreach ($path in $required) {
+            if (!(Test-Path $path)) { throw "Missing release screenshot: $path" }
+            $bytes = (Get-Item $path).Length
+            if ($bytes -lt 10000) { throw "Release screenshot looks unexpectedly small: $path ($bytes bytes)" }
+          }
+
+      - name: Commit refreshed screenshots
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/screenshot.png assets/screenshot-en.png assets/screenshot-mobile.png
+          if (git diff --cached --quiet) {
+            Write-Host "Release screenshots already match the current capture."
+            exit 0
+          }
+          git commit -m "docs: refresh Reveal Sheet release screenshots"
+          if ("${{ github.event_name }}" -eq "pull_request") {
+            git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+          } else {
+            git push origin "HEAD:${{ github.ref_name }}"
+          }
