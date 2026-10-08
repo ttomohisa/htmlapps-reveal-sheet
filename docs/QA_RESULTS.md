@@ -4,6 +4,27 @@
 
 This record contains verified CI evidence through v0.9.0 / T01–T18. It does not mark all 48 formal acceptance items complete. The release-candidate automated matrix now includes runtime-network/CSP/hostile-input auditing, repeated standard-size round trips and the configured 30-page / 1,000-cover boundary in addition to the earlier editing, study, persistence, lesson, mobile/touch and bilingual accessibility work. Physical phones, real screen readers, Safari, Firefox, background/screen-lock behavior and OS save-cancel/file-handoff behavior remain untested.
 
+## v1.0.0 release-preparation baseline — 2026-10-08
+
+Baseline application commit before the v1.0.0 metadata/documentation pass: **0b831dc500397f0e0941816c2a681c2fe2b0b3f9** (PR #8 head).
+
+- Application workflow **37658057318**: success.
+- Standalone validation workflow **37658057314**: success.
+- PR preview workflow **37658057301**: success.
+- QA artifact: `reveal-qa-0b831dc500397f0e0941816c2a681c2fe2b0b3f9`, ID **11499677237**.
+
+| Verification | Result |
+|---|---|
+| Pure unit tests | 124 passed, 0 failed |
+| Normal HTML opened via file URL | 91 passed |
+| Self-extracting HTML opened via file URL | 91 passed |
+| Standalone validation | Passed |
+| PR Preview | Passed |
+| Readable HTML size | 424,086 bytes |
+| Self-extract HTML size | 143,069 bytes |
+
+This baseline includes the review-requested horizontal smartphone page carousel and the compact smartphone guided-study layout. The v1.0.0 release-candidate branch reruns the same automated gates after version/documentation/capture changes. Physical Android/iPhone, real screen-reader, real 200% zoom, background/screen-lock and OS save-cancel/file-handoff behavior remain unperformed and are not counted as passed.
+
 ## Verified v0.9.0 release candidate — 2026-10-07
 
 Tested application source commit: **527f2d9a02f8200f2e93cefe819542b901890bc2**.

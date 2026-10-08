@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.0 - 2026-10-08 (release candidate)
+
+T19–T20 release preparation. No new product scope is added in this milestone.
+
+- Restored the smartphone page-card list to a horizontal carousel while keeping reordering drag-handle-only, full-card displacement feedback and keyboard reordering.
+- Rewrote the Japanese and English README files around the finished-tool workflow: purpose, features, quick start, usage, privacy, limits, browser support and build instructions.
+- Updated the release screenshot capture so it uses the actual current editor: three real cover questions are created on an original synthetic desk-lamp worksheet before the desktop captures.
+- Made the capture choose Japanese and English explicitly instead of relying on browser locale or an ambiguous language-toggle state.
+- Added a smartphone guided-study capture that shows the image and primary reveal action together.
+- Advanced repository metadata to v1.0.0 for release-candidate validation.
+- Physical Android/iPhone, real screen-reader, real 200% zoom, background/screen-lock and OS save-cancel/file-handoff checks remain unperformed and are not represented as passed.
+
 ## 0.9.0 - 2026-10-07 (release candidate)
 
 T17–T18: feature freeze, runtime-network/CSP/hostile-input audit, configured resource-bound verification and release-candidate recovery checks. This is still a release candidate, not the v1.0 release.
