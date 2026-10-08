@@ -13,6 +13,8 @@
 
 ![Reveal Sheet screenshot](assets/screenshot.png)
 
+![Reveal Sheet mobile screenshot](assets/screenshot-mobile.png)
+
 ## Features
 
 - **画像上でそのまま覆いを作成** — 答えの範囲をドラッグして覆いを置き、移動・リサイズ・複製・削除・Undo / Redoができます。
@@ -190,7 +192,7 @@ reveal-sheet.html             リポジトリの単一HTML版
 
 ## リリース状況
 
-現在は **v0.9.0** です。v1.0.0へ向けたリリース候補として、主要機能の追加を止め、最終回帰、スクリーンショット、配布成果物、引き渡し確認を進める段階です。
+このブランチは **v1.0.0** のリリース候補です。主要機能の追加は止め、全回帰、単一HTML成果物、端末内処理の境界、保存・再読込、リリース用スクリーンショットを最終確認します。Android / iPhone実機、実スクリーンリーダー、実際の200%ズーム、OSのファイル受け渡しは、実機で確認するまで未検証として残します。リリース判定の境界はQA資料を参照してください。
 
 ## Contributing
 

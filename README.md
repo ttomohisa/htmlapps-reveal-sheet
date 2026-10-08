@@ -11,7 +11,9 @@ Reveal Sheet is a browser-only study-sheet maker for diagrams, photos, screensho
 
 Selected images and saved-sheet data are processed on your device. The app does not upload them to a server and does not require an account or installation.
 
-![Reveal Sheet screenshot](assets/screenshot.png)
+![Reveal Sheet screenshot](assets/screenshot-en.png)
+
+![Reveal Sheet mobile screenshot](assets/screenshot-mobile.png)
 
 ## Features
 
@@ -190,7 +192,7 @@ reveal-sheet.html             Repository standalone app
 
 ## Release status
 
-The repository is currently on **v0.9.0**, a release-candidate milestone toward v1.0.0. The main feature set is frozen while final regression, screenshots, release artifacts, and handoff checks are completed.
+This branch prepares **v1.0.0**. The product feature set is frozen and the automated release regression, standalone artifacts, local-processing boundary, save/reopen flows, and release screenshots are being finalized. Physical Android/iPhone, real screen-reader, real 200% zoom, and OS file-handoff checks remain explicitly unverified until they are performed on real hardware; see the QA documents for the release boundary.
 
 ## Contributing
 
