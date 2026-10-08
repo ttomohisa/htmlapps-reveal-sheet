@@ -86,8 +86,8 @@ button:disabled,input:disabled { cursor:not-allowed; }
  .local-badge { margin-top:0; }
  .reveal-shell { padding:12px; }
  .reveal-grid { grid-template-columns:minmax(0,1fr);gap:12px; }
- .page-list { flex-direction:column;align-items:stretch;max-height:min(32dvh,270px);overflow-x:hidden;overflow-y:auto;padding:4px;scroll-snap-type:none;overscroll-behavior:contain; }
- .page-item { min-width:0;width:100%;flex:0 0 auto;scroll-snap-align:none; }
+ .page-list { flex-direction:row;align-items:stretch;max-height:none;overflow-x:auto;overflow-y:hidden;padding:4px 4px 10px;scroll-snap-type:x proximity;scroll-padding-inline:4px;overscroll-behavior-inline:contain;scrollbar-gutter:auto; }
+ .page-item { min-width:clamp(230px,72vw,280px);width:clamp(230px,72vw,280px);flex:0 0 auto;scroll-snap-align:start; }
  .page-drag-handle { touch-action:none; }
  .preview-surface { height:44vh;min-height:250px;max-height:430px; }
  .sheet-header { margin:12px 0; }
@@ -251,8 +251,8 @@ button:disabled,input:disabled { cursor:not-allowed; }
 .has-pages.create-mode .input-note{display:none}.has-pages .input-status-row{min-height:28px;margin:5px 0}.has-pages .input-status-row p{font-size:12px}.has-pages .sheet-header{margin:4px 0 8px}@media(max-width:520px){.editor-guide{flex-basis:100%;order:5}.cover-color-control span{display:none}.image-meta-row{gap:6px}.image-meta>span:last-child{display:none}}
 
 @media(max-width:767px){
- .page-item.drop-before::before{top:2px;bottom:auto;left:8px;right:8px;width:auto;height:3px}
- .page-item.drop-after::after{top:auto;bottom:2px;left:8px;right:8px;width:auto;height:3px}
+ .page-item.drop-before::before{top:8px;bottom:8px;left:2px;right:auto;width:3px;height:auto}
+ .page-item.drop-after::after{top:8px;bottom:8px;left:auto;right:2px;width:3px;height:auto}
 }
 
 .study-mode .image-meta-row{display:none!important}

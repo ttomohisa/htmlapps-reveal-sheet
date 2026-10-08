@@ -52,14 +52,19 @@ test('T05: card editing replaces the old page action row and stays compact',asyn
   await expect(card.locator('.page-description-summary')).toContainText(/Add description|説明を追加/);const cb=await card.boundingBox(),sb=await card.locator('.page-description-summary').boundingBox();expect(sb.x+sb.width).toBeLessThanOrEqual(cb.x+cb.width-1);expect(sb.y+sb.height).toBeLessThanOrEqual(cb.y+cb.height+1);
 });
 
-test('T05: mobile page cards reorder vertically from the drag handle',async({page})=>{
+test('T05: mobile page cards stay horizontal and reorder from the drag handle',async({page})=>{
   await page.setViewportSize({width:390,height:780});await openApp(page);
   await page.locator('#imageInput').setInputFiles([imagePath('static.png'),imagePath('static.jpg'),imagePath('static.webp')]);
   const list=page.locator('#pageList'),titles=list.locator('.page-card-title');await expect(titles).toHaveCount(3);await expect(titles.nth(0)).toHaveValue(/Page 1|ページ1/);
-  expect(await list.evaluate(node=>getComputedStyle(node).flexDirection)).toBe('column');
+  expect(await list.evaluate(node=>getComputedStyle(node).flexDirection)).toBe('row');
+  expect(await list.evaluate(node=>node.scrollWidth>node.clientWidth)).toBe(true);
   const first=list.locator('.page-item').nth(0),second=list.locator('.page-item').nth(1),handle=first.locator('.page-drag-handle');
-  const hb=await handle.boundingBox(),sb=await second.boundingBox();await page.mouse.move(hb.x+hb.width/2,hb.y+hb.height/2);await page.mouse.down();await page.mouse.move(hb.x+hb.width/2,sb.y+sb.height/2,{steps:6});
-  await expect(page.locator('#pageList .page-item.reorder-shift')).toHaveCount(1);expect(Math.abs(parseFloat(await first.evaluate(node=>node.style.getPropertyValue('--page-drag-x')))||0)).toBeLessThan(1);await page.mouse.up();
+  const hb=await handle.boundingBox(),sb=await second.boundingBox();await page.mouse.move(hb.x+hb.width/2,hb.y+hb.height/2);await page.mouse.down();await page.mouse.move(Math.min(sb.x+70,386),hb.y+hb.height/2,{steps:6});
+  const shifted=page.locator('#pageList .page-item.reorder-shift');await expect(shifted).toHaveCount(1);
+  expect(Math.abs(parseFloat(await first.evaluate(node=>node.style.getPropertyValue('--page-drag-y')))||0)).toBeLessThan(1);
+  expect(Math.abs(parseFloat(await shifted.first().evaluate(node=>node.style.getPropertyValue('--page-shift-x')))||0)).toBeGreaterThan(100);
+  expect(Math.abs(parseFloat(await shifted.first().evaluate(node=>node.style.getPropertyValue('--page-shift-y')))||0)).toBeLessThan(1);
+  await page.mouse.up();
   await expect(titles.nth(1)).toHaveValue(/Page 1|ページ1/);
 });
 
