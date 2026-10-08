@@ -4,6 +4,36 @@
 
 This record contains verified CI evidence through v0.9.0 / T01–T18. It does not mark all 48 formal acceptance items complete. The release-candidate automated matrix now includes runtime-network/CSP/hostile-input auditing, repeated standard-size round trips and the configured 30-page / 1,000-cover boundary in addition to the earlier editing, study, persistence, lesson, mobile/touch and bilingual accessibility work. Physical phones, real screen readers, Safari, Firefox, background/screen-lock behavior and OS save-cancel/file-handoff behavior remain untested.
 
+## v1.0.0 automated release candidate — 2026-10-08
+
+Runtime/application source verified at commit **43e58119d60990ba6a20a86399e3e87592b8ea27**. The later screenshot commits change release documentation assets/workflow only and do not change the distributed application source.
+
+- Application workflow **37710615943**: success.
+- Standalone validation workflow **37710616039**: success.
+- PR preview workflow **37710616019**: success.
+- QA artifact: `reveal-qa-43e58119d60990ba6a20a86399e3e87592b8ea27`, ID **11522100604**.
+- Release screenshot refresh workflow **37711062714**: success.
+- Checked-in screenshot asset commit: **d0c77c45842dea734f9527e1420a05f632d00cde**.
+
+Environment recorded by the QA capture: Windows runner `10.0.26100`, Node `v24.21.0`, Chromium `153.0.8010.12`, direct `file://` app mode. The capture recorded **0 external HTTP(S) requests** and **0 page errors**.
+
+| Verification | Result |
+|---|---|
+| Pure unit tests | 124 passed, 0 failed |
+| Normal HTML opened via file URL | 91 passed |
+| Self-extracting HTML opened via file URL | 91 passed |
+| PowerShell syntax / assembly-negative fixtures | Passed |
+| Repository build and standalone contracts | Passed |
+| Normal/root-copy bytes and self-extract restoration | Passed |
+| PR Preview create/probe | Passed |
+| Release screenshot capture | Passed |
+| Readable HTML size | 424,086 bytes |
+| Self-extract HTML size | 143,065 bytes |
+
+Release screenshots now use the actual v1.0.0 rendered app with original synthetic study material. Japanese and English desktop captures contain three real cover questions; the smartphone capture enters guided study and keeps the image plus primary reveal action in one viewport. The screenshot helper selects the language explicitly instead of inferring it from browser locale.
+
+This automated evidence does **not** convert the outstanding physical/manual items into passes. Android Chrome, iPhone Safari, real screen readers, real browser 200% zoom, physical background/screen-lock behavior and OS save-cancel/file-handoff behavior remain unperformed.
+
 ## v1.0.0 release-preparation baseline — 2026-10-08
 
 Baseline application commit before the v1.0.0 metadata/documentation pass: **0b831dc500397f0e0941816c2a681c2fe2b0b3f9** (PR #8 head).
