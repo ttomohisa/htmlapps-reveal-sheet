@@ -3,7 +3,7 @@
   "name": "Reveal Sheet",
   "nameJa": "めくる暗記シート",
   "slug": "reveal-sheet",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Create accessible image-based study sheets with mobile-first editing, self-contained lesson HTML, safe re-editing, bilingual keyboard support, and optional local persistence.",
   "descriptionJa": "スマホ操作・日英・キーボード・読み上げに配慮し、教材HTML保存と安全な再編集、任意の端末内保存に対応するめくる暗記シート。",
   "defaultLanguage": "auto",

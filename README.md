@@ -18,6 +18,7 @@ Selected images and saved-sheet data are processed on your device. The app does 
 ## Features
 
 - **Create covers directly on an image** — Drag over an answer to place a cover, then move, resize, duplicate, delete, Undo, or Redo it.
+- **Choose the question order** — Select an answer cover and use Move earlier / Move later in Question content. Grouped covers move as one question; Undo/Redo and both saved formats preserve the order. The current study session keeps its existing order until you start a new session.
 - **Choose the cover color** — The selected color is stored with the sheet and used consistently while editing and studying.
 - **Turn several covers into one question** — Group related answers so they reveal together, or keep hint areas covered while studying.
 - **Study freely or one question at a time** — Reveal any answer manually, or use the guided flow with Recalled / Review again self-assessment.
@@ -192,7 +193,7 @@ reveal-sheet.html             Repository standalone app
 
 ## Release status
 
-This branch prepares **v1.0.0**. The product feature set is frozen and the automated release regression, standalone artifacts, local-processing boundary, save/reopen flows, and release screenshots are being finalized. Physical Android/iPhone, real screen-reader, real 200% zoom, and OS file-handoff checks remain explicitly unverified until they are performed on real hardware; see the QA documents for the release boundary.
+**v1.0.1** adds within-page question ordering and fixes cover duplication so grouped covers, auxiliary roles, prompts, and answers are preserved. The saved format remains schemaVersion 1. Physical Android/iPhone, real screen-reader, real 200% zoom, and OS file-handoff checks remain explicitly unverified until they are performed on real hardware; see the QA documents for the release boundary.
 
 ## Contributing
 

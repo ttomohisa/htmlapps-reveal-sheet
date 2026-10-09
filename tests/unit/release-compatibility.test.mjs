@@ -10,11 +10,11 @@ const io=createProjectIO({core,imageIO:{verifyStoredAsset:async()=>{}},env:{Blob
 const versions=['0.2.0','0.3.0','0.4.0','0.5.0','0.6.0','0.7.0','0.8.0','0.9.0'];
 function asFile(value,name){const file=new Blob([JSON.stringify(value)],{type:'application/json'});Object.defineProperty(file,'name',{value:name});return file;}
 
-test('T19: every schema-version-1 milestone fixture opens in v1.0.0 without dropping document data',async()=>{
+test('T19: every schema-version-1 milestone fixture opens in the current release without dropping document data',async()=>{
  const config=JSON.parse(fs.readFileSync('app.config.json','utf8'));
  const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
  const lock=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
- assert.equal(config.version,'1.0.0');assert.equal(pkg.version,'1.0.0');assert.equal(lock.version,'1.0.0');assert.equal(lock.packages[''].version,'1.0.0');
+ assert.equal(config.version,'1.0.1');assert.equal(pkg.version,config.version);assert.equal(lock.version,config.version);assert.equal(lock.packages[''].version,config.version);
  for(const version of versions){
   const path='tests/fixtures/sheets/v'+version+'.reveal.json';
   assert.equal(fs.existsSync(path),true,version);
