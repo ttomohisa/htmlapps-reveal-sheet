@@ -11,7 +11,7 @@ test('question reorder preserves groups through Undo, JSON reload and a lesson e
  const errors=[];page.on('pageerror',error=>errors.push(error.message));await load(page);await select(page,'m1');
  await expect(page.locator('#questionOrderPosition')).toContainText('1 / 3');await expect(page.locator('#questionEarlierButton')).toBeDisabled();
  await page.locator('#questionLaterButton').click();await expect(page.locator('#questionOrderPosition')).toContainText('2 / 3');
- await page.locator('#undoButton').click();await expect(page.locator('#questionOrderPosition')).toContainText('1 / 3');
+ await page.locator('#undoButton').click();await expect(page.locator('#inputStatus')).toContainText('Undid the previous edit.');await expect(page.locator('#questionOrderPosition')).toContainText('1 / 3');
  await page.locator('#redoButton').click();await expect(page.locator('#questionOrderPosition')).toContainText('2 / 3');
  await page.locator('#questionLaterButton').click();await expect(page.locator('#questionLaterButton')).toBeDisabled();
  const saved=await saveJson(page);expect(saved.data.document.pages[0].questionOrder).toEqual(['q2','q3','q1']);expect(saved.data.document.questions[0].maskIds).toEqual(['m1','m2']);
@@ -29,8 +29,9 @@ test('on-canvas duplicate preserves grouped text and auxiliary kind without page
  expect(copy).toMatchObject({prompt:'Name both parts',answer:'Alpha / ベータ'});expect(copy.maskIds).toHaveLength(2);expect(data.document.masks.filter(m=>m.kind==='auxiliary')).toHaveLength(2);expect(errors).toEqual([]);
 });
 test('language switches name their destination in the current UI language',async({page})=>{
- await openApp(page);await expect(page.locator('#languageButton')).toHaveText('JA');await expect(page.locator('#languageButton')).toHaveAttribute('title','Switch to Japanese');
- await page.locator('#languageButton').click();await expect(page.locator('#languageButton')).toHaveText('EN');await expect(page.locator('#languageButton')).toHaveAttribute('title','英語に切り替え');await expect(page.locator('#helpButton')).toHaveAttribute('title','使い方と注意事項');
+ await openApp(page);await expect(page.locator('#draftSaveStatus')).toContainText('On-device saving is off');await expect(page.locator('#studySaveStatus')).toContainText('Study progress saving is off');await expect(page.locator('#languageButton')).toHaveText('JA');await expect(page.locator('#languageButton')).toHaveAttribute('title','Switch to Japanese');
+ await page.locator('#languageButton').click();await expect(page.locator('#languageButton')).toHaveText('EN');await expect(page.locator('#languageButton')).toHaveAttribute('title','英語に切り替え');await expect(page.locator('#helpButton')).toHaveAttribute('title','使い方と注意事項');await expect(page.locator('#draftSaveStatus')).toContainText('端末内保存はOFF');await expect(page.locator('#studySaveStatus')).toContainText('学習記録はOFF');
+ await page.locator('#languageButton').click();await expect(page.locator('#draftSaveStatus')).toContainText('On-device saving is off');await expect(page.locator('#studySaveStatus')).toContainText('Study progress saving is off');
 });
 
 

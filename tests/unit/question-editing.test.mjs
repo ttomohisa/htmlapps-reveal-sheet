@@ -97,3 +97,16 @@ test('duplicating authored text over the sheet budget fails atomically',()=>{
  assert.throws(()=>core.applyCommand(doc,{type:'DUPLICATE_MASK',maskId:doc.questions.at(-1).maskIds[0]},ctx),{code:'LIMIT_EXCEEDED'});
  assert.equal(JSON.stringify(doc),snapshot);
 });
+
+test('switching language refreshes the current persistence statuses without replacing their state',()=>{
+ const source=fs.readFileSync('src/reveal/editor.js','utf8'),nodes={draftSaveStatus:{},studySaveStatus:{}};
+ const sandbox=vm.createContext({lang:'en',lastDraftStatus:null,lastStudyStatus:null,$:id=>nodes[id],mode:'create',exportBusy:false,lessonPreviewSession:null,doc:{pages:[]},selectedId:null,refreshCopy:()=>{}});
+ vm.runInContext("function t(key,values){return lang+':'+key+':'+JSON.stringify(values);}",sandbox);
+ for(const name of ['setDraftStatus','setStudyStatus','localize'])vm.runInContext(source.match(new RegExp('^  function '+name+'\\(.*$','m'))[0],sandbox);
+ sandbox.setDraftStatus('draftSaved',{time:'10:00'});sandbox.setStudyStatus('studyConflictStatus');sandbox.lang='ja';sandbox.localize();
+ assert.equal(nodes.draftSaveStatus.textContent,'ja:draftSaved:{"time":"10:00"}');assert.equal(nodes.studySaveStatus.textContent,'ja:studyConflictStatus:{}');
+});
+test('Undo and Redo copy applies to question edits as well as page additions',()=>{
+ const template=fs.readFileSync('src/index.template.html','utf8');
+ assert.doesNotMatch(template,/Undid the previous page addition|Redid the page addition|直前のページ追加を元に戻しました|ページ追加をやり直しました/);
+});

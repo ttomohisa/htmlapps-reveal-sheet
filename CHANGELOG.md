@@ -4,6 +4,7 @@
 
 - Added within-page question ordering with localized Earlier/Later controls, boundary states, and Undo/Redo. Grouped covers stay one question; existing study sessions retain their current order while new sessions and exports use the edited order.
 - Fixed on-canvas duplication dropping prompt/answer text or splitting grouped questions, and rejecting auxiliary covers. Auxiliary duplication invalidates affected study answers on the same page.
+- Fixed persistence-status messages retaining the previous UI language and made Undo/Redo messages describe edits instead of page additions.
 - Standardized editor and lesson language switches to EN/JA with destination titles and accessible names in the current UI language.
 - Retained schemaVersion 1, zero runtime dependencies, local-only processing, and byte-verified readable/root/self-extract output.
 

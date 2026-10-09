@@ -18,9 +18,10 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   // Toggle the attribute explicitly because shared CSS hides [hidden].
   function setSvgHidden(hidden){if(hidden)svg.setAttribute('hidden','');else svg.removeAttribute('hidden');}
   const t=translate;
+  let lastDraftStatus=null,lastStudyStatus=null;
   const studyView=createStudyView({core,dom:env.document,onAction:action=>handleViewAction(action),translate:t});
-  function setDraftStatus(key,values={}){const node=$('draftSaveStatus');if(node)node.textContent=t(key,values);}
-  function setStudyStatus(key,values={}){const node=$('studySaveStatus');if(node)node.textContent=t(key,values);}
+  function setDraftStatus(key,values={}){lastDraftStatus={key,values};const node=$('draftSaveStatus');if(node)node.textContent=t(key,values);}
+  function setStudyStatus(key,values={}){lastStudyStatus={key,values};const node=$('studySaveStatus');if(node)node.textContent=t(key,values);}
   function identityToken(identity){return identity?identity.documentId+'|'+identity.revision+'|'+identity.fingerprint:'';}
   async function currentStudyIdentity(documentSnapshot=doc){
     const fingerprint=await persistence.fingerprintDocument(documentSnapshot);if(!fingerprint)return null;
@@ -720,7 +721,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   env.addEventListener('pageshow',()=>{if(doc.pages.length)showPreview(true);});
   env.document.addEventListener('visibilitychange',()=>{if(env.document.hidden)pointerCancel();});
   env.addEventListener('beforeunload',event=>{if(doc.pages.length){event.preventDefault();event.returnValue='';}});
-  function localize(){if(mode==='save'&&exportBusy){invalidatePreparedExport();status('exportChanged');}refreshCopy();if(lessonPreviewSession)renderLessonPreview();const page=doc.pages.find(p=>p.id===selectedId);if(page)image.alt=t('imageAlt',{name:page.title});}
+  function localize(){if(lastDraftStatus)setDraftStatus(lastDraftStatus.key,lastDraftStatus.values);if(lastStudyStatus)setStudyStatus(lastStudyStatus.key,lastStudyStatus.values);if(mode==='save'&&exportBusy){invalidatePreparedExport();status('exportChanged');}refreshCopy();if(lessonPreviewSession)renderLessonPreview();const page=doc.pages.find(p=>p.id===selectedId);if(page)image.alt=t('imageAlt',{name:page.title});}
   refreshCopy();showPreview();initPersistence();
   return Object.freeze({localize,destroy});
 }
