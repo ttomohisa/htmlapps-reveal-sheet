@@ -143,6 +143,10 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       $('coverSelectionTitle').textContent='';$('coverSelectionDetail').textContent='';
     }
     const question=currentQuestion(),textPanel=$('questionTextPanel');textPanel.hidden=mode!=='create'||!question||chosen.length!==1;
+    const questionIndex=question?page.questionOrder.indexOf(question.id):-1;
+    $('questionOrderPosition').textContent=question?t('questionOrderPosition',{number:questionIndex+1,count:page.questionOrder.length}):'';
+    $('questionEarlierButton').disabled=busy||questionIndex<=0;
+    $('questionLaterButton').disabled=busy||questionIndex<0||questionIndex>=page.questionOrder.length-1;
     if(question){
       if(env.document.activeElement!==$('questionPromptInput'))$('questionPromptInput').value=question.prompt;
       if(env.document.activeElement!==$('questionAnswerInput'))$('questionAnswerInput').value=question.answer;
@@ -524,7 +528,11 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function handleViewAction(action){if(action.type==='SELECT_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);refreshCopy();return;}if(mode==='create'&&action.type==='DUPLICATE_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);duplicateSelected();return;}if(mode==='create'&&action.type==='DELETE_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);deleteSelected();return;}if(mode!=='study')return;if(action.type==='TOGGLE_QUESTION'&&studySession?.mode==='free'){studySession=core.toggleFree(studySession,action.questionId);scheduleStudySave();refreshCopy();return;}if(action.type==='REVEAL_CURRENT'&&studySession?.mode==='guided'&&action.questionId===currentGuidedId()){revealGuided();}}
   function editSelected(kind,amount=1){const mask=currentMask(),asset=currentAsset();if(!mask||!asset||mode!=='create')return;const dx=amount/asset.width,dy=amount/asset.height;let r={...mask.rect};if(kind==='left')r.x-=dx;if(kind==='right')r.x+=dx;if(kind==='up')r.y-=dy;if(kind==='down')r.y+=dy;if(kind==='wider')r.w+=dx;if(kind==='narrower')r.w-=dx;if(kind==='taller')r.h+=dy;if(kind==='shorter')r.h-=dy;try{const result=core.applyCommand(doc,{type:'SET_MASK_RECT',maskId:mask.id,rect:r},ctx);commit(result,mask.id);status('coverChanged');refreshCopy();}catch(error){if(error.code!=='INVALID_SHEET')throw error;}}
   function deleteSelected(){const mask=currentMask();if(!mask)return;const result=core.applyCommand(doc,{type:'DELETE_MASK',maskId:mask.id},ctx);commit(result,null);status('coverDeleted');refreshCopy();}
-  function duplicateSelected(){const mask=currentMask();if(!mask)return;const before=new Set(doc.masks.map(m=>m.id)),result=core.applyCommand(doc,{type:'DUPLICATE_MASK',maskId:mask.id},ctx),added=result.document.masks.find(m=>!before.has(m.id));commit(result,added?.id||null);selectedMaskIds=added?new Set([added.id]):new Set();status('coverAdded');refreshCopy();}
+  function duplicateSelected(){
+    const mask=currentMask();if(!mask||busy||mode!=='create')return;
+    try{const before=new Set(doc.masks.map(m=>m.id)),result=core.applyCommand(doc,{type:'DUPLICATE_MASK',maskId:mask.id},ctx),added=result.document.masks.find(m=>!before.has(m.id));commit(result,added?.id||null);selectedMaskIds=added?new Set([added.id]):new Set();status('coverAdded');refreshCopy();}
+    catch(error){status('error_'+(error?.code||'INVALID_SHEET'));}
+  }
   function groupSelected(){
     const page=currentPage();if(!page||busy)return;const chosen=doc.masks.filter(mask=>mask.pageId===page.id&&selectedMaskIds.has(mask.id));
     const questionIds=[...new Set(chosen.filter(mask=>mask.kind==='answer').map(mask=>mask.questionId))];if(chosen.some(mask=>mask.kind!=='answer')||questionIds.length<2)return;
@@ -540,9 +548,10 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     const result=core.applyCommand(doc,{type:'CONVERT_MASK_KIND',maskId:chosen[0].id,kind},ctx);commit(result,chosen[0].id);selectedMaskIds=new Set([chosen[0].id]);status(kind==='auxiliary'?'madeAuxiliary':'madeAnswer');refreshCopy();
   }
   function duplicateSelection(){
-    const page=currentPage();if(!page||busy)return;const ids=doc.masks.filter(mask=>mask.pageId===page.id&&selectedMaskIds.has(mask.id)).map(mask=>mask.id);if(!ids.length)return;
-    const before=new Set(doc.masks.map(mask=>mask.id)),result=core.applyCommand(doc,{type:'DUPLICATE_SELECTION',maskIds:ids},ctx),newIds=result.document.masks.filter(mask=>!before.has(mask.id)).map(mask=>mask.id);
-    commit(result,newIds[0]||null);selectedMaskIds=new Set(newIds);status('duplicatedSelection');refreshCopy();
+    const page=currentPage();if(!page||busy||mode!=='create')return;const ids=doc.masks.filter(mask=>mask.pageId===page.id&&selectedMaskIds.has(mask.id)).map(mask=>mask.id);if(!ids.length)return;
+    try{const before=new Set(doc.masks.map(mask=>mask.id)),result=core.applyCommand(doc,{type:'DUPLICATE_SELECTION',maskIds:ids},ctx),newIds=result.document.masks.filter(mask=>!before.has(mask.id)).map(mask=>mask.id);
+      commit(result,newIds[0]||null);selectedMaskIds=new Set(newIds);status('duplicatedSelection');refreshCopy();}
+    catch(error){status('error_'+(error?.code||'INVALID_SHEET'));}
   }
   function renamePage(pageId,title){
     const page=doc.pages.find(item=>item.id===pageId);if(!page||busy||mode!=='create')return;
@@ -553,6 +562,11 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     const page=doc.pages.find(item=>item.id===pageId);if(!page||busy||mode!=='create')return;
     try{const result=core.applyCommand(doc,{type:'SET_PAGE_DESCRIPTION',pageId,description},ctx);if(result.document!==doc){commit(result,selectedMaskId);status('pageDescriptionChanged');refreshCopy();}}
     catch(error){status('error_'+(error?.code||'LIMIT_EXCEEDED'));refreshCopy();}
+  }
+  function moveQuestion(delta){
+    const question=currentQuestion();if(!question||busy||mode!=='create')return;
+    const result=core.applyCommand(doc,{type:'MOVE_QUESTION',questionId:question.id,delta},ctx);
+    if(result.document!==doc){commit(result,selectedMaskId);status('questionReordered');refreshCopy();}
   }
   function changeQuestionText(){
     const question=currentQuestion();if(!question||busy||mode!=='create')return;const prompt=$('questionPromptInput').value,answer=$('questionAnswerInput').value;
@@ -688,6 +702,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   $('redoButton').addEventListener('click',()=>history('redo'));
   $('coverColor').addEventListener('change',event=>{if(mode!=='create'||busy)return;const result=core.applyCommand(doc,{type:'SET_COVER_COLOR',coverColor:event.currentTarget.value},ctx);if(result.document!==doc){commit(result,selectedMaskId);status('coverColorChanged');refreshCopy();}});
   $('questionPromptInput').addEventListener('change',changeQuestionText);$('questionAnswerInput').addEventListener('change',changeQuestionText);
+  $('questionEarlierButton').addEventListener('click',()=>moveQuestion(-1));$('questionLaterButton').addEventListener('click',()=>moveQuestion(1));
   $('groupButton').addEventListener('click',groupSelected);$('ungroupButton').addEventListener('click',ungroupSelected);$('makeAuxiliaryButton').addEventListener('click',()=>convertSelected('auxiliary'));$('makeAnswerButton').addEventListener('click',()=>convertSelected('answer'));$('duplicateSelectionButton').addEventListener('click',duplicateSelection);
   $('freeModeButton').addEventListener('click',()=>switchStudyMode('free'));$('guidedModeButton').addEventListener('click',()=>switchStudyMode('guided'));$('otherAnswersHidden').addEventListener('change',event=>{if(event.target.checked)changeOtherAnswers('hidden');});$('otherAnswersVisible').addEventListener('change',event=>{if(event.target.checked)changeOtherAnswers('visible');});$('revealCurrentButton').addEventListener('click',revealGuided);$('recalledButton').addEventListener('click',()=>rateGuided('recalled'));$('againButton').addEventListener('click',()=>rateGuided('again'));$('skipButton').addEventListener('click',skipGuided);$('previousQuestionButton').addEventListener('click',previousGuided);$('finishStudyButton').addEventListener('click',finishGuided);$('reviewAgainButton').addEventListener('click',()=>reviewGuided('again'));$('reviewUncheckedButton').addEventListener('click',()=>reviewGuided('unchecked'));
   $('viewZoomIn').addEventListener('click',()=>zoomView(1.25));$('viewZoomOut').addEventListener('click',()=>zoomView(.8));$('viewFit').addEventListener('click',fitView);$('focusQuestionButton').addEventListener('click',focusCurrentQuestion);$('editCurrentQuestionButton').addEventListener('click',editCurrentQuestion);$('returnToStudyButton').addEventListener('click',returnToStudy);

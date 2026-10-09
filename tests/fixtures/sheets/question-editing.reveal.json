@@ -1,0 +1,134 @@
+{
+  "format": "reveal-sheet",
+  "schemaVersion": 1,
+  "appVersion": "1.0.0",
+  "kind": "editable",
+  "document": {
+    "id": "editing_qa",
+    "revision": 1,
+    "title": "Question editing QA",
+    "defaults": {
+      "mode": "free",
+      "otherAnswers": "hidden",
+      "coverColor": "#16624f"
+    },
+    "pages": [
+      {
+        "id": "p1",
+        "title": "Parts",
+        "description": "Synthetic test diagram",
+        "imageId": "a1",
+        "questionOrder": [
+          "q1",
+          "q2",
+          "q3"
+        ]
+      }
+    ],
+    "assets": [
+      {
+        "id": "a1",
+        "mime": "image/png",
+        "width": 120,
+        "height": 80,
+        "byteLength": 288,
+        "dataBase64": "iVBORw0KGgoAAAANSUhEUgAAAHgAAABQCAYAAADSm7GJAAAA50lEQVR4nO3RsRHEMAzAMI+ezf0TfBvlKBRcgDj3nLup8yxrejhgwIABAwYMeEfjwwEDBgwYMGDAO5oeDhgwYMCAAQPe0fhwwIABAwYMGPCOpocDBgwYMGDAgHc0PhwwYMCAAQMGvKPp4YABAwYMGDDgHY0PBwwYMGDAgAHvaHo4YMCAAQP+2weev9q9Z1WA4wGOBzge4HiA4wGOBzge4HiA4wGOBzge4HiA4wGOBzge4HiA4wGOBzge4HiA4wGOBzge4HiA4wGOBzge4HiA4wGOBzge4HiA4wGOBzge4HiA4wGOBzjeD00/aaKR8g1DAAAAAElFTkSuQmCC"
+      }
+    ],
+    "questions": [
+      {
+        "id": "q1",
+        "pageId": "p1",
+        "revision": 1,
+        "maskIds": [
+          "m1",
+          "m2"
+        ],
+        "prompt": "Name both parts",
+        "answer": "Alpha / ベータ"
+      },
+      {
+        "id": "q2",
+        "pageId": "p1",
+        "revision": 1,
+        "maskIds": [
+          "m3"
+        ],
+        "prompt": "Third part",
+        "answer": "Gamma"
+      },
+      {
+        "id": "q3",
+        "pageId": "p1",
+        "revision": 1,
+        "maskIds": [
+          "m4"
+        ],
+        "prompt": "Last part",
+        "answer": "Delta"
+      }
+    ],
+    "masks": [
+      {
+        "id": "m1",
+        "pageId": "p1",
+        "kind": "answer",
+        "questionId": "q1",
+        "rect": {
+          "x": 0.05,
+          "y": 0.25,
+          "w": 0.1,
+          "h": 0.2
+        }
+      },
+      {
+        "id": "m2",
+        "pageId": "p1",
+        "kind": "answer",
+        "questionId": "q1",
+        "rect": {
+          "x": 0.25,
+          "y": 0.25,
+          "w": 0.1,
+          "h": 0.2
+        }
+      },
+      {
+        "id": "m3",
+        "pageId": "p1",
+        "kind": "answer",
+        "questionId": "q2",
+        "rect": {
+          "x": 0.45,
+          "y": 0.25,
+          "w": 0.1,
+          "h": 0.2
+        }
+      },
+      {
+        "id": "m4",
+        "pageId": "p1",
+        "kind": "answer",
+        "questionId": "q3",
+        "rect": {
+          "x": 0.65,
+          "y": 0.25,
+          "w": 0.1,
+          "h": 0.2
+        }
+      },
+      {
+        "id": "m5",
+        "pageId": "p1",
+        "kind": "auxiliary",
+        "questionId": null,
+        "rect": {
+          "x": 0.82,
+          "y": 0.25,
+          "w": 0.1,
+          "h": 0.2
+        }
+      }
+    ]
+  }
+}

@@ -258,3 +258,6 @@ button:disabled,input:disabled { cursor:not-allowed; }
 .study-mode .image-meta-row{display:none!important}
 
 .study-summary>div:first-child{flex:0 0 auto;min-width:128px}.study-summary .study-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.study-summary .study-actions .button{min-height:44px;padding:8px 12px}
+
+.question-order-controls { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px; }
+.question-order-controls > span { color:var(--muted);font-size:12px; }

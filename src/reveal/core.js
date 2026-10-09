@@ -154,7 +154,11 @@ function createRevealCore() {
       }
       for(const source of selectedAux){const mid=ctx.newId('mask');newMasks.push(offsetMask(source,mid,null,'auxiliary'));}
       const pages=doc.pages.map(page=>({...page,questionOrder:page.questionOrder.flatMap(id=>duplicateQuestionByOriginal.has(id)?[id,duplicateQuestionByOriginal.get(id)]:[id])}));
-      return mutation({...doc,revision:doc.revision+1,pages,questions:[...doc.questions,...newQuestions],masks:[...doc.masks,...newMasks]},{addedQuestionIds:newQuestions.map(question=>question.id),affectedQuestionIds:newQuestions.map(question=>question.id)});
+      const auxiliaryPages=new Set(selectedAux.map(mask=>mask.pageId));
+      const affectedQuestionIds=[...doc.questions.filter(question=>auxiliaryPages.has(question.pageId)).map(question=>question.id),...newQuestions.map(question=>question.id)];
+      const next={...doc,revision:doc.revision+1,pages,questions:[...doc.questions,...newQuestions],masks:[...doc.masks,...newMasks]};
+      if(totalUserTextBytes(next)>1024*1024)throw error('LIMIT_EXCEEDED');
+      return mutation(next,{addedQuestionIds:newQuestions.map(question=>question.id),affectedQuestionIds});
     }
     if(command.type==='RENAME_PAGE') {
       const page=doc.pages.find(item=>item.id===command.pageId);if(!page||!validText(command.title,120))throw error('INVALID_SHEET');
@@ -204,10 +208,17 @@ function createRevealCore() {
       return mutation({...doc,revision:doc.revision+1,pages,assets,questions,masks},{deletedQuestionIds});
     }
     if(command.type==='DUPLICATE_MASK') {
-      const source=doc.masks.find(item=>item.id===command.maskId); if(!source || source.kind!=='answer')throw error('INVALID_SHEET');
-      const {asset}=pageAsset(doc,source.pageId),px=1/asset.width,py=1/asset.height;
-      const rect=normalizeRect({x:Math.min(1-source.rect.w,source.rect.x+10*px),y:Math.min(1-source.rect.h,source.rect.y+10*py),w:source.rect.w,h:source.rect.h},asset);
-      return applyCommand(doc,{type:'ADD_ANSWER_MASK',pageId:source.pageId,rect},ctx);
+      return applyCommand(doc,{type:'DUPLICATE_SELECTION',maskIds:[command.maskId]},ctx);
+    }
+    if(command.type==='MOVE_QUESTION') {
+      const question=doc.questions.find(item=>item.id===command.questionId),delta=command.delta;
+      if(!question||!Number.isInteger(delta)||![-1,1].includes(delta))throw error('INVALID_SHEET');
+      const page=doc.pages.find(item=>item.id===question.pageId),index=page?.questionOrder.indexOf(question.id)??-1;
+      if(index<0)throw error('INVALID_SHEET');
+      const target=index+delta;if(target<0||target>=page.questionOrder.length)return mutation(doc);
+      const questionOrder=[...page.questionOrder];[questionOrder[index],questionOrder[target]]=[questionOrder[target],questionOrder[index]];
+      const pages=doc.pages.map(item=>item.id===page.id?{...item,questionOrder}:item);
+      return mutation({...doc,revision:doc.revision+1,pages});
     }
     throw error('INVALID_SHEET');
   }

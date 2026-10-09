@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.1 - 2026-10-09
+
+- Added within-page question ordering with localized Earlier/Later controls, boundary states, and Undo/Redo. Grouped covers stay one question; existing study sessions retain their current order while new sessions and exports use the edited order.
+- Fixed on-canvas duplication dropping prompt/answer text or splitting grouped questions, and rejecting auxiliary covers. Auxiliary duplication invalidates affected study answers on the same page.
+- Standardized editor and lesson language switches to EN/JA with destination titles and accessible names in the current UI language.
+- Retained schemaVersion 1, zero runtime dependencies, local-only processing, and byte-verified readable/root/self-extract output.
+
 ## 1.0.0 - 2026-10-08 (release candidate)
 
 T19–T20: freeze schema-version-1 compatibility, run full release regression, align distributable artifacts and finalize user-facing release documentation/screenshots. The application version is 1.0.0, but required physical-device/browser paths remain explicitly pending until performed.
