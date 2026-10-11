@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Keep Japanese and English help focused on usage and practical limitations; remove developer implementation and verification-status notes.
+
 ## 1.0.1 - 2026-10-09
 
 - Added within-page question ordering with localized Earlier/Later controls, boundary states, and Undo/Redo. Grouped covers stay one question; existing study sessions retain their current order while new sessions and exports use the edited order.
