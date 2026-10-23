@@ -595,3 +595,7 @@ Browser Kitty本体への登録、紹介ページ、公開URL、サイト更新�
 ページ内の問題順は、答え用の覆いを一つ選択した問題欄で「順番を前へ／順番を後ろへ」により変更できる。先頭・末尾では対応ボタンを無効にし、グループの全覆いを一問のまま移動する。Undo／Redo、編集データ・教材HTMLへの保存と再読込に対応する。14章の通り進行中の学習回の順序・評価は維持し、新しい学習回から変更した順序を使う。
 
 画像上の複製は複数選択の複製と同じ規則を使う。グループ全体・問題文・答えを複製し、補助の覆いは補助のまま複製する。複製した補助があるページの確認・自己評価は未回答へ戻す。日英の切替ボタンはEN／JAを表示し、現在のUI言語で切替先のtitleとaria-labelを示す。保存スキーマは1を維持する。
+
+## Informational footer on smartphones
+
+Hide only the main informational footer using the existing smartphone layout query `(max-width:767px)`. Preserve functional navigation, desktop footer, existing local-processing wording and Help content. No build information is added.
