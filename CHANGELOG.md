@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Hide the informational footer on smartphones while preserving functional navigation and desktop visibility.
+
+
 - Keep Japanese and English help focused on usage and practical limitations; remove developer implementation and verification-status notes.
 
 ## 1.0.1 - 2026-10-09
