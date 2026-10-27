@@ -300,3 +300,7 @@ if (-not $webrtcReadyText.Contains("options.requireReadyChannelOpen!==false&&(!r
   throw "WebRTC application-ready must wait for the designated DataChannel to open."
 }
 
+
+# Header icons and version visibility across source and generated releases.
+& node (Join-Path $Root "scripts/test-header-ui.cjs")
+if ($LASTEXITCODE -ne 0) { throw "Header UI regression failed." }

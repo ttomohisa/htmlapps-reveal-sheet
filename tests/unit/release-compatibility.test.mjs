@@ -14,7 +14,7 @@ test('T19: every schema-version-1 milestone fixture opens in the current release
  const config=JSON.parse(fs.readFileSync('app.config.json','utf8'));
  const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
  const lock=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
- assert.equal(config.version,'1.0.1');assert.equal(pkg.version,config.version);assert.equal(lock.version,config.version);assert.equal(lock.packages[''].version,config.version);
+ assert.equal(config.version,'1.0.2');assert.equal(pkg.version,config.version);assert.equal(lock.version,config.version);assert.equal(lock.packages[''].version,config.version);
  for(const version of versions){
   const path='tests/fixtures/sheets/v'+version+'.reveal.json';
   assert.equal(fs.existsSync(path),true,version);

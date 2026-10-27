@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2 - 2026-10-27
+
+- Keep the header version visible on narrow smartphones without overlapping the app name or language/Help controls.
+
 ## Unreleased
 
 - Hide the informational footer on smartphones while preserving functional navigation and desktop visibility.
