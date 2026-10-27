@@ -6,7 +6,7 @@ const cfg={"slug": "reveal-sheet", "bp": 767, "end": "helpOffline", "badge": "lo
 const evidence=path.resolve('test-results/mobile-footer');
 async function main(){
  fs.mkdirSync(evidence,{recursive:true});const browser=await chromium.launch();
- try{for(const language of ['ja','en'])for(const [width,height,touch]of [[1360,900,false],[cfg.bp+1,568,false],[cfg.bp,568,false],[320,568,false],[393,252,false],...(cfg.slug==='photo-collage'?[[900,500,true]]:[])]){
+ try{for(const language of ['ja','en'])for(const [width,height,touch]of [[1360,900,false],[cfg.bp+1,568,false],[cfg.bp,568,false],[320,568,false],[360,640,false],[390,844,false],[393,252,false],...(cfg.slug==='photo-collage'?[[900,500,true]]:[])]){
  const context=await browser.newContext({viewport:{width,height},locale:language,reducedMotion:'reduce',hasTouch:touch});
  const page=await context.newPage(),errors=[],requests=[],label=`${language}-${width}x${height}${touch?'-coarse':''}`;
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url());});
@@ -14,6 +14,10 @@ async function main(){
  await page.goto(pathToFileURL(path.resolve(__dirname,'../dist/index.html')).href);
  await page.locator('#helpButton').waitFor();
  if(await page.locator('html').getAttribute('lang')!==language)await page.locator('#languageButton').click();
+ const headerVersion=page.locator('header .version-badge');
+ assert.equal(await headerVersion.isVisible(),true,label+': header version is visible');
+ assert.equal((await headerVersion.textContent()).trim(),'v'+JSON.parse(fs.readFileSync(path.resolve(__dirname,'../app.config.json'),'utf8')).version,label+': current version');
+ assert.ok(await headerVersion.evaluate(el=>{const r=el.getBoundingClientRect();if(r.left<0||r.right>innerWidth||el.scrollWidth>el.clientWidth+1)return false;for(let p=el.parentElement;p;p=p.parentElement){if(/hidden|clip/.test(getComputedStyle(p).overflowX)){const b=p.getBoundingClientRect();if(r.left<b.left-1||r.right>b.right+1)return false;}}return true;}),label+': version is not clipped');
  const badge=page.locator('[data-i18n="'+cfg.badge+'"]');
  assert.equal((await badge.textContent()).trim(),language==='ja'?'完全ローカル処理':'Fully local processing');
  const phone=width<=cfg.bp||(cfg.slug==='photo-collage'&&touch&&height<=520);

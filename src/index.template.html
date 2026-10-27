@@ -63,7 +63,7 @@ dialog { color:var(--text);background:var(--surface); }
 .dialog-body h3:first-child { margin-top:0; }
 .dialog-body li { margin-bottom:10px; }
 .dialog-note { background:#edf4f0;padding:14px;border-radius:10px; }
-@media(max-width:479px) { .version-badge { display:none; } }
+
 /* Adapt canonical confirmation to short viewports without losing its bottom sheet. */
 .app-confirm-dialog { max-height:calc(100dvh - 16px); }
 .app-confirm-dialog[open] { display:flex;flex-direction:column; }
@@ -109,6 +109,13 @@ dialog { color:var(--text);background:var(--surface); }
 @media(max-width:520px) { .app-toast { left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));max-width:none; } }
 /* REVEAL:SHARED_CSS */
       @media (max-width:767px) { body > footer { display: none; } }
+
+    @media (max-width: 600px) {
+      .brand-name { display: flex; align-items: center; }
+      .brand-name > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+      .version-badge { flex: 0 0 auto; white-space: nowrap; }
+      .header-actions { flex: 0 0 auto; }
+    }
   </style>
 </head>
 <body>
@@ -117,7 +124,7 @@ dialog { color:var(--text);background:var(--surface); }
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><img id="appBrandIcon" src="__APP_ICON_DATA_URI__" alt=""></div>
         <div class="brand-copy">
-          <p class="brand-name"><span id="brandName">Reveal Sheet</span><span class="version-badge" id="versionBadge">v0.1.0</span></p>
+          <p class="brand-name"><span id="brandName">Reveal Sheet</span><span class="version-badge" id="versionBadge">v1.0.2</span></p>
           <p class="brand-meta" data-i18n="brandMeta">Study sheets from your images</p>
         </div>
       </div>

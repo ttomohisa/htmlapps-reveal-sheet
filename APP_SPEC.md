@@ -599,3 +599,7 @@ Browser Kitty本体への登録、紹介ページ、公開URL、サイト更新�
 ## Informational footer on smartphones
 
 Hide only the main informational footer using the existing smartphone layout query `(max-width:767px)`. Preserve functional navigation, desktop footer, existing local-processing wording and Help content. No build information is added.
+
+## Header visibility
+
+Keep the header version visible on narrow smartphones without overlapping the app name or language/Help controls. Verify Japanese and English at 320px, 360px, 390px and desktop widths.
