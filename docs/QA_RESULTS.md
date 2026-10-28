@@ -2,7 +2,37 @@
 
 ## Scope and status
 
-This record contains verified CI evidence through v0.9.0 / T01–T18. It does not mark all 48 formal acceptance items complete. The release-candidate automated matrix now includes runtime-network/CSP/hostile-input auditing, repeated standard-size round trips and the configured 30-page / 1,000-cover boundary in addition to the earlier editing, study, persistence, lesson, mobile/touch and bilingual accessibility work. Physical phones, real screen readers, Safari, Firefox, background/screen-lock behavior and OS save-cancel/file-handoff behavior remain untested.
+This record contains the v1.1.0 mobile-editor verification below and the historical release/CI evidence that follows it. It does not mark all 48 formal acceptance items complete. The automated matrix includes runtime-network/CSP/hostile-input auditing, repeated standard-size round trips and the configured 30-page / 1,000-cover boundary in addition to editing, study, persistence, lesson, mobile/touch and bilingual accessibility work. Physical phones, real screen readers, Safari, Firefox, background/screen-lock behavior and OS save-cancel/file-handoff behavior remain untested.
+
+## v1.1.0 mobile editor correction — 2026-10-28
+
+The user reported that moving an enlarged image was too slow and that the smartphone interface still felt unlike a native app. Verification used the revised source on PR #16, based on commit `98fc3f5725aa52ea3c180cd19475ea7b7c4c6435`. The generated readable HTML SHA-256 was `9f08ed63f4906797a3de8d7129399b0e133eeea2060f22cac9257af68b745efa`. Hosted CI/preview results for the resulting commit are recorded in the PR; the table here records the completed local run.
+
+Environment: Linux `6.18.55`, Node `v24.22.1`, PowerShell `7.5.4`, the repository-pinned Playwright `1.63.0`, and Chrome for Testing `141.0.7390.122` through `CHROMIUM_PATH`. Noto Sans CJK JP was available to the capture browser so Japanese screenshots contain real glyphs. This is an automated browser environment, not a physical phone.
+
+| Verification | Result |
+|---|---|
+| PowerShell syntax preflight | Passed, 13 scripts |
+| Repository build, standalone contracts and header checks | Passed |
+| Assembly negative fixtures | Passed |
+| Unit suite | 24 test files passed, 0 failed |
+| Readable HTML browser suite | 123 passed, 0 failed |
+| Self-extracting HTML browser suite | 123 passed, 0 failed |
+| Actual Japanese/English desktop and mobile captures | Passed; visually inspected |
+| External HTTP(S) requests / page errors during capture | 0 / 0 |
+| Readable / self-extracting HTML size | 484,973 / 159,073 bytes |
+
+### Gesture and layout regressions
+
+The old pan path divided by an already transformed SVG size and by zoom again; its renderer also translated the viewport rather than the fitted image. At approximately 3.81× zoom, a 20-CSS-pixel horizontal drag moved the image only about 1.37 pixels. The previous 120 ms transform transition added visible lag. The corrected renderer and pointer conversion use the same fitted-image geometry, with view updates coalesced into animation frames and no transform easing.
+
+`gesture-response.spec.mjs` verifies 20 × 16 CSS-pixel drags on both portrait and landscape images at 1.25×, approximately 2×, 4× and 8×, and 16×. Every displacement matches within 0.5 CSS pixels while away from the pan boundary. It also verifies the pinch midpoint, continued panning with one remaining finger, cancellation rollback, panning from a covered answer without revealing it, and cover alignment in exported lessons. Baseline failures were reproduced before the corrections; the pinch-continuation regression also failed against the pristine baseline after its CDP touch-end fixture was corrected.
+
+`native-workspace.spec.mjs` verifies the image, editing dock and navigation in one viewport; 48-pixel primary targets; 320 × 480 and 700 × 390 layouts; modal page/cover/tool panels; focus restoration; language changes; desktop resize; and stable image geometry while selecting or adjusting a cover. It also verifies that Undo cancels another pointer's unfinished cover draft.
+
+Independent review found that the selected-cover row intercepted zoom taps at 568 × 320. The short-landscape dock now keeps all seven editing actions separate from zoom; the regression checks actual hit ownership with `elementFromPoint`, then zooms without deleting the cover. That regression and the unfinished-draft Undo regression failed before the corresponding fixes and passed in both final browser suites.
+
+The complete suites also preserve grouped/auxiliary covers, Undo/Redo, free/guided study, optional persistence, old schema-v1 imports and JSON/HTML export. Screenshots in `assets/` show the actual generated app with synthetic study material. Physical Android Chrome and iPhone Safari touch/camera/save behavior, real accessibility services, device safe areas and background/screen-lock recovery remain **unperformed**.
 
 ## v1.0.0 automated release candidate — 2026-10-08
 

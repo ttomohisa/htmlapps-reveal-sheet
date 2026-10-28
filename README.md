@@ -27,7 +27,7 @@ Selected images and saved-sheet data are processed on your device. The app does 
 - **Turn several covers into one question** — Group related answers so they reveal together, or keep hint areas covered while studying.
 - **Study freely or one question at a time** — Reveal any answer manually, or use the guided flow with Recalled / Review again self-assessment.
 - **Edit without losing your place** — Fix the current question during guided study and return to the same question and view position.
-- **Manage multi-page material** — Rename pages, add optional descriptions, reorder with a drag handle, delete, and Undo. On phones, page cards stay in a horizontal carousel so the image area remains close at hand.
+- **Manage multi-page material** — Rename pages, add optional descriptions, reorder with a drag handle, delete, and Undo. On phones, tap the page title to open the horizontal page-card carousel.
 - **Save an editable sheet** — Export a `.reveal.json` file that contains normalized images, covers, questions, and page structure.
 - **Share a self-contained lesson** — Export a `.reveal.html` file that contains the images and study player in one HTML file.
 - **Reopen Reveal Sheet lessons safely** — Imported lesson HTML is read as text; only the fixed non-executing JSON data block is validated and used.
@@ -60,7 +60,7 @@ The generated app is written to `dist/index.html`. A self-extracting single-HTML
 
 1. **Add images** — Use the file picker, desktop drag-and-drop, or paste an image file. Accepted images are normalized to orientation-fixed PNG without resizing.
 2. **Create covers** — Drag over each answer. Drag a selected cover to move it and use the corner handles to resize it.
-3. **Organize pages** — Edit page names and optional descriptions directly in the cards. On mobile, swipe the horizontal card carousel normally and start reordering only from the drag handle.
+3. **Organize pages** — Edit page names and optional descriptions directly in the cards. On mobile, tap the page title to open the horizontal carousel; swipe normally and start reordering only from the drag handle.
 4. **Build questions** — Select several answer covers and choose **Reveal together** when they should behave as one question. Use **Keep covered while studying** for auxiliary hint covers.
 5. **Study** — Choose **Reveal freely** or **One at a time**. Guided study requires the answer to be revealed before it can be rated.
 6. **Correct while studying** — Use **Edit this question**, make the change, then return to study.
@@ -78,7 +78,9 @@ Original filenames, Undo history, current view position, and the author's study 
 
 ## Mobile behavior
 
-On smartphones, **Create / Study / Save** stays in bottom navigation. The editor shows a compact page title with Previous / Next buttons. Tap the title to expand the horizontal page-card carousel; reorder only from each card's drag handle. Use **Place covers** to draw covers, or **Move image** to pan; a two-finger pinch zooms in either mode. Selecting a cover opens on-screen Move / Size, 1 / 5 / 10 px steps, duplicate, and delete controls directly below the image. **Take photo** uses a camera-capable chooser when the browser supports it; regular image selection remains available.
+On smartphones, **Create / Study / Save** stays in bottom navigation. After importing an image, the editor fills the available screen with the image and a bottom tool dock. Previous / Next and Undo / Redo remain available above the image. Tap the page title to open a bottom sheet with the horizontal page-card carousel; reorder only from each card's drag handle.
+
+Use **Place covers** to draw covers, or **Move image** to pan. Within the pan limits, the image follows your finger by the same distance regardless of zoom. A two-finger pinch zooms in either mode, and a remaining finger can continue panning. Selecting a cover shows **Adjust**, duplicate, and delete near the image without changing the image area. On short screens these actions overlay the image's lower edge; on very short landscape screens they share the bottom dock with the four editing tools, clear of the zoom controls. **Adjust** opens Move / Size controls with 1 / 5 / 10 image-pixel steps. **Covers** opens grouping and question settings. **More** contains image import, camera, color, and local-saving settings. **Take photo** uses a camera-capable chooser where supported; regular image selection remains available.
 
 Guided study is compacted so the image and the primary action — **Reveal answer** or the rating buttons — fit together on a 390 × 760 viewport in the automated regression suite. Secondary actions such as Previous, Skip, Edit this question, and Finish study are kept under **More**.
 

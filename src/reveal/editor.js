@@ -11,6 +11,8 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   let filenameBase='reveal-sheet',preparedJsonExport=null,preparedLessonExport=null,exportGeneration=0,exportBusy=false,lessonPreviewSession=null,lessonPreviewPageId=null,lessonPreviewGeneration=0;
   let gesture=null,draftRect=null,pageDrag=null,editTool='draw',maskAdjustMode='move',mobilePagesOpen=false;
   const activeTouches=new Map();
+  const mobileLayout=env.matchMedia('(max-width:767px)');
+  let editorSheetKind='',editorSheetOpener=null,editorSheetMoves=[];
   const expandedPageDescriptions=new Set();
   let draftSaveTimer=0,draftSaveChain=Promise.resolve(),localDraftGeneration=0,draftConflict=false,localAvailable=false,localDraftExists=false,lastDraftSavedAt='';
   let studySaveTimer=0,studySaveChain=Promise.resolve(),studyRecordGeneration=0,studyIdentityToken='',studyConflict=false,localStudyExists=false,lastStudySavedAt='';
@@ -20,7 +22,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function setSvgHidden(hidden){if(hidden)svg.setAttribute('hidden','');else svg.removeAttribute('hidden');}
   const t=translate;
   let lastDraftStatus=null,lastStudyStatus=null;
-  const studyView=createStudyView({core,dom:env.document,onAction:action=>handleViewAction(action),translate:t});
+  const studyView=createStudyView({core,dom:env.document,onAction:action=>handleViewAction(action),translate:t,pointerActions:false});
   function setDraftStatus(key,values={}){lastDraftStatus={key,values};const node=$('draftSaveStatus');if(node)node.textContent=t(key,values);}
   function setStudyStatus(key,values={}){lastStudyStatus={key,values};const node=$('studySaveStatus');if(node)node.textContent=t(key,values);}
   function identityToken(identity){return identity?identity.documentId+'|'+identity.revision+'|'+identity.fingerprint:'';}
@@ -101,9 +103,46 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function currentAsset(){const page=currentPage();return page&&doc.assets.find(a=>a.id===page.imageId)||null;}
   function currentMask(){return doc.masks.find(m=>m.id===selectedMaskId)||null;}
   function currentQuestion(){const mask=currentMask();return mask?.kind==='answer'?doc.questions.find(question=>question.id===mask.questionId)||null:null;}
+  // Move the original controls into a modal sheet, then restore their exact
+  // DOM positions. This keeps one set of IDs, handlers and input state.
+  function restoreEditorSheet({restoreFocus=true}={}){
+    if(!editorSheetKind&&!editorSheetMoves.length)return;
+    const opener=editorSheetOpener;
+    if(opener?.hasAttribute('aria-expanded'))opener.setAttribute('aria-expanded','false');
+    for(const {node,placeholder} of editorSheetMoves)placeholder.replaceWith(node);
+    editorSheetMoves=[];editorSheetKind='';editorSheetOpener=null;mobilePagesOpen=false;
+    $('editorSheet').removeAttribute('data-sheet');
+    $('mobilePageToggle').setAttribute('aria-expanded','false');
+    env.document.body.classList.remove('page-list-open','editor-sheet-open');
+    if(restoreFocus&&opener?.isConnected&&opener.getClientRects().length&&!opener.disabled)opener.focus({preventScroll:true});
+  }
+  function closeEditorSheet(options={}){
+    const dialog=$('editorSheet');
+    if(dialog.open)dialog.close();
+    restoreEditorSheet(options);
+  }
+  function openEditorSheet(kind,opener){
+    if(!mobileLayout.matches||mode!=='create'||!currentPage())return;
+    const selectors={pages:['.page-panel'],covers:['#coverPanel'],adjust:['#maskFineControls'],tools:['#editControls','#failureSection','.image-meta-row','#localDraftPanel','.data-notice']};
+    if(!selectors[kind]||(kind!=='tools'&&busy))return;
+    cancelTransientInteraction();closeEditorSheet({restoreFocus:false});
+    editorSheetKind=kind;editorSheetOpener=opener||env.document.activeElement;
+    if(editorSheetOpener?.hasAttribute('aria-expanded'))editorSheetOpener.setAttribute('aria-expanded','true');
+    const dialog=$('editorSheet'),body=$('editorSheetBody');
+    for(const selector of selectors[kind]){
+      const node=env.document.querySelector(selector);if(!node)continue;
+      const placeholder=env.document.createComment('editor-sheet-home');node.before(placeholder);
+      editorSheetMoves.push({node,placeholder});body.append(node);
+    }
+    $('editorSheetTitle').textContent=t({pages:'pages',covers:'coverPanelTitle',adjust:'fineAdjust',tools:'moreTools'}[kind]);
+    dialog.dataset.sheet=kind;mobilePagesOpen=kind==='pages';
+    env.document.body.classList.add('editor-sheet-open');
+    refreshMobileEditor();dialog.showModal();$('editorSheetClose').focus({preventScroll:true});
+  }
   // Mobile editing and page switcher state is transient; the saved sheet format is unchanged.
   function refreshMobileEditor(){
     const activePage=currentPage(),pageIndex=doc.pages.findIndex(page=>page.id===selectedId);
+    if(editorSheetKind&&(!mobileLayout.matches||mode!=='create'||!activePage||(editorSheetKind==='adjust'&&!currentMask())||(editorSheetKind==='covers'&&!doc.masks.some(mask=>mask.pageId===selectedId))))closeEditorSheet();
     $('mobilePageSwitch').hidden=mode!=='create'||!activePage;
     $('mobilePageLabel').textContent=activePage?.title||'';
     $('mobilePagePosition').textContent=t('mobilePagePosition',{current:pageIndex+1,total:doc.pages.length});
@@ -112,6 +151,10 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('mobilePageToggle').setAttribute('aria-expanded',String(mobilePagesOpen));
     env.document.body.classList.toggle('page-list-open',mode==='create'&&mobilePagesOpen&&Boolean(activePage));
     const editable=mode==='create'&&Boolean(activePage)&&!busy;
+    $('mobileUndoButton').disabled=$('undoButton').disabled;
+    $('mobileRedoButton').disabled=$('redoButton').disabled;
+    $('mobileCoversButton').disabled=!editable||!doc.masks.some(mask=>mask.pageId===selectedId);
+    $('mobileMoreButton').disabled=!activePage;
     $('editModeToolbar').hidden=!editable;
     $('drawModeButton').setAttribute('aria-pressed',String(editTool==='draw'));
     $('panModeButton').setAttribute('aria-pressed',String(editTool==='pan'));
@@ -122,13 +165,15 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('maskQuickTitle').textContent=showMaskTools?t('maskQuickTitle')+' '+(doc.masks.filter(mask=>mask.pageId===selectedId).findIndex(mask=>mask.id===chosen.id)+1):'';
     $('maskAdjustMove').setAttribute('aria-pressed',String(maskAdjustMode==='move'));
     $('maskAdjustResize').setAttribute('aria-pressed',String(maskAdjustMode==='size'));
-    for(const button of $('maskQuickActions').querySelectorAll('[data-mask-direction]')){
+    for(const button of $('maskFineControls').querySelectorAll('[data-mask-direction]')){
       const direction=button.dataset.maskDirection;
       const key=(maskAdjustMode==='move'?'adjustDirection_':'adjustSize_')+direction;
       button.setAttribute('aria-label',t(key));button.title=t(key);button.disabled=!showMaskTools;
     }
     $('maskQuickDuplicate').disabled=!showMaskTools;
     $('maskQuickDelete').disabled=!showMaskTools;
+    $('maskFineAdjustButton').disabled=!showMaskTools;
+    if(editorSheetKind)$('editorSheetTitle').textContent=t({pages:'pages',covers:'coverPanelTitle',adjust:'fineAdjust',tools:'moreTools'}[editorSheetKind]);
   }
   function setEditTool(next){
     if(!['draw','pan'].includes(next)||mode!=='create')return;
@@ -221,6 +266,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function currentGuidedId(session=studySession){return session?.mode==='guided'&&!session.ended?session.queue[session.index]?.questionId||null:null;}
   function syncGuidedPage(){
     const qid=currentGuidedId();if(!qid)return false;const question=doc.questions.find(item=>item.id===qid);if(!question||question.pageId===selectedId)return false;
+    cancelTransientInteraction();
     selectedId=question.pageId;selectedMaskId=null;selectedMaskIds.clear();viewKey='';return true;
   }
   function fillGuidedResults(summary){
@@ -264,7 +310,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   }
   function selectPage(pageId,{collapseMobile=false}={}){
     if(!doc.pages.some(page=>page.id===pageId))return;
-    if(collapseMobile)mobilePagesOpen=false;
+    if(collapseMobile){mobilePagesOpen=false;if(editorSheetKind==='pages')closeEditorSheet();}
     if(selectedId===pageId){refreshMobileEditor();return;}
     cancelTransientInteraction();selectedId=pageId;selectedMaskId=null;selectedMaskIds.clear();
     $('pageList').querySelectorAll('.page-item').forEach(card=>card.setAttribute('aria-current',card.dataset.pageId===pageId?'page':'false'));
@@ -431,6 +477,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function history(direction) {
     if(busy||mode==='study')return;
     const from=direction==='undo'?undo:redo,to=direction==='undo'?redo:undo;if(!from.length)return;
+    cancelTransientInteraction();
     const oldDoc=doc;to.push(doc);const snapshot=from.pop(),revisionMap=new Map(doc.questions.map(question=>[question.id,question.revision]));
     const next={...snapshot,revision:doc.revision+1,questions:snapshot.questions.map(question=>({...question,revision:Math.max(question.revision,revisionMap.get(question.id)||question.revision)}))};
     const mutationResult=derivedMutation(oldDoc,next);doc=next;invalidatePreparedExport();reconcileStudyEdit(oldDoc,mutationResult);
@@ -441,6 +488,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   async function addImages(input) {
     if(busy)return;
     const files=Array.from(input);if(!files.length)return;
+    cancelTransientInteraction();closeEditorSheet();
     // A cancelled decoder must settle before another is started. This prevents
     // two costly decodes overlapping after a quick Cancel -> Add sequence.
     busy=true;const currentBatch=++batchId,currentGeneration=generation;
@@ -479,6 +527,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     if(!doc.pages.length&&!busy)return;
     const yes=await env.AppConfirm.ask({title:t('newTitle'),message:t('newMessage',{count:doc.pages.length}),confirmLabel:t('newAction'),cancelLabel:t('cancel'),tone:'danger'});
     if(!yes)return;
+    cancelTransientInteraction();closeEditorSheet({restoreFocus:false});
     generation++;controller?.abort();invalidatePreparedExport();doc=core.newDocument(ctx,t('untitled'));selectedId=null;selectedMaskId=null;selectedMaskIds.clear();
     undo=[];redo=[];failures=[];studySession=null;mode='create';editTool='draw';maskAdjustMode='move';mobilePagesOpen=false;activeTouches.clear();filenameBase='reveal-sheet';$('outputFilename').value=filenameBase;imageIO.releaseAll();status('emptyStatus');refreshCopy();showPreview();
   }
@@ -525,83 +574,112 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function beginDirectEdit(event,maskId,kind,corner=null){
     const mask=doc.masks.find(item=>item.id===maskId),point=imagePoint(event,true);if(!mask||!point)return false;
     selectedMaskId=mask.id;selectedMaskIds=new Set([mask.id]);event.preventDefault();svg.classList.add('mask-direct-editing');
-    gesture={kind,pointerId:event.pointerId,maskId:mask.id,corner,start:point,current:point,startRect:{...mask.rect},currentRect:{...mask.rect},startClientX:event.clientX,startClientY:event.clientY,distanceCssPx:0,cancelled:false,captureTarget:event.currentTarget};
+    gesture={kind,pointerId:event.pointerId,pageId:selectedId,documentGeneration:generation,mode,maskId:mask.id,corner,start:point,current:point,startRect:{...mask.rect},currentRect:{...mask.rect},startClientX:event.clientX,startClientY:event.clientY,distanceCssPx:0,cancelled:false,captureTarget:event.currentTarget};
     refreshCoverPanel();updateToolButtons();event.target.classList?.add('selected');event.currentTarget.setPointerCapture(event.pointerId);return true;
+  }
+  function beginPan(pointerId,point,{rollbackView=null,tapAction=null}={}){
+    const geometry=studyView.getViewGeometry();if(!geometry)return false;
+    const startView=studyView.getViewState(selectedId);
+    gesture={kind:'pan',pointerId,pageId:selectedId,documentGeneration:generation,mode,startClientX:point.x,startClientY:point.y,startView,rollbackView:rollbackView||startView,geometry,distanceCssPx:0,cancelled:false,tapAction,captureTarget:surface};
+    try{surface.setPointerCapture(pointerId);}catch{}
+    return true;
   }
   function startPinch(){
     if(!selectedId||activeTouches.size!==2)return;
-    const touches=[...activeTouches.values()],rect=surface.getBoundingClientRect();
+    const touches=[...activeTouches.values()],previous=gesture;
     const distance=Math.hypot(touches[0].x-touches[1].x,touches[0].y-touches[1].y);
-    if(!(rect.width>0&&rect.height>0&&distance>1))return;
+    if(!(distance>1))return;
     // Cancel an uncommitted drag before switching two fingers to image zoom.
     gesture=null;draftRect?.remove();draftRect=null;svg.classList.remove('mask-direct-editing');renderOverlay();
-    gesture={kind:'pinch',startView:studyView.getViewState(selectedId),
+    const geometry=studyView.getViewGeometry();if(!geometry)return;
+    const startView=studyView.getViewState(selectedId);
+    gesture={kind:'pinch',pageId:selectedId,documentGeneration:generation,mode,startView,rollbackView:previous?.rollbackView||previous?.startView||startView,
       startDistance:distance,startMid:{x:(touches[0].x+touches[1].x)/2,y:(touches[0].y+touches[1].y)/2},
-      box:rect};
+      geometry};
     for(const pointerId of activeTouches.keys()){try{surface.setPointerCapture(pointerId);}catch{}}
   }
   function movePinch(){
     if(gesture?.kind!=='pinch'||activeTouches.size!==2||!selectedId)return;
-    const touches=[...activeTouches.values()],active=gesture;
+    const touches=[...activeTouches.values()],active=gesture,geometry=active.geometry;
     const distance=Math.hypot(touches[0].x-touches[1].x,touches[0].y-touches[1].y);
     const nextZoom=Math.max(.5,Math.min(16,active.startView.zoom*(distance/active.startDistance)));
-    const x0=(active.startMid.x-active.box.left)/active.box.width,y0=(active.startMid.y-active.box.top)/active.box.height;
-    const x1=((touches[0].x+touches[1].x)/2-active.box.left)/active.box.width;
-    const y1=((touches[0].y+touches[1].y)/2-active.box.top)/active.box.height;
-    // Preserve the content beneath the initial midpoint as the fingers move.
-    const anchorX=.5+(x0-1+active.startView.centerX)/active.startView.zoom;
-    const anchorY=.5+(y0-1+active.startView.centerY)/active.startView.zoom;
-    studyView.setViewState(selectedId,{zoom:nextZoom,
-      centerX:1+(anchorX-.5)*nextZoom-x1,centerY:1+(anchorY-.5)*nextZoom-y1});
+    const midX=(touches[0].x+touches[1].x)/2,midY=(touches[0].y+touches[1].y)/2;
+    // Normalized image coordinates use the fitted image, not the letterboxed
+    // viewport or an already-scaled SVG bounding box. Keep this anchor under
+    // the moving midpoint while changing the image's relative zoom.
+    const anchorX=active.startView.centerX+(active.startMid.x-geometry.centerX)/(geometry.fitWidth*active.startView.zoom);
+    const anchorY=active.startView.centerY+(active.startMid.y-geometry.centerY)/(geometry.fitHeight*active.startView.zoom);
+    studyView.setViewState(active.pageId,{zoom:nextZoom,
+      centerX:anchorX-(midX-geometry.centerX)/(geometry.fitWidth*nextZoom),centerY:anchorY-(midY-geometry.centerY)/(geometry.fitHeight*nextZoom)},{defer:true});
     refreshViewControls();
   }
   function pointerDown(event){
-    if(event.button!==0||mode==='save'||busy)return;
+    if(event.button!==0||mode==='save'||busy||!selectedId||image.hidden)return;
     if(event.target?.closest?.('#viewControls,.mask-inline-action'))return;
     if(event.pointerType==='touch'){
+      // A third finger does not replace either of the pinch's two anchors.
+      if(activeTouches.size>=2){event.preventDefault();return;}
       activeTouches.set(event.pointerId,{x:event.clientX,y:event.clientY});
       if(activeTouches.size===2){event.preventDefault();startPinch();return;}
-      if(activeTouches.size>2){event.preventDefault();return;}
     }
     const handle=event.target?.closest?.('.mask-resize-handle'),maskNode=event.target?.closest?.('.mask-rect');
-    if(mode==='create'&&editTool==='draw'&&handle?.dataset.maskId&&beginDirectEdit(event,handle.dataset.maskId,'mask-resize',handle.dataset.resizeCorner))return;
-    if(mode==='create'&&editTool==='draw'&&maskNode?.dataset.maskId&&beginDirectEdit(event,maskNode.dataset.maskId,'mask-move'))return;
-    if((handle||maskNode)&&!(mode==='create'&&editTool==='pan'))return;
-    const point=imagePoint(event);if(!point)return;
     if(mode==='create'&&editTool==='draw'&&!event.shiftKey){
-      event.preventDefault();gesture={kind:'cover',pointerId:event.pointerId,start:point,current:point,captureTarget:event.currentTarget};event.currentTarget.setPointerCapture(event.pointerId);return;
+      if(handle?.dataset.maskId&&beginDirectEdit(event,handle.dataset.maskId,'mask-resize',handle.dataset.resizeCorner))return;
+      if(maskNode?.dataset.maskId&&beginDirectEdit(event,maskNode.dataset.maskId,'mask-move'))return;
+      const point=imagePoint(event);if(!point)return;
+      event.preventDefault();gesture={kind:'cover',pointerId:event.pointerId,pageId:selectedId,documentGeneration:generation,mode,start:point,current:point,captureTarget:event.currentTarget};event.currentTarget.setPointerCapture(event.pointerId);return;
     }
     if(mode==='create'||mode==='study'){
-      const box=svg.getBoundingClientRect();if(!(box.width>0&&box.height>0))return;
-      event.preventDefault();gesture={kind:'pan',pointerId:event.pointerId,startClientX:event.clientX,startClientY:event.clientY,currentClientX:event.clientX,currentClientY:event.clientY,startView:studyView.getViewState(selectedId),box:{width:box.width,height:box.height},distanceCssPx:0,cancelled:false,captureTarget:event.currentTarget};event.currentTarget.setPointerCapture(event.pointerId);
+      const mask=maskNode&&doc.masks.find(item=>item.id===maskNode.dataset.maskId);
+      let tapAction=null;
+      if(mode==='study'&&mask?.kind==='answer'){
+        if(studySession?.mode==='free')tapAction={type:'TOGGLE_QUESTION',questionId:mask.questionId};
+        else if(mask.questionId===currentGuidedId())tapAction={type:'REVEAL_CURRENT',questionId:mask.questionId};
+      }
+      event.preventDefault();beginPan(event.pointerId,{x:event.clientX,y:event.clientY},{tapAction});
     }
   }
   function pointerMove(event){
+    if(gesture&&(gesture.pageId!==selectedId||gesture.documentGeneration!==generation||gesture.mode!==mode)){pointerCancel();return;}
     if(event.pointerType==='touch'&&activeTouches.has(event.pointerId))
       activeTouches.set(event.pointerId,{x:event.clientX,y:event.clientY});
-    if(gesture?.kind==='pinch'){movePinch();return;}
+    if(gesture?.kind==='pinch'){if(activeTouches.has(event.pointerId))movePinch();return;}
     if(!gesture||event.pointerId!==gesture.pointerId)return;
     if(gesture.kind==='cover'){const point=imagePoint(event);if(point){gesture.current=point;drawDraft(gesture.start,point);}return;}
     if(gesture.kind==='mask-move'||gesture.kind==='mask-resize'){
       const point=imagePoint(event,true);if(!point)return;gesture.current=point;gesture.distanceCssPx=Math.max(gesture.distanceCssPx,Math.hypot(event.clientX-gesture.startClientX,event.clientY-gesture.startClientY));gesture.currentRect=directEditRect(gesture,point);drawDirectPreview(gesture.maskId,gesture.currentRect);return;
     }
     if(gesture.kind==='pan'){
-      gesture.currentClientX=event.clientX;gesture.currentClientY=event.clientY;
       const dx=event.clientX-gesture.startClientX,dy=event.clientY-gesture.startClientY;gesture.distanceCssPx=Math.max(gesture.distanceCssPx,Math.hypot(dx,dy));
-      const zoom=gesture.startView.zoom||1;
-      studyView.setViewState(selectedId,{...gesture.startView,centerX:gesture.startView.centerX-dx/(gesture.box.width*zoom),centerY:gesture.startView.centerY-dy/(gesture.box.height*zoom)});
+      const zoom=gesture.startView.zoom,geometry=gesture.geometry;
+      studyView.setViewState(gesture.pageId,{...gesture.startView,centerX:gesture.startView.centerX-dx/(geometry.fitWidth*zoom),centerY:gesture.startView.centerY-dy/(geometry.fitHeight*zoom)},{defer:true});
     }
   }
   function pointerUp(event){
-    if(event.pointerType==='touch')activeTouches.delete(event.pointerId);
+    if(gesture&&(gesture.pageId!==selectedId||gesture.documentGeneration!==generation||gesture.mode!==mode)){pointerCancel();return;}
     if(gesture?.kind==='pinch'){
+      if(!activeTouches.has(event.pointerId))return;
+      pointerMove(event);studyView.flushView();
+      const rollbackView=gesture.rollbackView;activeTouches.delete(event.pointerId);
+      if(activeTouches.size===1){
+        const [pointerId,point]=activeTouches.entries().next().value;
+        // The remaining finger continues the same navigation gesture. It must
+        // never turn into a cover draw or an answer tap when the first lifts.
+        beginPan(pointerId,point,{rollbackView});
+      }else gesture=null;
       try{surface.releasePointerCapture(event.pointerId);}catch{}
-      if(activeTouches.size<2){gesture=null;refreshViewControls();}
+      refreshViewControls();
       return;
     }
+    if(event.pointerType==='touch')activeTouches.delete(event.pointerId);
     if(!gesture||event.pointerId!==gesture.pointerId)return;
-    const active=gesture;try{active.captureTarget?.releasePointerCapture(event.pointerId);}catch{}
-    if(active.kind==='pan'){gesture=null;refreshViewControls();return;}
+    pointerMove(event);const active=gesture;if(!active)return;
+    gesture=null;try{active.captureTarget?.releasePointerCapture(event.pointerId);}catch{}
+    if(active.kind==='pan'){
+      studyView.flushView();refreshViewControls();
+      if(active.tapAction&&core.isTap(active))handleViewAction(active.tapAction);
+      return;
+    }
     if(active.kind==='mask-move'||active.kind==='mask-resize'){
       gesture=null;svg.classList.remove('mask-direct-editing');
       if(active.distanceCssPx>0){try{const result=core.applyCommand(doc,{type:'SET_MASK_RECT',maskId:active.maskId,rect:active.currentRect},ctx);if(result.document!==doc){commit(result,active.maskId);status('coverChanged');}}catch{}}
@@ -610,10 +688,14 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     const start=active.start,point=imagePoint(event)||active.current;clearDraft();const rect=rectFromPoints(start,point);if(rect)addCover(rect);else updateToolButtons();
   }
   function pointerCancel(event=null){
-    if(event?.pointerId!==undefined)activeTouches.delete(event.pointerId);else activeTouches.clear();
-    if(!gesture)return;const active=gesture;
-    if(active.kind==='pan'&&selectedId)studyView.setViewState(selectedId,active.startView);
-    gesture=null;svg.classList.remove('mask-direct-editing');draftRect?.remove();draftRect=null;renderOverlay();updateToolButtons();refreshViewControls();
+    if(event?.pointerId!==undefined&&event.pointerId!==gesture?.pointerId&&!activeTouches.has(event.pointerId))return;
+    const active=gesture,pointerIds=new Set(activeTouches.keys());if(active?.pointerId!==undefined)pointerIds.add(active.pointerId);
+    gesture=null;activeTouches.clear();
+    for(const pointerId of pointerIds){try{surface.releasePointerCapture(pointerId);}catch{}}
+    if(!active)return;
+    if((active.kind==='pan'||active.kind==='pinch')&&active.documentGeneration===generation)
+      studyView.setViewState(active.pageId,active.rollbackView||active.startView);
+    studyView.flushView();svg.classList.remove('mask-direct-editing');draftRect?.remove();draftRect=null;renderOverlay();updateToolButtons();refreshViewControls();
   }
   function cancelTransientInteraction(){pointerCancel();endPageDrag(null,true);updateToolButtons();}
   function handleViewAction(action){if(action.type==='SELECT_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);refreshCopy();return;}if(mode==='create'&&action.type==='DUPLICATE_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);duplicateSelected();return;}if(mode==='create'&&action.type==='DELETE_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);deleteSelected();return;}if(mode!=='study')return;if(action.type==='TOGGLE_QUESTION'&&studySession?.mode==='free'){studySession=core.toggleFree(studySession,action.questionId);scheduleStudySave();refreshCopy();return;}if(action.type==='REVEAL_CURRENT'&&studySession?.mode==='guided'&&action.questionId===currentGuidedId()){revealGuided();}}
@@ -683,13 +765,14 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function reviewGuided(kind){if(studySession?.mode!=='guided')return;const previous=core.summary(studySession),next=core.makeReviewSession(doc,studySession,kind,ctx);if(!next)return;previousStudySummary=previous;studySession=next;studyMode='guided';studyConflict=false;scheduleStudySave();const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);}
   function editCurrentQuestion(){
     const qid=currentGuidedId();if(mode!=='study'||studySession?.mode!=='guided'||!qid)return;const question=doc.questions.find(item=>item.id===qid);if(!question)return;
+    cancelTransientInteraction();closeEditorSheet({restoreFocus:false});
     studyEditActive=true;studyEditImpact={changed:new Set(),deleted:new Set(),added:new Set()};mode='create';editTool='draw';mobilePagesOpen=false;selectedId=question.pageId;selectedMaskId=question.maskIds[0]||null;selectedMaskIds=new Set(question.maskIds);refreshCopy();showPreview();
   }
   function returnToStudy(){
-    if(!studyEditActive||!studySession)return;studyEditActive=false;mode='study';selectedMaskId=null;selectedMaskIds.clear();const impact=studyEditImpact||{changed:new Set(),deleted:new Set(),added:new Set()};studyEditImpact=null;const pageChanged=syncGuidedPage();status('studyEditSummary',{changed:impact.changed.size,deleted:impact.deleted.size,added:impact.added.size});studyConflict=false;scheduleStudySave();refreshCopy();if(pageChanged)showPreview(true);else showPreview();
+    if(!studyEditActive||!studySession)return;cancelTransientInteraction();closeEditorSheet({restoreFocus:false});studyEditActive=false;mode='study';selectedMaskId=null;selectedMaskIds.clear();const impact=studyEditImpact||{changed:new Set(),deleted:new Set(),added:new Set()};studyEditImpact=null;const pageChanged=syncGuidedPage();status('studyEditSummary',{changed:impact.changed.size,deleted:impact.deleted.size,added:impact.added.size});studyConflict=false;scheduleStudySave();refreshCopy();if(pageChanged)showPreview(true);else showPreview();
   }
   async function beginStudy(){
-    if(!doc.questions.length||busy)return;cancelTransientInteraction();studyEditActive=false;studyEditImpact=null;selectedMaskId=null;previousStudySummary=null;studyConflict=false;
+    if(!doc.questions.length||busy)return;if(studyEditActive&&studySession){returnToStudy();return;}cancelTransientInteraction();closeEditorSheet({restoreFocus:false});studyEditActive=false;studyEditImpact=null;selectedMaskId=null;previousStudySummary=null;studyConflict=false;
     studyMode=doc.defaults.mode||'free';let restored=null,identity=null;
     if(localAvailable&&persistence.settings.studyOptIn){
       identity=await currentStudyIdentity();if(identity){try{restored=await persistence.loadSession(identity);}catch{setStudyStatus('studySaveFailed');}}
@@ -704,7 +787,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     }
     mode='study';mobilePagesOpen=false;const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);
   }
-  function beginCreate(){cancelTransientInteraction();scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='create';mobilePagesOpen=false;studySession=null;previousStudySummary=null;refreshCopy();$('addButton').focus({preventScroll:true});}
+  function beginCreate(){cancelTransientInteraction();closeEditorSheet({restoreFocus:false});scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='create';mobilePagesOpen=false;studySession=null;previousStudySummary=null;refreshCopy();$(mobileLayout.matches&&doc.pages.length?'drawModeButton':'addButton').focus({preventScroll:true});}
   async function prepareSaveExports(){
     if(!doc.pages.length)return null;
     const token=exportGeneration,snapshot=doc;exportBusy=true;preparedJsonExport=null;preparedLessonExport=null;status('exportPreparing');refreshCopy();
@@ -725,10 +808,11 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     }
   }
   function beginSave(){
-    if(!doc.pages.length||busy||exportBusy)return;scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='save';mobilePagesOpen=false;studySession=null;selectedMaskId=null;preparedJsonExport=null;preparedLessonExport=null;
+    if(!doc.pages.length||busy||exportBusy)return;cancelTransientInteraction();closeEditorSheet({restoreFocus:false});scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='save';mobilePagesOpen=false;studySession=null;selectedMaskId=null;preparedJsonExport=null;preparedLessonExport=null;
     refreshCopy();$('outputFilename').focus({preventScroll:true});prepareSaveExports();
   }
   function applyImported(envelope,{fromLocal=false}={}){
+    cancelTransientInteraction();closeEditorSheet({restoreFocus:false});
     generation++;cancelStudyTimer();studyRecordGeneration=0;studyIdentityToken='';studyConflict=false;invalidatePreparedExport();controller?.abort();imageIO.releaseAll();doc=envelope.document;selectedId=doc.pages[0]?.id||null;selectedMaskId=null;selectedMaskIds.clear();undo=[];redo=[];failures=[];studySession=null;studyEditActive=false;studyEditImpact=null;mode='create';viewKey='';
     editTool='draw';mobilePagesOpen=false;activeTouches.clear();filenameBase=doc.title&&doc.title!==t('untitled')?doc.title:'reveal-sheet';$('outputFilename').value=filenameBase;status(fromLocal?'draftRestored':'sheetOpened');refreshCopy();showPreview(true);if(!fromLocal)scheduleDraftSave();
   }
@@ -774,6 +858,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function downloadHtml(){return downloadPrepared('html');}
   function keydown(event){
     if(editableTarget(event.target)||env.document.querySelector('dialog[open]'))return;
+    if(event.key==='Escape'&&gesture){event.preventDefault();pointerCancel();return;}
     if(mode==='study'&&studySession?.mode==='guided'){
       if(event.repeat&&[' ','1','2','s','S','ArrowLeft'].includes(event.key)){event.preventDefault();return;}
       if(event.key===' '){event.preventDefault();revealGuided();}else if(event.key==='1'){event.preventDefault();if(studySession.stage==='revealed')rateGuided('recalled');}else if(event.key==='2'){event.preventDefault();if(studySession.stage==='revealed')rateGuided('again');}else if(event.key.toLowerCase()==='s'){event.preventDefault();skipGuided();}else if(event.key==='ArrowLeft'){event.preventDefault();previousGuided();}return;
@@ -787,14 +872,23 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   $('addButton').addEventListener('click',()=>$('imageInput').click());
   $('cameraButton').addEventListener('click',()=>$('cameraInput').click());
   $('cameraInput').addEventListener('change',event=>{const files=Array.from(event.target.files||[]);event.target.value='';addImages(files);});
-  $('mobilePageToggle').addEventListener('click',()=>{if(mode!=='create'||!currentPage())return;mobilePagesOpen=!mobilePagesOpen;refreshMobileEditor();});
+  $('mobilePageToggle').addEventListener('click',event=>openEditorSheet('pages',event.currentTarget));
+  $('mobileCoversButton').addEventListener('click',event=>openEditorSheet('covers',event.currentTarget));
+  $('mobileMoreButton').addEventListener('click',event=>openEditorSheet('tools',event.currentTarget));
+  $('maskFineAdjustButton').addEventListener('click',event=>openEditorSheet('adjust',event.currentTarget));
+  $('mobileUndoButton').addEventListener('click',()=>history('undo'));
+  $('mobileRedoButton').addEventListener('click',()=>history('redo'));
+  $('editorSheetClose').addEventListener('click',()=>closeEditorSheet());
+  $('editorSheet').addEventListener('close',()=>{if(!$('editorSheet').open)restoreEditorSheet();});
+  $('editorSheet').addEventListener('click',event=>{if(event.target!==$('editorSheet'))return;const box=event.target.getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)closeEditorSheet();});
+  mobileLayout.addEventListener('change',()=>{cancelTransientInteraction();closeEditorSheet({restoreFocus:false});refreshMobileEditor();});
   $('mobilePrevPage').addEventListener('click',()=>stepPage(-1));
   $('mobileNextPage').addEventListener('click',()=>stepPage(1));
   $('drawModeButton').addEventListener('click',()=>setEditTool('draw'));
   $('panModeButton').addEventListener('click',()=>setEditTool('pan'));
   $('maskAdjustMove').addEventListener('click',()=>{maskAdjustMode='move';refreshMobileEditor();});
   $('maskAdjustResize').addEventListener('click',()=>{maskAdjustMode='size';refreshMobileEditor();});
-  $('maskQuickActions').querySelectorAll('[data-mask-direction]').forEach(button=>button.addEventListener('click',()=>adjustSelected(button.dataset.maskDirection)));
+  $('maskFineControls').querySelectorAll('[data-mask-direction]').forEach(button=>button.addEventListener('click',()=>adjustSelected(button.dataset.maskDirection)));
   $('maskQuickDuplicate').addEventListener('click',duplicateSelected);
   $('maskQuickDelete').addEventListener('click',deleteSelected);
   $('retryButton').addEventListener('click',()=>$('imageInput').click());
@@ -813,6 +907,9 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   $('draftOptIn').addEventListener('change',changeDraftOptIn);$('studyOptIn').addEventListener('change',changeStudyOptIn);$('clearDraftButton').addEventListener('click',clearDraftLocal);$('clearStudyButton').addEventListener('click',clearStudyLocal);$('resolveConflictSaveButton').addEventListener('click',beginSave);$('resolveConflictReloadButton').addEventListener('click',reloadConflictDraft);
   $('studyButton').addEventListener('click',beginStudy);$('createButton').addEventListener('click',beginCreate);$('saveButton').addEventListener('click',beginSave);$('downloadJsonButton').addEventListener('click',downloadJson);$('downloadHtmlButton').addEventListener('click',downloadHtml);$('openButton').addEventListener('click',()=>$('sheetInput').click());$('sheetInput').addEventListener('change',event=>{const file=event.target.files?.[0]||null;event.target.value='';openSheet(file);});$('hideAllButton').addEventListener('click',()=>{studySession=core.hideAllFree(studySession);scheduleStudySave();refreshCopy();});$('revealPageButton').addEventListener('click',()=>{studySession=core.revealPageFree(doc,studySession,selectedId);scheduleStudySave();refreshCopy();});
   surface.addEventListener('pointerdown',pointerDown);surface.addEventListener('pointermove',pointerMove);surface.addEventListener('pointerup',pointerUp);surface.addEventListener('pointercancel',pointerCancel);
+  surface.addEventListener('lostpointercapture',event=>{
+    if(gesture&&(event.pointerId===gesture.pointerId||(gesture.kind==='pinch'&&activeTouches.has(event.pointerId))))pointerCancel();
+  });
   env.document.addEventListener('keydown',keydown);
   env.document.addEventListener('paste',paste);
   env.document.addEventListener('dragover',event=>{if(Array.from(event.dataTransfer?.types||[]).includes('Files'))event.preventDefault();});
@@ -822,6 +919,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   env.addEventListener('pagehide',()=>{pointerCancel();controller?.abort();imageIO.releaseAll();viewKey='';image.hidden=true;setSvgHidden(true);});
   env.addEventListener('pageshow',()=>{if(doc.pages.length)showPreview(true);});
   env.document.addEventListener('visibilitychange',()=>{if(env.document.hidden)pointerCancel();});
+  env.addEventListener('resize',()=>{if(gesture)pointerCancel();});
   env.addEventListener('beforeunload',event=>{if(doc.pages.length){event.preventDefault();event.returnValue='';}});
   function localize(){if(lastDraftStatus)setDraftStatus(lastDraftStatus.key,lastDraftStatus.values);if(lastStudyStatus)setStudyStatus(lastStudyStatus.key,lastStudyStatus.values);if(mode==='save'&&exportBusy){invalidatePreparedExport();status('exportChanged');}refreshCopy();if(lessonPreviewSession)renderLessonPreview();const page=doc.pages.find(p=>p.id===selectedId);if(page)image.alt=t('imageAlt',{name:page.title});}
   refreshCopy();showPreview();initPersistence();

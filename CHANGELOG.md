@@ -2,6 +2,10 @@
 
 ## 1.1.0 - 2026-10-28
 
+- Corrected image panning to track pointer movement within pan bounds at every zoom level, including letterboxed portrait/landscape images; removed transform easing during direct manipulation.
+- Kept pinch-to-one-finger panning continuous and restored the starting view on cancellation; study drags on covers no longer trigger an answer tap.
+- Replaced the long loaded-phone editing page with a viewport-sized image workspace, bottom editing dock, nearby Undo/Redo, stable selected-cover actions, and modal bottom sheets for pages, cover settings, precise adjustment, and additional tools.
+- On very short landscape screens, the four editing tools and three selected-cover actions share one row, separate from zoom controls.
 - Added a phone camera input for photos, using the same existing JPEG/static PNG/static WebP validation and on-device normalization flow.
 - Added mobile Place covers / Move image controls, two-finger pinch zoom, and precise cover move/resize buttons with 1 / 5 / 10 px steps, plus nearby duplicate and delete.
 - Collapsed the mobile page-card carousel behind an accessible page-title switcher with Previous and Next buttons.
