@@ -527,15 +527,47 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     gesture={kind,pointerId:event.pointerId,maskId:mask.id,corner,start:point,current:point,startRect:{...mask.rect},currentRect:{...mask.rect},startClientX:event.clientX,startClientY:event.clientY,distanceCssPx:0,cancelled:false,captureTarget:event.currentTarget};
     refreshCoverPanel();updateToolButtons();event.target.classList?.add('selected');event.currentTarget.setPointerCapture(event.pointerId);return true;
   }
+  function startPinch(){
+    if(!selectedId||activeTouches.size!==2)return;
+    const touches=[...activeTouches.values()],rect=surface.getBoundingClientRect();
+    const distance=Math.hypot(touches[0].x-touches[1].x,touches[0].y-touches[1].y);
+    if(!(rect.width>0&&rect.height>0&&distance>1))return;
+    // Cancel an uncommitted drag before switching two fingers to image zoom.
+    gesture=null;draftRect?.remove();draftRect=null;svg.classList.remove('mask-direct-editing');renderOverlay();
+    gesture={kind:'pinch',startView:studyView.getViewState(selectedId),
+      startDistance:distance,startMid:{x:(touches[0].x+touches[1].x)/2,y:(touches[0].y+touches[1].y)/2},
+      box:rect};
+    for(const pointerId of activeTouches.keys()){try{surface.setPointerCapture(pointerId);}catch{}}
+  }
+  function movePinch(){
+    if(gesture?.kind!=='pinch'||activeTouches.size!==2||!selectedId)return;
+    const touches=[...activeTouches.values()],active=gesture;
+    const distance=Math.hypot(touches[0].x-touches[1].x,touches[0].y-touches[1].y);
+    const nextZoom=Math.max(.5,Math.min(16,active.startView.zoom*(distance/active.startDistance)));
+    const x0=(active.startMid.x-active.box.left)/active.box.width,y0=(active.startMid.y-active.box.top)/active.box.height;
+    const x1=((touches[0].x+touches[1].x)/2-active.box.left)/active.box.width;
+    const y1=((touches[0].y+touches[1].y)/2-active.box.top)/active.box.height;
+    // Preserve the content beneath the initial midpoint as the fingers move.
+    const anchorX=.5+(x0-1+active.startView.centerX)/active.startView.zoom;
+    const anchorY=.5+(y0-1+active.startView.centerY)/active.startView.zoom;
+    studyView.setViewState(selectedId,{zoom:nextZoom,
+      centerX:1+(anchorX-.5)*nextZoom-x1,centerY:1+(anchorY-.5)*nextZoom-y1});
+    refreshViewControls();
+  }
   function pointerDown(event){
-    if(event.button!==0)return;
+    if(event.button!==0||mode==='save'||busy)return;
     if(event.target?.closest?.('#viewControls,.mask-inline-action'))return;
+    if(event.pointerType==='touch'){
+      activeTouches.set(event.pointerId,{x:event.clientX,y:event.clientY});
+      if(activeTouches.size===2){event.preventDefault();startPinch();return;}
+      if(activeTouches.size>2){event.preventDefault();return;}
+    }
     const handle=event.target?.closest?.('.mask-resize-handle'),maskNode=event.target?.closest?.('.mask-rect');
-    if(mode==='create'&&handle?.dataset.maskId&&beginDirectEdit(event,handle.dataset.maskId,'mask-resize',handle.dataset.resizeCorner))return;
-    if(mode==='create'&&maskNode?.dataset.maskId&&beginDirectEdit(event,maskNode.dataset.maskId,'mask-move'))return;
-    if(handle||maskNode)return;
+    if(mode==='create'&&editTool==='draw'&&handle?.dataset.maskId&&beginDirectEdit(event,handle.dataset.maskId,'mask-resize',handle.dataset.resizeCorner))return;
+    if(mode==='create'&&editTool==='draw'&&maskNode?.dataset.maskId&&beginDirectEdit(event,maskNode.dataset.maskId,'mask-move'))return;
+    if((handle||maskNode)&&!(mode==='create'&&editTool==='pan'))return;
     const point=imagePoint(event);if(!point)return;
-    if(mode==='create'&&!event.shiftKey){
+    if(mode==='create'&&editTool==='draw'&&!event.shiftKey){
       event.preventDefault();gesture={kind:'cover',pointerId:event.pointerId,start:point,current:point,captureTarget:event.currentTarget};event.currentTarget.setPointerCapture(event.pointerId);return;
     }
     if(mode==='create'||mode==='study'){
@@ -544,6 +576,9 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     }
   }
   function pointerMove(event){
+    if(event.pointerType==='touch'&&activeTouches.has(event.pointerId))
+      activeTouches.set(event.pointerId,{x:event.clientX,y:event.clientY});
+    if(gesture?.kind==='pinch'){movePinch();return;}
     if(!gesture||event.pointerId!==gesture.pointerId)return;
     if(gesture.kind==='cover'){const point=imagePoint(event);if(point){gesture.current=point;drawDraft(gesture.start,point);}return;}
     if(gesture.kind==='mask-move'||gesture.kind==='mask-resize'){
@@ -557,6 +592,12 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     }
   }
   function pointerUp(event){
+    if(event.pointerType==='touch')activeTouches.delete(event.pointerId);
+    if(gesture?.kind==='pinch'){
+      try{surface.releasePointerCapture(event.pointerId);}catch{}
+      if(activeTouches.size<2){gesture=null;refreshViewControls();}
+      return;
+    }
     if(!gesture||event.pointerId!==gesture.pointerId)return;
     const active=gesture;try{active.captureTarget?.releasePointerCapture(event.pointerId);}catch{}
     if(active.kind==='pan'){gesture=null;refreshViewControls();return;}
@@ -567,7 +608,8 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     }
     const start=active.start,point=imagePoint(event)||active.current;clearDraft();const rect=rectFromPoints(start,point);if(rect)addCover(rect);else updateToolButtons();
   }
-  function pointerCancel(){
+  function pointerCancel(event=null){
+    if(event?.pointerId!==undefined)activeTouches.delete(event.pointerId);else activeTouches.clear();
     if(!gesture)return;const active=gesture;
     if(active.kind==='pan'&&selectedId)studyView.setViewState(selectedId,active.startView);
     gesture=null;svg.classList.remove('mask-direct-editing');draftRect?.remove();draftRect=null;renderOverlay();updateToolButtons();refreshViewControls();
