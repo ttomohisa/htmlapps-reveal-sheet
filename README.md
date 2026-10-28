@@ -17,6 +17,8 @@ Selected images and saved-sheet data are processed on your device. The app does 
 
 ![Reveal Sheet mobile screenshot](assets/screenshot-mobile.png)
 
+![Exported lesson mobile study screen](assets/screenshot-lesson-mobile.png)
+
 ## Features
 
 - **Create covers directly on an image** — Drag over an answer to place a cover, then move, resize, duplicate, delete, Undo, or Redo it.
