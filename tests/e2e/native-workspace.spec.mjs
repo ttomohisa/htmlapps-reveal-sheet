@@ -58,11 +58,18 @@ test('native workspace: pages use a modal carousel without moving the image',asy
 test('native workspace: selected cover tools preserve image geometry and Undo',async({page})=>{
   await loadImage(page);const before=await page.locator('#dropZone').boundingBox();await drawCover(page);
   expect(await page.locator('#dropZone').boundingBox()).toEqual(before);
-  await page.locator('#maskFineAdjustButton').click();await expect(page.locator('#editorSheet #maskFineControls')).toBeVisible();
+  await page.locator('#maskFineAdjustButton').click();
+  await expect(page.locator('#maskFineControls')).toBeVisible();
+  await expect(page.locator('#editorSheet')).toBeHidden();
+  await expect(page.locator('#previewImage')).toBeVisible();
+  await expect(page.locator('#maskFineClose')).toBeVisible();
+  await expect(page.locator('#editModeToolbar')).toBeHidden();
+  const editingStage=await page.locator('#dropZone').boundingBox();
+  expect(editingStage.height).toBeGreaterThanOrEqual(before.height-20);
   const rect=page.locator('#maskSvg .mask-rect'),x=Number(await rect.getAttribute('x'));
   await page.locator('#maskFineControls [data-mask-direction="right"]').click();
   expect(Number(await rect.getAttribute('x'))).toBeGreaterThan(x);
-  await page.locator('#editorSheetClose').click();await page.locator('#mobileUndoButton').click();
+  await page.locator('#maskFineClose').click();await page.locator('#mobileUndoButton').click();
   expect(Number(await rect.getAttribute('x'))).toBeCloseTo(x,2);
   await page.locator('#maskQuickDuplicate').click();await expect(rect).toHaveCount(2);
   await page.locator('#mobileCoversButton').click();await expect(page.locator('#editorSheet #coverPanel')).toBeVisible();
