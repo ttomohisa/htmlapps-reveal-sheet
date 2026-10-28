@@ -4,6 +4,19 @@
 
 This record contains the v1.1.0 mobile-editor verification below and the historical release/CI evidence that follows it. It does not mark all 48 formal acceptance items complete. The automated matrix includes runtime-network/CSP/hostile-input auditing, repeated standard-size round trips and the configured 30-page / 1,000-cover boundary in addition to editing, study, persistence, lesson, mobile/touch and bilingual accessibility work. Physical phones, real screen readers, Safari, Firefox, background/screen-lock behavior and OS save-cancel/file-handoff behavior remain untested.
 
+## Exported lesson HTML mobile study UX — 2026-10-29
+
+This review updates the **exported `.reveal.html` study player**, not only the authoring app. The player stays entirely embedded in each generated lesson, with the build-time runtime CSP hash and local-only processing unchanged.
+
+- Mobile portrait: native-style compact header, page selector, image-first workspace, free/guided segmented control, current-question progress, reveal then rating actions, and sheets for pages, questions, other-answer choices, optional study persistence and editable download.
+- Short landscape: image and study controls use a two-column arrangement; long prompts and settings scroll within their own regions.
+- Image inspection: in-stage zoom-out / fit / zoom-in controls, drag panning and two-pointer pinch, with per-page transient view state. Tap targets and covered-answer disclosure remain separated.
+- Desktop: sticky page list and cleaned study panel; app copy and learning modes remain intact.
+- New actual exported-lesson screenshot at `assets/screenshot-lesson-mobile.png`, produced by `scripts/capture-qa.mjs` from a saved sample lesson via `file://` rather than a mockup.
+- Browser regressions in `tests/e2e/exported-lesson-mobile.spec.mjs` cover 390×844, 320×480, 700×390, switching study modes, zoom-and-pan, page/question sheets, language, editable JSON download, error-free offline startup and viewport fit.
+
+**Verified source baseline:** GitHub Actions [application tests run 40777546536](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/runs/40777546536) succeeded with **144 pure unit tests** and **136 browser tests per HTML variant (readable and self-extracting)**. [Standalone validation](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/runs/40777546388) and [preview deployment](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/runs/40777546450) passed. Later screenshot/docs commits do not change the study player source. Physical Android/iPhone touch, software keyboards, OS file downloads, screen readers and background/return behavior have **not** been verified on devices.
+
 ## v1.1.0 follow-up: navigation, errors, inline adjustments — 2026-10-28
 
 This follow-up on PR #16 addresses four reviewed items without changing the saved lesson schema or the local-only processing boundary:
