@@ -56,8 +56,11 @@ async function prepareSheet(page,language){
  const data=await syntheticWorksheet(page);
  await page.locator('#imageInput').setInputFiles({name:'practice-diagram.png',mimeType:'image/png',buffer:Buffer.from(data,'base64')});
  await page.locator('#previewImage').waitFor({state:'visible'});
+ const pageToggle=page.locator('#mobilePageToggle');
+ if(await pageToggle.isVisible())await pageToggle.click();
  const title=page.locator('#pageList .page-item').first().locator('.page-card-title');
  await title.fill(language==='ja'?'デスクランプの部品':'Desk lamp parts');await title.press('Enter');
+ if(await pageToggle.isVisible()&&await page.locator('.page-panel').isVisible())await pageToggle.click();
  await dragCover(page,[682,261],[1007,327]);
  await dragCover(page,[682,393],[1007,459]);
  await dragCover(page,[682,551],[1007,617]);
