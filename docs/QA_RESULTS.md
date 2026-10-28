@@ -4,6 +4,14 @@
 
 This record contains the v1.1.0 mobile-editor verification below and the historical release/CI evidence that follows it. It does not mark all 48 formal acceptance items complete. The automated matrix includes runtime-network/CSP/hostile-input auditing, repeated standard-size round trips and the configured 30-page / 1,000-cover boundary in addition to editing, study, persistence, lesson, mobile/touch and bilingual accessibility work. Physical phones, real screen readers, Safari, Firefox, background/screen-lock behavior and OS save-cancel/file-handoff behavior remain untested.
 
+## Exported lesson Settings & Save follow-up — 2026-10-29
+
+The Android Chrome screenshot revealed three presentation regressions in the exported study-only `.reveal.html`: the study-persistence checkbox rendered as a large empty square detached from its label; the two other-answer radio controls were extremely oversized; and the gear icon and secondary buttons looked inconsistent with the app. The root cause for the input sizes was the player CSS rule `.lesson-dialog input { width:100%; min-height:48px }`, which applied text-field dimensions to native checkbox and radio inputs.
+
+The player now scopes 100%-wide text-field rules to `input[type=text]`, sets checkbox and radio sizes to 20 and 18 CSS pixels with branded native accent colors, and keeps each control beside its text. The options are restrained selectable cards; the title/description/status and editable-data action align within the settings sheet. A redesigned gear SVG replaces the malformed path. The player provides explicit button backgrounds, borders, typography, corner radii and clear primary/secondary/segmented states, rather than browser-default buttons.
+
+A new exported-lesson browser test asserts input bounding boxes, green native accents, radio selection, checkbox/text alignment, filename and save-button dimensions, and both 390px and 320px mobile widths. `scripts/capture-qa.mjs` generates the actual export's settings-sheet screenshot `assets/screenshot-lesson-settings-mobile.png` from a synthetic local lesson. The existing tests continue covering English/Japanese, persistence opt-in, local-only `file://` learning and save confirmation. Physical Android/iOS touch and OS file-save behavior have not been retested in the automation environment.
+
 ## Exported lesson HTML mobile study UX — 2026-10-29
 
 This review updates the **exported `.reveal.html` study player**, not only the authoring app. The player stays entirely embedded in each generated lesson, with the build-time runtime CSP hash and local-only processing unchanged.
