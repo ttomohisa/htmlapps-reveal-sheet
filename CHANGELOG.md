@@ -2,6 +2,9 @@
 
 ## 1.1.0 - 2026-10-28
 
+- Refined the exported lesson Settings & Save sheet after real Android Chrome screenshot feedback: fixed native checkbox/radio dimensions, unified card selections and save controls, replaced the malformed gear with a clean SVG, and normalized button typography, borders, corners and pressed states without affecting the main editor.
+
+
 - Rebuilt exported `.reveal.html` study UI: a compact mobile page switcher, image-first viewport, segmented free/guided study, contextual reveal/assessment actions, and bottom sheets for page/question lists, study settings, and editable download.
 - Added exported-lesson 100%/zoom controls and gesture-based pan/pinch for close study of image details, with per-page viewport state and a visible progress indicator.
 - On short landscape phones, show the image alongside study controls instead of shrinking the image below the controls; keep long prompts and settings in local scroll regions without scrolling the whole app.
