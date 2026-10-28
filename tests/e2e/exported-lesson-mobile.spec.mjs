@@ -111,6 +111,57 @@ test('exported lesson: mobile pages, settings, language and editable save remain
   await expect(lesson.locator('#lessonSettingsButton')).toBeFocused();
   await lesson.close();
 });
+
+for(const viewport of [{width:390,height:844},{width:320,height:640}]){
+  test(`exported lesson: settings controls use compact native sizing at ${viewport.width}px`,async({page,context},testInfo)=>{
+    const filepath=await exportLesson(page,testInfo);
+    const lesson=await openLesson(context,filepath,viewport);
+    await lesson.locator('#lessonGuidedMode').click();
+    await lesson.locator('#lessonSettingsButton').click();
+    const sheet=lesson.locator('#lessonSheet');
+    await expect(sheet).toBeVisible();
+    const radios=sheet.locator('#lessonOtherOptions input[type="radio"]');
+    await expect(radios).toHaveCount(2);
+    for(const radio of await radios.all()){
+      const size=await radio.evaluate(node=>{
+        const box=node.getBoundingClientRect(),cs=getComputedStyle(node);
+        return {width:box.width,height:box.height,accent:cs.accentColor};
+      });
+      expect(size.width).toBeGreaterThanOrEqual(16);
+      expect(size.width).toBeLessThanOrEqual(24);
+      expect(size.height).toBeGreaterThanOrEqual(16);
+      expect(size.height).toBeLessThanOrEqual(24);
+      expect(size.accent).toBe('rgb(22, 98, 79)');
+    }
+    await sheet.locator('#lessonOtherVisible').check();
+    await expect(sheet.locator('#lessonOtherVisible')).toBeChecked();
+    await expect(sheet.locator('#lessonOtherHidden')).not.toBeChecked();
+    const checkbox=sheet.locator('#lessonStudyOptIn');
+    const checkBounds=await checkbox.boundingBox();
+    const textBounds=await sheet.locator('#lessonStudyOptInText').boundingBox();
+    expect(checkBounds.width).toBeGreaterThanOrEqual(18);
+    expect(checkBounds.width).toBeLessThanOrEqual(24);
+    expect(checkBounds.height).toBeGreaterThanOrEqual(18);
+    expect(checkBounds.height).toBeLessThanOrEqual(24);
+    expect(checkBounds.x+checkBounds.width).toBeLessThan(textBounds.x);
+    const name=sheet.locator('#lessonFilename');
+    await expect(name).toHaveCSS('height','46px');
+    await expect(name).toHaveCSS('font-size','16px');
+    const button=sheet.locator('#lessonSaveEditableButton');
+    const bounds=await button.boundingBox();
+    expect(bounds.height).toBeGreaterThanOrEqual(44);
+    expect(bounds.height).toBeLessThanOrEqual(56);
+    await expect(button).toHaveCSS('border-bottom-style','solid');
+    await expect(button).toHaveCSS('background-color','rgb(234, 244, 238)');
+    expect(await sheet.evaluate(node=>node.scrollWidth<=node.clientWidth+1)).toBe(true);
+    const gear=lesson.locator('#lessonSettingsButton svg');
+    await expect(gear.locator('path')).toHaveCount(1);
+    await expect(gear.locator('circle')).toHaveCount(1);
+    await lesson.locator('#lessonSheetClose').click();
+    await expect(lesson.locator('#lessonSettingsButton')).toBeFocused();
+    await lesson.close();
+  });
+}
 for(const viewport of [{width:320,height:480},{width:700,height:390}]){
   test(`exported lesson: controls fit ${viewport.width}×${viewport.height} without viewport overflow`,async({page,context},testInfo)=>{
     const filepath=await exportLesson(page,testInfo);
