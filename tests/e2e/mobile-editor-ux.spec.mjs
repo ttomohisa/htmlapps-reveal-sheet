@@ -64,7 +64,8 @@ test('mobile: draw/pan controls and cover nudge/resize preserve Undo',async({pag
   await page.locator('#maskAdjustResize').click();
   await page.locator('#maskFineControls [data-mask-direction="right"]').click();
   expect(Number(await rect.getAttribute('width'))).toBeGreaterThan(beforeWidth);
-  await page.locator('#editorSheetClose').click();
+  await expect(page.locator('#editorSheet')).toBeHidden();
+  await page.locator('#maskFineClose').click();
   await page.locator('#mobileUndoButton').click();
   expect(Number(await rect.getAttribute('width'))).toBeCloseTo(beforeWidth,1);
   await page.locator('#maskQuickDuplicate').click();
