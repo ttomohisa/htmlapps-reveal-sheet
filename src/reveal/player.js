@@ -7,9 +7,10 @@ function createPlayer({core,projectIO,persistence,env,envelope}) {
   let imageGeneration=0,studyView=null,pendingConfirm=null,studyGeneration=0,studyIdentity=null,saveTimer=0,persistenceAvailable=false;
   const mobileLayout=env.matchMedia('(max-width:720px)');
   let sheetKind='',sheetOpener=null,sheetMoves=[];
+  const pointers=new Map();let imageGesture=null,suppressTapUntil=0;
   const tr={
-    ja:{titleSuffix:'学習教材',free:'自由にめくる',guided:'一問ずつ',checked:'確認済み',hideAll:'全部隠す',revealPage:'このページの答えをすべて表示',reveal:'答えを見る',recalled:'思い出せた',again:'もう一度',skip:'飛ばす',previous:'前の問題',finish:'学習を終える',results:'今回の結果',total:'対象',unanswered:'未回答',reviewAgain:'もう一度だけ確認',reviewUnchecked:'未確認を確認',otherAnswers:'ほかの答え',hideOthers:'ほかの答えも隠す',showOthers:'ほかの答えは見せる',pagesLabel:'ページ',coversLabel:'画像上の覆い',questionsLabel:'問題',coverLabel:'覆い',coveredAnswerLabel:'閉じている答え',subtitle:'画像で学ぶ暗記シート',pagePosition:'{current} / {total}ページ',previousPage:'前のページ',nextPage:'次のページ',openPages:'ページ一覧',settings:'設定・保存',questions:'問題一覧',studyMode:'学習方法',filenameLabel:'ファイル名',close:'閉じる',rating_unanswered:'未回答',rating_recalled:'思い出せた',rating_again:'もう一度',rating_skipped:'飛ばした',revealedAnswerText:'表示中の答え（平文）',saveEditable:'編集データを保存',saveConfirmTitle:'編集データを保存しますか？',saveConfirm:'画像・ページ・問題・覆いを含む編集データを保存します。個人の学習結果は含めません。',saveAction:'保存を開始',cancel:'キャンセル',help:'使い方と注意事項',helpBody:'覆いを押して自由に確認するか、一問ずつ答えを見て自己評価できます。TabとEnter／Spaceでも主要操作を使えます。画像だけに写っている文字は自動では読み上げられません。平文の答えがある場合も、答えをめくるまでは読み上げ対象へ出しません。この教材を直す場合はReveal Sheet本体でこの.reveal.htmlを選び直してください。',studySave:'この端末に学習の続きだけを残す',studySaveNote:'初期OFF。画像は保存せず、この教材に一致する小さい学習記録だけを保存します。',studyUnavailable:'この起動方法では学習記録を保存できません。学習自体は利用できます。',studySaved:'学習の続きを端末内に保存しました。',studyOff:'学習記録はOFFです。',enableStudyTitle:'学習の続きをこの端末に残しますか？',enableStudyMessage:'問題の進み具合と自己評価だけをこのブラウザに保存します。画像は学習記録に含めません。',enable:'ONにする',resumeTitle:'学習の続きがあります',resumeMessage:'この教材と内容が一致する学習の続きがあります。答えを閉じた状態で再開しますか？',continue:'続きから',fresh:'最初から'},
-    en:{titleSuffix:'Study lesson',free:'Reveal freely',guided:'One at a time',checked:'Checked',hideAll:'Hide all',revealPage:'Reveal all answers on this page',reveal:'Reveal answer',recalled:'Recalled',again:'Review again',skip:'Skip',previous:'Previous',finish:'Finish study',results:'This session',total:'Total',unanswered:'Unanswered',reviewAgain:'Review again only',reviewUnchecked:'Review unchecked',otherAnswers:'Other answers',hideOthers:'Hide other answers',showOthers:'Show other answers',pagesLabel:'Pages',coversLabel:'Image covers',questionsLabel:'Questions',coverLabel:'Cover',coveredAnswerLabel:'Covered answer',subtitle:'Study from your images',pagePosition:'Page {current} of {total}',previousPage:'Previous page',nextPage:'Next page',openPages:'Page list',settings:'Settings & save',questions:'Question list',studyMode:'Study mode',filenameLabel:'Filename',close:'Close',rating_unanswered:'Unanswered',rating_recalled:'Recalled',rating_again:'Review again',rating_skipped:'Skipped',revealedAnswerText:'Revealed answer text',saveEditable:'Save editable sheet',saveConfirmTitle:'Save editable sheet?',saveConfirm:'Save images, pages, questions and covers as editable data. Personal study results are not included.',saveAction:'Start save',cancel:'Cancel',help:'How to use & notes',helpBody:'Reveal covers freely or study one question at a time. Main controls also work with Tab and Enter/Space. Reveal Sheet does not automatically read text that exists only in image pixels. Plain-text answer content, when present, is not exposed to assistive output until it is revealed. To edit this lesson, open Reveal Sheet and choose this .reveal.html file again.',studySave:'Keep only study progress on this device',studySaveNote:'Off by default. Stores only a small matching study record without images.',studyUnavailable:'Study progress cannot be saved in this launch mode. Studying still works.',studySaved:'Saved study progress on this device.',studyOff:'Study progress saving is off.',enableStudyTitle:'Keep study progress on this device?',enableStudyMessage:'Only question progress and self-assessment are stored in this browser. Images are not stored in the study record.',enable:'Enable',resumeTitle:'Saved study progress found',resumeMessage:'Matching study progress exists for this exact lesson. Continue with the current answer closed?',continue:'Continue',fresh:'Start fresh'}
+    ja:{titleSuffix:'学習教材',free:'自由にめくる',guided:'一問ずつ',checked:'確認済み',hideAll:'全部隠す',revealPage:'このページの答えをすべて表示',reveal:'答えを見る',recalled:'思い出せた',again:'もう一度',skip:'飛ばす',previous:'前の問題',finish:'学習を終える',results:'今回の結果',total:'対象',unanswered:'未回答',reviewAgain:'もう一度だけ確認',reviewUnchecked:'未確認を確認',otherAnswers:'ほかの答え',hideOthers:'ほかの答えも隠す',showOthers:'ほかの答えは見せる',pagesLabel:'ページ',coversLabel:'画像上の覆い',questionsLabel:'問題',coverLabel:'覆い',coveredAnswerLabel:'閉じている答え',subtitle:'画像で学ぶ暗記シート',pagePosition:'{current} / {total}ページ',previousPage:'前のページ',nextPage:'次のページ',openPages:'ページ一覧',settings:'設定・保存',questions:'問題一覧',studyMode:'学習方法',zoomControls:'画像の拡大・縮小',zoomIn:'拡大',zoomOut:'縮小',zoomFit:'全体表示へ戻す',filenameLabel:'ファイル名',close:'閉じる',rating_unanswered:'未回答',rating_recalled:'思い出せた',rating_again:'もう一度',rating_skipped:'飛ばした',revealedAnswerText:'表示中の答え（平文）',saveEditable:'編集データを保存',saveConfirmTitle:'編集データを保存しますか？',saveConfirm:'画像・ページ・問題・覆いを含む編集データを保存します。個人の学習結果は含めません。',saveAction:'保存を開始',cancel:'キャンセル',help:'使い方と注意事項',helpBody:'覆いを押して自由に確認するか、一問ずつ答えを見て自己評価できます。TabとEnter／Spaceでも主要操作を使えます。画像だけに写っている文字は自動では読み上げられません。平文の答えがある場合も、答えをめくるまでは読み上げ対象へ出しません。この教材を直す場合はReveal Sheet本体でこの.reveal.htmlを選び直してください。',studySave:'この端末に学習の続きだけを残す',studySaveNote:'初期OFF。画像は保存せず、この教材に一致する小さい学習記録だけを保存します。',studyUnavailable:'この起動方法では学習記録を保存できません。学習自体は利用できます。',studySaved:'学習の続きを端末内に保存しました。',studyOff:'学習記録はOFFです。',enableStudyTitle:'学習の続きをこの端末に残しますか？',enableStudyMessage:'問題の進み具合と自己評価だけをこのブラウザに保存します。画像は学習記録に含めません。',enable:'ONにする',resumeTitle:'学習の続きがあります',resumeMessage:'この教材と内容が一致する学習の続きがあります。答えを閉じた状態で再開しますか？',continue:'続きから',fresh:'最初から'},
+    en:{titleSuffix:'Study lesson',free:'Reveal freely',guided:'One at a time',checked:'Checked',hideAll:'Hide all',revealPage:'Reveal all answers on this page',reveal:'Reveal answer',recalled:'Recalled',again:'Review again',skip:'Skip',previous:'Previous',finish:'Finish study',results:'This session',total:'Total',unanswered:'Unanswered',reviewAgain:'Review again only',reviewUnchecked:'Review unchecked',otherAnswers:'Other answers',hideOthers:'Hide other answers',showOthers:'Show other answers',pagesLabel:'Pages',coversLabel:'Image covers',questionsLabel:'Questions',coverLabel:'Cover',coveredAnswerLabel:'Covered answer',subtitle:'Study from your images',pagePosition:'Page {current} of {total}',previousPage:'Previous page',nextPage:'Next page',openPages:'Page list',settings:'Settings & save',questions:'Question list',studyMode:'Study mode',zoomControls:'Image zoom',zoomIn:'Zoom in',zoomOut:'Zoom out',zoomFit:'Fit image',filenameLabel:'Filename',close:'Close',rating_unanswered:'Unanswered',rating_recalled:'Recalled',rating_again:'Review again',rating_skipped:'Skipped',revealedAnswerText:'Revealed answer text',saveEditable:'Save editable sheet',saveConfirmTitle:'Save editable sheet?',saveConfirm:'Save images, pages, questions and covers as editable data. Personal study results are not included.',saveAction:'Start save',cancel:'Cancel',help:'How to use & notes',helpBody:'Reveal covers freely or study one question at a time. Main controls also work with Tab and Enter/Space. Reveal Sheet does not automatically read text that exists only in image pixels. Plain-text answer content, when present, is not exposed to assistive output until it is revealed. To edit this lesson, open Reveal Sheet and choose this .reveal.html file again.',studySave:'Keep only study progress on this device',studySaveNote:'Off by default. Stores only a small matching study record without images.',studyUnavailable:'Study progress cannot be saved in this launch mode. Studying still works.',studySaved:'Saved study progress on this device.',studyOff:'Study progress saving is off.',enableStudyTitle:'Keep study progress on this device?',enableStudyMessage:'Only question progress and self-assessment are stored in this browser. Images are not stored in the study record.',enable:'Enable',resumeTitle:'Saved study progress found',resumeMessage:'Matching study progress exists for this exact lesson. Continue with the current answer closed?',continue:'Continue',fresh:'Start fresh'}
   };
   const t=key=>tr[language][key]||key;
   function confirmAsk({title,message,ok,cancel=t('cancel')}){return new Promise(resolve=>{pendingConfirm=resolve;$('lessonConfirmTitle').textContent=title;$('lessonConfirmMessage').textContent=message;$('lessonConfirmOk').textContent=ok;$('lessonConfirmCancel').textContent=cancel;$('lessonConfirmDialog').showModal();});}
@@ -53,6 +54,73 @@ function createPlayer({core,projectIO,persistence,env,envelope}) {
     $('lessonNextPage').disabled=index<0||index>=doc.pages.length-1;
     $('lessonQuestionsButton').disabled=!session.queue.length;
   }
+  function refreshZoom(){
+    if(!studyView)return;
+    const value=studyView.getViewState(pageId).zoom;
+    $('lessonZoomFit').textContent=Math.round(value*100)+'%';
+    $('lessonZoomOut').disabled=value<=.5;
+    $('lessonZoomIn').disabled=value>=16;
+  }
+  function zoom(factor){
+    if(!studyView)return;
+    const view=studyView.getViewState(pageId);
+    studyView.setViewState(pageId,{...view,zoom:factor===0?1:view.zoom*factor,...(factor===0?{centerX:.5,centerY:.5}:{})});
+    refreshZoom();
+  }
+  function resetImageGesture(){pointers.clear();imageGesture=null;}
+  function beginPinch(){
+    if(pointers.size!==2||!studyView)return;
+    const points=[...pointers.values()],d=Math.hypot(points[0].x-points[1].x,points[0].y-points[1].y);
+    if(d<1)return;
+    imageGesture={kind:'pinch',pageId,startView:studyView.getViewState(pageId),geometry:studyView.getViewGeometry(),
+      distance:d,midX:(points[0].x+points[1].x)/2,midY:(points[0].y+points[1].y)/2};
+    suppressTapUntil=Date.now()+350;
+  }
+  function beginPan(pointerId,point){
+    if(!studyView)return;
+    imageGesture={kind:'pan',pageId,pointerId,startX:point.x,startY:point.y,
+      startView:studyView.getViewState(pageId),geometry:studyView.getViewGeometry()};
+  }
+  function stagePointerDown(event){
+    if(event.button!==0||event.target.closest?.('#lessonZoomControls'))return;
+    if(pointers.size>=2)return;
+    pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
+    if(pointers.size===2)beginPinch();
+    else beginPan(event.pointerId,{x:event.clientX,y:event.clientY});
+  }
+  function stagePointerMove(event){
+    if(!pointers.has(event.pointerId)||!imageGesture||!studyView)return;
+    pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
+    const a=imageGesture,geometry=a.geometry;
+    if(!geometry||a.pageId!==pageId)return;
+    if(a.kind==='pinch'&&pointers.size===2){
+      const [p,q]=[...pointers.values()],distance=Math.hypot(p.x-q.x,p.y-q.y);
+      const z=Math.max(.5,Math.min(16,a.startView.zoom*distance/a.distance)),mx=(p.x+q.x)/2,my=(p.y+q.y)/2;
+      const anchorX=a.startView.centerX+(a.midX-geometry.centerX)/(geometry.fitWidth*a.startView.zoom);
+      const anchorY=a.startView.centerY+(a.midY-geometry.centerY)/(geometry.fitHeight*a.startView.zoom);
+      studyView.setViewState(pageId,{zoom:z,centerX:anchorX-(mx-geometry.centerX)/(geometry.fitWidth*z),centerY:anchorY-(my-geometry.centerY)/(geometry.fitHeight*z)},{defer:true});
+      refreshZoom();return;
+    }
+    if(a.kind==='pan'&&a.pointerId===event.pointerId&&a.startView.zoom>1){
+      studyView.setViewState(pageId,{...a.startView,
+        centerX:a.startView.centerX-(event.clientX-a.startX)/(geometry.fitWidth*a.startView.zoom),
+        centerY:a.startView.centerY-(event.clientY-a.startY)/(geometry.fitHeight*a.startView.zoom)},{defer:true});
+    }
+  }
+  function stagePointerUp(event){
+    if(!pointers.has(event.pointerId))return;
+    stagePointerMove(event);
+    const wasPinch=imageGesture?.kind==='pinch';
+    pointers.delete(event.pointerId);studyView?.flushView();
+    if(wasPinch&&pointers.size===1){
+      const [id,point]=pointers.entries().next().value;beginPan(id,point);suppressTapUntil=Date.now()+350;
+    }else if(!pointers.size)imageGesture=null;
+    refreshZoom();
+  }
+  function stagePointerCancel(){
+    if(imageGesture?.pageId===pageId&&imageGesture.startView)studyView?.setViewState(pageId,imageGesture.startView);
+    resetImageGesture();refreshZoom();
+  }
   function stepPage(delta){
     const index=doc.pages.findIndex(item=>item.id===pageId),next=doc.pages[index+delta];
     if(next){closeSheet();showPage(next.id);}
@@ -62,10 +130,10 @@ function createPlayer({core,projectIO,persistence,env,envelope}) {
   function currentGuidedId(){return session.mode==='guided'&&!session.ended?session.queue[session.index]?.questionId||null:null;}
   function visibleSvg(hidden){if(hidden)$('maskSvg').setAttribute('hidden','');else $('maskSvg').removeAttribute('hidden');}
   async function showPage(nextId){
-    const next=doc.pages.find(item=>item.id===nextId);if(!next)return;pageId=next.id;const a=doc.assets.find(item=>item.id===next.imageId),token=++imageGeneration,img=$('previewImage');
+    const next=doc.pages.find(item=>item.id===nextId);if(!next)return;resetImageGesture();pageId=next.id;const a=doc.assets.find(item=>item.id===next.imageId),token=++imageGeneration,img=$('previewImage');
     img.hidden=true;visibleSvg(true);img.src='data:image/png;base64,'+a.dataBase64;
     try{await img.decode();}catch{if(token===imageGeneration)$('lessonError').hidden=false;return;}
-    if(token!==imageGeneration)return;img.hidden=false;studyView.mount({document:doc,pageId:next.id,session,mode:'study',selectedMaskId:null,selectedMaskIds:[]});visibleSvg(false);renderPages();refreshNavigation();render();
+    if(token!==imageGeneration)return;img.hidden=false;studyView.mount({document:doc,pageId:next.id,session,mode:'study',selectedMaskId:null,selectedMaskIds:[]});visibleSvg(false);renderPages();refreshNavigation();render();refreshZoom();
   }
   function renderPages(){
     const list=$('lessonPages');list.replaceChildren();doc.pages.forEach((p,index)=>{const b=env.document.createElement('button');b.type='button';b.className='lesson-page-button';b.textContent=(index+1)+'. '+p.title;b.setAttribute('aria-pressed',String(p.id===pageId));b.addEventListener('click',()=>{closeSheet();showPage(p.id);});list.append(b);});
@@ -77,7 +145,7 @@ function createPlayer({core,projectIO,persistence,env,envelope}) {
   function render(){
     const activePage=page();$('lessonPageDescription').hidden=!activePage?.description;$('lessonPageDescription').textContent=activePage?.description||'';
     $('lessonFreeMode').setAttribute('aria-pressed',String(mode==='free'));$('lessonGuidedMode').setAttribute('aria-pressed',String(mode==='guided'));$('lessonFreePanel').hidden=mode!=='free';$('lessonGuidedPanel').hidden=mode!=='guided';
-    refreshNavigation();
+    refreshNavigation();refreshZoom();
     if(mode==='free'){
       const sum=core.summaryFree(session);$('lessonConfirmedCount').textContent=String(sum.confirmed);$('lessonQuestionCount').textContent=String(sum.total);const open=new Set(session.openQuestionIds),list=$('lessonQuestionList');list.replaceChildren();
       session.queue.forEach((qid,index)=>{const q=doc.questions.find(item=>item.id===qid);if(!q)return;const b=env.document.createElement('button');b.type='button';b.className='lesson-question';const base=(open.has(qid)?'✓ ':'')+(index+1);b.textContent=q.prompt?base+' · '+q.prompt:base;b.addEventListener('click',()=>{closeSheet();session=core.toggleFree(session,qid);scheduleStudySave();render();studyView.render();});list.append(b);});
@@ -118,6 +186,8 @@ function createPlayer({core,projectIO,persistence,env,envelope}) {
     for(const [id,key] of [['lessonPrevPage','previousPage'],['lessonNextPage','nextPage'],['lessonPageToggle','openPages'],['lessonSettingsButton','settings'],['lessonQuestionsButton','questions'],['lessonSheetClose','close']]){
       $(id).setAttribute('aria-label',t(key));
     }
+    for(const [id,key] of [['lessonZoomOut','zoomOut'],['lessonZoomFit','zoomFit'],['lessonZoomIn','zoomIn']])$(id).setAttribute('aria-label',t(key));
+    $('lessonZoomControls').setAttribute('aria-label',t('zoomControls'));
     $('lessonSettingsButton').title=t('settings');
     $('lessonQuestionsButton').textContent=t('questions');
     $('lessonFreeMode').setAttribute('aria-label',t('free'));
@@ -150,6 +220,19 @@ function createPlayer({core,projectIO,persistence,env,envelope}) {
     studyView=createStudyView({core,dom:env.document,translate:t,onAction:action=>{if(action.type==='TOGGLE_QUESTION'&&mode==='free'){session=core.toggleFree(session,action.questionId);scheduleStudySave();render();}else if(action.type==='REVEAL_CURRENT'&&mode==='guided'&&action.questionId===currentGuidedId())reveal();}});
     $('lessonFilename').value=doc.title||'reveal-sheet';
     $('lessonFreeMode').addEventListener('click',()=>newSession('free'));$('lessonGuidedMode').addEventListener('click',()=>newSession('guided'));$('lessonHideAll').addEventListener('click',()=>{session=core.hideAllFree(session);render();});$('lessonRevealPage').addEventListener('click',()=>{session=core.revealPageFree(doc,session,pageId);render();});$('lessonRevealCurrent').addEventListener('click',reveal);$('lessonRecalled').addEventListener('click',()=>rate('recalled'));$('lessonAgain').addEventListener('click',()=>rate('again'));$('lessonSkip').addEventListener('click',skip);$('lessonPrevious').addEventListener('click',previous);$('lessonFinish').addEventListener('click',finish);$('lessonReviewAgain').addEventListener('click',()=>review('again'));$('lessonReviewUnchecked').addEventListener('click',()=>review('unchecked'));$('lessonOtherHidden').addEventListener('change',()=>{if(session.mode==='guided'){session={...session,otherAnswers:'hidden'};render();}});$('lessonOtherVisible').addEventListener('change',()=>{if(session.mode==='guided'){session={...session,otherAnswers:'visible'};render();}});
+    $('lessonZoomIn').addEventListener('click',()=>zoom(1.25));
+    $('lessonZoomOut').addEventListener('click',()=>zoom(.8));
+    $('lessonZoomFit').addEventListener('click',()=>zoom(0));
+    const stage=$('lessonStage');
+    stage.addEventListener('pointerdown',stagePointerDown);
+    stage.addEventListener('pointermove',stagePointerMove);
+    stage.addEventListener('pointerup',stagePointerUp);
+    stage.addEventListener('pointercancel',stagePointerCancel);
+    stage.addEventListener('click',event=>{
+      if(event.detail!==0&&Date.now()<suppressTapUntil){event.stopImmediatePropagation();event.preventDefault();}
+    },true);
+    stage.addEventListener('dragstart',event=>event.preventDefault());
+    env.addEventListener('pointerup',stagePointerUp);
     $('lessonPageToggle').addEventListener('click',event=>openSheet('pages',event.currentTarget));
     $('lessonPrevPage').addEventListener('click',()=>stepPage(-1));
     $('lessonNextPage').addEventListener('click',()=>stepPage(1));
@@ -166,6 +249,6 @@ function createPlayer({core,projectIO,persistence,env,envelope}) {
     $('lessonLanguage').addEventListener('click',()=>{language=language==='ja'?'en':'ja';applyLanguage();});$('lessonHelpButton').addEventListener('click',()=>$('lessonHelpDialog').showModal());$('lessonHelpClose').addEventListener('click',()=>$('lessonHelpDialog').close());$('lessonSaveEditableButton').addEventListener('click',saveEditable);$('lessonStudyOptIn').addEventListener('change',toggleStudy);$('lessonConfirmOk').addEventListener('click',()=>finishConfirm(true));$('lessonConfirmCancel').addEventListener('click',()=>finishConfirm(false));env.document.addEventListener('keydown',keydown);
     applyLanguage();renderPages();await showPage(pageId);$('lessonWaiting').hidden=true;$('lessonReady').hidden=false;env.document.body.classList.add('lesson-active');await initPersistence();
   }
-  function destroy(){closeSheet();if(saveTimer)env.clearTimeout(saveTimer);studyView?.destroy();}
+  function destroy(){resetImageGesture();closeSheet();if(saveTimer)env.clearTimeout(saveTimer);studyView?.destroy();}
   return Object.freeze({start,destroy});
 }
