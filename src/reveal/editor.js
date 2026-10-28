@@ -570,7 +570,13 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function rectFromPoints(a,b){const asset=currentAsset();if(!asset)return null;const x=Math.min(a.x,b.x),y=Math.min(a.y,b.y),w=Math.abs(a.x-b.x),h=Math.abs(a.y-b.y);if(w<1||h<1)return null;return{x:x/asset.width,y:y/asset.height,w:w/asset.width,h:h/asset.height};}
   function clearDraft(){draftRect?.remove();draftRect=null;gesture=null;}
   function drawDraft(a,b){const rect=rectFromPoints(a,b);if(!rect)return;const asset=currentAsset(),px=core.rectToPixels(rect,asset.width,asset.height);if(!draftRect){draftRect=env.document.createElementNS('http://www.w3.org/2000/svg','rect');draftRect.classList.add('mask-draft');svg.append(draftRect);}draftRect.setAttribute('x',String(px.x));draftRect.setAttribute('y',String(px.y));draftRect.setAttribute('width',String(px.w));draftRect.setAttribute('height',String(px.h));}
-  function addCover(rect){const before=new Set(doc.masks.map(m=>m.id)),result=core.applyCommand(doc,{type:'ADD_ANSWER_MASK',pageId:selectedId,rect},ctx),added=result.document.masks.find(m=>!before.has(m.id));commit(result,added?.id||null);selectedMaskIds=added?new Set([added.id]):new Set();status('coverAdded');clearDraft();refreshCopy();}
+  function addCover(rect){
+    try{
+      const before=new Set(doc.masks.map(m=>m.id)),result=core.applyCommand(doc,{type:'ADD_ANSWER_MASK',pageId:selectedId,rect},ctx),added=result.document.masks.find(m=>!before.has(m.id));
+      commit(result,added?.id||null);selectedMaskIds=added?new Set([added.id]):new Set();status('coverAdded');refreshCopy();
+    }catch(error){status('error_'+(error?.code||'INVALID_SHEET'));refreshCopy();}
+    finally{clearDraft();}
+  }
   function directEditRect(active,point){
     const asset=currentAsset();if(!asset||!point)return active.startRect;
     const start=active.startRect,minW=1/asset.width,minH=1/asset.height,nx=point.x/asset.width,ny=point.y/asset.height;
@@ -729,7 +735,10 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function groupSelected(){
     const page=currentPage();if(!page||busy)return;const chosen=doc.masks.filter(mask=>mask.pageId===page.id&&selectedMaskIds.has(mask.id));
     const questionIds=[...new Set(chosen.filter(mask=>mask.kind==='answer').map(mask=>mask.questionId))];if(chosen.some(mask=>mask.kind!=='answer')||questionIds.length<2)return;
-    const keepId=chosen[0].id,result=core.applyCommand(doc,{type:'GROUP_QUESTIONS',questionIds},ctx);commit(result,keepId);selectedMaskIds=new Set([keepId]);status('groupedCovers');refreshCopy();
+    try{
+      const keepId=chosen[0].id,result=core.applyCommand(doc,{type:'GROUP_QUESTIONS',questionIds},ctx);
+      commit(result,keepId);selectedMaskIds=new Set([keepId]);status('groupedCovers');refreshCopy();
+    }catch(error){status('error_'+(error?.code||'INVALID_SHEET'));refreshCopy();}
   }
   function ungroupSelected(){
     const page=currentPage();if(!page||busy)return;const chosen=doc.masks.filter(mask=>mask.pageId===page.id&&selectedMaskIds.has(mask.id));if(chosen.length!==1||chosen[0].kind!=='answer')return;
@@ -885,6 +894,10 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function downloadHtml(){return downloadPrepared('html');}
   function keydown(event){
     if(editableTarget(event.target)||env.document.querySelector('dialog[open]'))return;
+    if(event.key==='Escape'&&fineAdjustOpen){
+      event.preventDefault();fineAdjustOpen=false;refreshMobileEditor();
+      $('maskFineAdjustButton').focus({preventScroll:true});return;
+    }
     if(event.key==='Escape'&&gesture){event.preventDefault();pointerCancel();return;}
     if(mode==='study'&&studySession?.mode==='guided'){
       if(event.repeat&&[' ','1','2','s','S','ArrowLeft'].includes(event.key)){event.preventDefault();return;}
