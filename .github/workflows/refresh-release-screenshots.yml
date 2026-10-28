@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: refresh-release-screenshots-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   capture:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
@@ -71,7 +75,13 @@ jobs:
           }
           git commit -m "docs: refresh Reveal Sheet release screenshots"
           if ("${{ github.event_name }}" -eq "pull_request") {
-            git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+            $target = "${{ github.event.pull_request.head.ref }}"
           } else {
-            git push origin "HEAD:${{ github.ref_name }}"
+            $target = "${{ github.ref_name }}"
           }
+          git fetch origin $target
+          if ($LASTEXITCODE -ne 0) { throw "Could not refresh screenshot target branch." }
+          git rebase "origin/$target"
+          if ($LASTEXITCODE -ne 0) { throw "Screenshot update conflicted with newer branch changes." }
+          git push origin "HEAD:$target"
+          if ($LASTEXITCODE -ne 0) { throw "Screenshot push failed." }
