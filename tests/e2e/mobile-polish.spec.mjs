@@ -82,7 +82,7 @@ test('image pan guide appears only at full-image scale and localizes',async({pag
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
-for(const viewport of [{width:320,height:480},{width:700,height:320}]){
+for(const viewport of [{width:320,height:480},{width:480,height:360},{width:700,height:320}]){
   test(`inline adjust dock stays reachable without dimming at ${viewport.width}×${viewport.height}`,async({page})=>{
     await load(page,viewport);await cover(page,10,10,35,30);
     await page.locator('#maskFineAdjustButton').click();
