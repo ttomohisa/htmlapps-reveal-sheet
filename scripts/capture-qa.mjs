@@ -93,6 +93,9 @@ try {
  await lesson.locator('#lessonGuidedMode').click();
  await lesson.locator('#lessonRevealCurrent').waitFor({state:'visible'});
  await lesson.screenshot({path:output+'/screenshot-lesson-mobile.png'});
+ await lesson.locator('#lessonSettingsButton').click();
+ await lesson.locator('#lessonSheet').waitFor({state:'visible'});
+ await lesson.screenshot({path:output+'/screenshot-lesson-settings-mobile.png'});
  await lesson.close();await mobile.close();
 
  if(process.env.CAPTURE_UPDATE_ASSETS==='1'){
@@ -101,6 +104,7 @@ try {
   copyFileSync(output+'/screenshot-mobile.png','assets/screenshot-mobile.png');
   copyFileSync(output+'/screenshot-mobile-edit.png','assets/screenshot-mobile-edit.png');
   copyFileSync(output+'/screenshot-lesson-mobile.png','assets/screenshot-lesson-mobile.png');
+  copyFileSync(output+'/screenshot-lesson-settings-mobile.png','assets/screenshot-lesson-settings-mobile.png');
  }
 
  let commit='unknown';try{commit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();}catch{}
