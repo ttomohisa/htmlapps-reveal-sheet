@@ -136,7 +136,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   }
   function stepPage(delta){
     const index=doc.pages.findIndex(page=>page.id===selectedId),next=doc.pages[index+delta];
-    if(mode==='create'&&!busy&&next)selectPage(next.id);
+    if(mode==='create'&&!busy&&next)selectPage(next.id,{collapseMobile:true});
   }
   function adjustSelected(direction){
     if(!['left','right','up','down'].includes(direction))return;
@@ -262,9 +262,9 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     }
     return icon;
   }
-  function selectPage(pageId){
+  function selectPage(pageId,{collapseMobile=false}={}){
     if(!doc.pages.some(page=>page.id===pageId))return;
-    mobilePagesOpen=false;
+    if(collapseMobile)mobilePagesOpen=false;
     if(selectedId===pageId){refreshMobileEditor();return;}
     cancelTransientInteraction();selectedId=pageId;selectedMaskId=null;selectedMaskIds.clear();
     $('pageList').querySelectorAll('.page-item').forEach(card=>card.setAttribute('aria-current',card.dataset.pageId===pageId?'page':'false'));
@@ -334,8 +334,8 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       }
       card.addEventListener('pointerdown',event=>{if(event.target.closest('input,textarea,button,summary,details'))return;if(env.matchMedia?.('(max-width:767px)').matches)return;beginPageDrag(event,p.id);});
       card.addEventListener('pointermove',movePageDrag);card.addEventListener('pointerup',event=>endPageDrag(event,false));card.addEventListener('pointercancel',event=>endPageDrag(event,true));
-      card.addEventListener('click',event=>{if(event.target.closest('input,textarea,button,summary,details'))return;selectPage(p.id);});
-      card.addEventListener('keydown',event=>{if(event.target!==card)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();selectPage(p.id);}});
+      card.addEventListener('click',event=>{if(event.target.closest('input,textarea,button,summary,details'))return;selectPage(p.id,{collapseMobile:true});});
+      card.addEventListener('keydown',event=>{if(event.target!==card)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();selectPage(p.id,{collapseMobile:true});}});
       list.append(card);
     });
   }
