@@ -46,6 +46,21 @@ test('editing page metadata in Create preserves unrelated study ratings',async({
   await expect(page.locator('#guidedQuestionList button').first()).toHaveAttribute('data-rating','recalled');
 });
 
+test('editing a studied question invalidates only its rating in the retained session',async({page})=>{
+  await load(page);await startTwoQuestionStudy(page);
+  await page.locator('#createButton').click();
+  await page.locator('#maskSvg .mask-rect').first().click();
+  await page.locator('#mobileCoversButton').click();
+  await expect(page.locator('#questionPromptInput')).toBeVisible();
+  await page.locator('#questionPromptInput').fill('Updated prompt for the first answer');
+  await page.locator('#questionPromptInput').press('Tab');
+  await page.keyboard.press('Escape');
+  await page.locator('#studyButton').click();
+  await expect(page.locator('#guidedPanel')).toBeVisible();
+  await expect(page.locator('#guidedQuestionList button').first()).toHaveAttribute('data-rating','unanswered');
+  await expect(page.locator('#guidedProgress')).toContainText('2 / 2');
+});
+
 test('rejected file imports show a visible warning after content is loaded',async({page})=>{
   await load(page);
   await page.locator('#imageInput').setInputFiles({name:'unsupported.gif',mimeType:'image/gif',buffer:Buffer.from('GIF89a','ascii')});
@@ -96,5 +111,9 @@ for(const viewport of [{width:320,height:480},{width:480,height:360},{width:700,
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth&&document.documentElement.scrollHeight<=innerHeight+1)).toBe(true);
     await page.locator('#maskFineClose').click();
     await expect(page.locator('#editModeToolbar')).toBeVisible();
+    await page.locator('#maskFineAdjustButton').click();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#maskFineControls')).toBeHidden();
+    await expect(page.locator('#maskQuickActions')).toBeVisible();
   });
 }
