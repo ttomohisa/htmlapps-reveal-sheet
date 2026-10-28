@@ -50,7 +50,8 @@ jobs:
           $required = @(
             'assets/screenshot.png',
             'assets/screenshot-en.png',
-            'assets/screenshot-mobile.png'
+            'assets/screenshot-mobile.png',
+            'assets/screenshot-mobile-edit.png'
           )
           foreach ($path in $required) {
             if (!(Test-Path $path)) { throw "Missing release screenshot: $path" }
@@ -63,7 +64,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/screenshot.png assets/screenshot-en.png assets/screenshot-mobile.png
+          git add assets/screenshot.png assets/screenshot-en.png assets/screenshot-mobile.png assets/screenshot-mobile-edit.png
           if (git diff --cached --quiet) {
             Write-Host "Release screenshots already match the current capture."
             exit 0
