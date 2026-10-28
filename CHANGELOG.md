@@ -2,6 +2,12 @@
 
 ## 1.1.0 - 2026-10-28
 
+- Rebuilt exported `.reveal.html` study UI: a compact mobile page switcher, image-first viewport, segmented free/guided study, contextual reveal/assessment actions, and bottom sheets for page/question lists, study settings, and editable download.
+- Added exported-lesson 100%/zoom controls and gesture-based pan/pinch for close study of image details, with per-page viewport state and a visible progress indicator.
+- On short landscape phones, show the image alongside study controls instead of shrinking the image below the controls; keep long prompts and settings in local scroll regions without scrolling the whole app.
+- Retained Japanese/English switching, free/guided session semantics, accessibility gating of unrevealed answers, opt-in study persistence, the runtime CSP hash and entirely self-contained output.
+
+
 - Corrected image panning to track pointer movement within pan bounds at every zoom level, including letterboxed portrait/landscape images; removed transform easing during direct manipulation.
 - Kept pinch-to-one-finger panning continuous and restored the starting view on cancellation; study drags on covers no longer trigger an answer tap.
 - Replaced the long loaded-phone editing page with a viewport-sized image workspace, bottom editing dock, nearby Undo/Redo, stable selected-cover actions, and modal bottom sheets for pages, cover settings, precise adjustment, and additional tools.
