@@ -70,9 +70,6 @@ button:disabled,input:disabled { cursor:not-allowed; }
 .failure-list { padding-left:20px;max-height:220px;overflow:auto; }
 .failure-list li { margin-bottom:12px;overflow-wrap:anywhere; }
 .failure-list strong,.failure-list span { display:block;line-height:1.7;font-size:13px; }
-.future-section { margin-top:20px; }
-.future-section summary { font-size:13px;color:var(--muted);cursor:pointer;min-height:48px;display:flex;align-items:center; }
-.future-section p { font-size:13px;color:var(--muted);line-height:1.7; }
 #outputFilename { max-width:100%;min-width:0; }
 .reveal-nav { display:flex;gap:8px;margin:16px 0; }
 .reveal-nav button { min-height:48px;border:1px solid var(--line);border-radius:12px;display:flex;gap:8px;align-items:center;justify-content:center;background:white;padding:10px 20px;font-size:14px; }
@@ -134,7 +131,7 @@ button:disabled,input:disabled { cursor:not-allowed; }
  .study-mode .guided-secondary-actions .button{min-height:40px;padding:5px 7px;font-size:11px}
  .study-mode .guided-tools-row{grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
  .study-mode .guided-disclosure>summary{min-height:40px;padding:6px 8px;font-size:11px}
- .save-mode .reveal-grid,.save-mode .local-persistence-panel,.save-mode .data-notice,.save-mode .failure-section,.save-mode .future-section,.save-mode .input-note{display:none!important;}
+ .save-mode .reveal-grid,.save-mode .local-persistence-panel,.save-mode .data-notice,.save-mode .failure-section,.save-mode .input-note{display:none!important;}
  .save-mode .save-panel{margin-bottom:8px;}
  @supports (height:100dvh){.preview-surface{height:min(44dvh,430px)}}
 }
@@ -185,7 +182,7 @@ button:disabled,input:disabled { cursor:not-allowed; }
 .question-list { display:flex;flex-wrap:wrap;gap:8px;margin-top:12px; }
 .question-item { min-height:48px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:8px 12px;font:inherit;font-size:13px; }
 .question-item:hover { background:var(--surface-hover); }
-.study-mode .input-note,.study-mode .input-status-row,.study-mode .failure-section,.study-mode .data-notice,.study-mode .future-section { display:none; }
+.study-mode .input-note,.study-mode .input-status-row,.study-mode .failure-section,.study-mode .data-notice { display:none; }
 @media(max-width:767px) {
  .cover-tools { order:3;width:100%; }
  .cover-tools .button { flex:1 1 30%;min-width:0;padding-inline:8px; }
