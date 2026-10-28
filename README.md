@@ -18,6 +18,8 @@ Selected images and saved-sheet data are processed on your device. The app does 
 ## Features
 
 - **Create covers directly on an image** — Drag over an answer to place a cover, then move, resize, duplicate, delete, Undo, or Redo it.
+- **Edit on a phone** — Switch between Place covers and Move image, pinch to zoom, and adjust a selected cover by 1, 5, or 10 image pixels using the on-screen arrow buttons.
+- **Capture a page** — The Take photo button opens the device's camera-capable file chooser where supported. Imported photos follow the same on-device processing and format limits as other images.
 - **Choose the question order** — Select an answer cover and use Move earlier / Move later in Question content. Grouped covers move as one question; Undo/Redo and both saved formats preserve the order. The current study session keeps its existing order until you start a new session.
 - **Choose the cover color** — The selected color is stored with the sheet and used consistently while editing and studying.
 - **Turn several covers into one question** — Group related answers so they reveal together, or keep hint areas covered while studying.
@@ -74,7 +76,7 @@ Original filenames, Undo history, current view position, and the author's study 
 
 ## Mobile behavior
 
-On smartphones, **Create / Study / Save** is shown as a bottom navigation. The editor keeps page cards in a horizontal carousel; touching the card itself does not start a reorder, while the drag handle does.
+On smartphones, **Create / Study / Save** stays in bottom navigation. The editor shows a compact page title with Previous / Next buttons. Tap the title to expand the horizontal page-card carousel; reorder only from each card's drag handle. Use **Place covers** to draw covers, or **Move image** to pan; a two-finger pinch zooms in either mode. Selecting a cover opens on-screen Move / Size, 1 / 5 / 10 px steps, duplicate, and delete controls directly below the image. **Take photo** uses a camera-capable chooser when the browser supports it; regular image selection remains available.
 
 Guided study is compacted so the image and the primary action — **Reveal answer** or the rating buttons — fit together on a 390 × 760 viewport in the automated regression suite. Secondary actions such as Previous, Skip, Edit this question, and Finish study are kept under **More**.
 
