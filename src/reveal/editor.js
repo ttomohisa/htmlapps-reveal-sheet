@@ -9,7 +9,8 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   let controller=null, busy=false, failures=[], progress=null;
   let undo=[],redo=[],viewKey='',lastStatus='emptyStatus',mode='create',studySession=null,studyMode='free',previousStudySummary=null,studyEditActive=false,studyEditImpact=null;
   let filenameBase='reveal-sheet',preparedJsonExport=null,preparedLessonExport=null,exportGeneration=0,exportBusy=false,lessonPreviewSession=null,lessonPreviewPageId=null,lessonPreviewGeneration=0;
-  let gesture=null,draftRect=null,pageDrag=null;
+  let gesture=null,draftRect=null,pageDrag=null,editTool='draw',maskAdjustMode='move',mobilePagesOpen=false;
+  const activeTouches=new Map();
   const expandedPageDescriptions=new Set();
   let draftSaveTimer=0,draftSaveChain=Promise.resolve(),localDraftGeneration=0,draftConflict=false,localAvailable=false,localDraftExists=false,lastDraftSavedAt='';
   let studySaveTimer=0,studySaveChain=Promise.resolve(),studyRecordGeneration=0,studyIdentityToken='',studyConflict=false,localStudyExists=false,lastStudySavedAt='';
@@ -100,6 +101,47 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function currentAsset(){const page=currentPage();return page&&doc.assets.find(a=>a.id===page.imageId)||null;}
   function currentMask(){return doc.masks.find(m=>m.id===selectedMaskId)||null;}
   function currentQuestion(){const mask=currentMask();return mask?.kind==='answer'?doc.questions.find(question=>question.id===mask.questionId)||null:null;}
+  // Mobile editing and page switcher state is transient; the saved sheet format is unchanged.
+  function refreshMobileEditor(){
+    const activePage=currentPage(),pageIndex=doc.pages.findIndex(page=>page.id===selectedId);
+    $('mobilePageSwitch').hidden=mode!=='create'||!activePage;
+    $('mobilePageLabel').textContent=activePage?.title||'';
+    $('mobilePagePosition').textContent=t('mobilePagePosition',{current:pageIndex+1,total:doc.pages.length});
+    $('mobilePrevPage').disabled=busy||pageIndex<=0;
+    $('mobileNextPage').disabled=busy||pageIndex<0||pageIndex>=doc.pages.length-1;
+    $('mobilePageToggle').setAttribute('aria-expanded',String(mobilePagesOpen));
+    env.document.body.classList.toggle('page-list-open',mode==='create'&&mobilePagesOpen&&Boolean(activePage));
+    const editable=mode==='create'&&Boolean(activePage)&&!busy;
+    $('editModeToolbar').hidden=!editable;
+    $('drawModeButton').setAttribute('aria-pressed',String(editTool==='draw'));
+    $('panModeButton').setAttribute('aria-pressed',String(editTool==='pan'));
+    env.document.body.classList.toggle('pan-tool-active',editable&&editTool==='pan');
+    const chosen=currentMask(),showMaskTools=editable&&Boolean(chosen)&&chosen.pageId===selectedId;
+    $('maskQuickActions').hidden=!showMaskTools;
+    $('maskQuickTitle').textContent=showMaskTools?t('maskQuickTitle')+' '+(doc.masks.filter(mask=>mask.pageId===selectedId).findIndex(mask=>mask.id===chosen.id)+1):'';
+    $('maskAdjustMove').setAttribute('aria-pressed',String(maskAdjustMode==='move'));
+    $('maskAdjustResize').setAttribute('aria-pressed',String(maskAdjustMode==='size'));
+    for(const button of $('maskQuickActions').querySelectorAll('[data-mask-direction]')){
+      const direction=button.dataset.maskDirection;
+      const key=(maskAdjustMode==='move'?'adjustDirection_':'adjustSize_')+direction;
+      button.setAttribute('aria-label',t(key));button.title=t(key);button.disabled=!showMaskTools;
+    }
+    $('maskQuickDuplicate').disabled=!showMaskTools;
+    $('maskQuickDelete').disabled=!showMaskTools;
+  }
+  function setEditTool(next){
+    if(!['draw','pan'].includes(next)||mode!=='create')return;
+    cancelTransientInteraction();editTool=next;refreshMobileEditor();
+  }
+  function stepPage(delta){
+    const index=doc.pages.findIndex(page=>page.id===selectedId),next=doc.pages[index+delta];
+    if(mode==='create'&&!busy&&next)selectPage(next.id);
+  }
+  function adjustSelected(direction){
+    if(!['left','right','up','down'].includes(direction))return;
+    const resizeMap={left:'narrower',right:'wider',up:'shorter',down:'taller'};
+    editSelected(maskAdjustMode==='move'?direction:resizeMap[direction],Number($('maskAdjustStep').value)||1);
+  }
   function refreshCoverPanel(){
     const page=currentPage(),panel=$('coverPanel'),list=$('coverList');
     if(!page){panel.hidden=true;list.replaceChildren();selectedMaskIds.clear();return;}
@@ -220,11 +262,13 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     return icon;
   }
   function selectPage(pageId){
-    if(!doc.pages.some(page=>page.id===pageId)||selectedId===pageId)return;
-    selectedId=pageId;selectedMaskId=null;selectedMaskIds.clear();
+    if(!doc.pages.some(page=>page.id===pageId))return;
+    mobilePagesOpen=false;
+    if(selectedId===pageId){refreshMobileEditor();return;}
+    cancelTransientInteraction();selectedId=pageId;selectedMaskId=null;selectedMaskIds.clear();
     $('pageList').querySelectorAll('.page-item').forEach(card=>card.setAttribute('aria-current',card.dataset.pageId===pageId?'page':'false'));
     const asset=currentAsset();if(asset){$('imageDimensions').textContent=`${asset.width} × ${asset.height} px`;$('imageBytes').textContent=formatBytes(asset.byteLength);}
-    refreshCoverPanel();showPreview();refreshViewControls();
+    refreshCoverPanel();refreshMobileEditor();showPreview();refreshViewControls();
   }
   function movePageTo(pageId,targetIndex){
     if(busy||mode!=='create')return;
@@ -303,6 +347,8 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('newButton').disabled=!doc.pages.length&&!busy;
     $('addButton').disabled=busy||doc.pages.length>=core.limits.maxPages;
     $('imageInput').disabled=busy;
+    $('cameraInput').disabled=busy||doc.pages.length>=core.limits.maxPages;
+    $('cameraButton').disabled=busy||doc.pages.length>=core.limits.maxPages;
     $('cancelButton').hidden=!busy;
     $('undoButton').disabled=busy||mode==='study'||undo.length===0;
     $('redoButton').disabled=busy||mode==='study'||redo.length===0;
@@ -313,6 +359,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     refreshCoverPanel();
     $('coverColor').disabled=busy||!selectedId||mode!=='create';$('coverColor').value=doc.defaults.coverColor||'#16624f';
     renderPageCards();
+    refreshMobileEditor();
     $('failureSection').hidden=failures.length===0;
     $('failureList').replaceChildren();
     for(const failure of failures){
@@ -406,7 +453,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
         const asset=await imageIO.normalize(file,{signal,ctx});
         if(signal.aborted||currentGeneration!==generation||currentBatch!==batchId)break;
         commit(core.appendAsset(doc,asset,ctx,t('pageName',{number:doc.pages.length+1})));
-        selectedId=doc.pages.at(-1).id;added++;
+        selectedId=doc.pages.at(-1).id;mobilePagesOpen=false;added++;
       } catch(error) {
         if(signal.aborted||currentGeneration!==generation||currentBatch!==batchId)break;
         const code=['UNSUPPORTED_IMAGE','ANIMATED_IMAGE','IMAGE_TOO_LARGE','DECODE_FAILED','LIMIT_EXCEEDED'].includes(error.code)?error.code:'DECODE_FAILED';
@@ -432,7 +479,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     const yes=await env.AppConfirm.ask({title:t('newTitle'),message:t('newMessage',{count:doc.pages.length}),confirmLabel:t('newAction'),cancelLabel:t('cancel'),tone:'danger'});
     if(!yes)return;
     generation++;controller?.abort();invalidatePreparedExport();doc=core.newDocument(ctx,t('untitled'));selectedId=null;selectedMaskId=null;selectedMaskIds.clear();
-    undo=[];redo=[];failures=[];studySession=null;mode='create';filenameBase='reveal-sheet';$('outputFilename').value=filenameBase;imageIO.releaseAll();status('emptyStatus');refreshCopy();showPreview();
+    undo=[];redo=[];failures=[];studySession=null;mode='create';editTool='draw';maskAdjustMode='move';mobilePagesOpen=false;activeTouches.clear();filenameBase='reveal-sheet';$('outputFilename').value=filenameBase;imageIO.releaseAll();status('emptyStatus');refreshCopy();showPreview();
   }
   function filesFromTransfer(data) {
     if(!data)return [];
@@ -527,7 +574,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   }
   function cancelTransientInteraction(){pointerCancel();endPageDrag(null,true);updateToolButtons();}
   function handleViewAction(action){if(action.type==='SELECT_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);refreshCopy();return;}if(mode==='create'&&action.type==='DUPLICATE_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);duplicateSelected();return;}if(mode==='create'&&action.type==='DELETE_MASK'){selectedMaskId=action.maskId;selectedMaskIds=new Set([action.maskId]);deleteSelected();return;}if(mode!=='study')return;if(action.type==='TOGGLE_QUESTION'&&studySession?.mode==='free'){studySession=core.toggleFree(studySession,action.questionId);scheduleStudySave();refreshCopy();return;}if(action.type==='REVEAL_CURRENT'&&studySession?.mode==='guided'&&action.questionId===currentGuidedId()){revealGuided();}}
-  function editSelected(kind,amount=1){const mask=currentMask(),asset=currentAsset();if(!mask||!asset||mode!=='create')return;const dx=amount/asset.width,dy=amount/asset.height;let r={...mask.rect};if(kind==='left')r.x-=dx;if(kind==='right')r.x+=dx;if(kind==='up')r.y-=dy;if(kind==='down')r.y+=dy;if(kind==='wider')r.w+=dx;if(kind==='narrower')r.w-=dx;if(kind==='taller')r.h+=dy;if(kind==='shorter')r.h-=dy;try{const result=core.applyCommand(doc,{type:'SET_MASK_RECT',maskId:mask.id,rect:r},ctx);commit(result,mask.id);status('coverChanged');refreshCopy();}catch(error){if(error.code!=='INVALID_SHEET')throw error;}}
+  function editSelected(kind,amount=1){const mask=currentMask(),asset=currentAsset();if(!mask||!asset||mode!=='create'||busy)return;const dx=amount/asset.width,dy=amount/asset.height;let r={...mask.rect};if(kind==='left')r.x-=dx;if(kind==='right')r.x+=dx;if(kind==='up')r.y-=dy;if(kind==='down')r.y+=dy;if(kind==='wider')r.w+=dx;if(kind==='narrower')r.w-=dx;if(kind==='taller')r.h+=dy;if(kind==='shorter')r.h-=dy;try{const result=core.applyCommand(doc,{type:'SET_MASK_RECT',maskId:mask.id,rect:r},ctx);if(result.document===doc)return;commit(result,mask.id);status('coverChanged');refreshCopy();}catch(error){if(error.code!=='INVALID_SHEET')throw error;}}
   function deleteSelected(){const mask=currentMask();if(!mask)return;const result=core.applyCommand(doc,{type:'DELETE_MASK',maskId:mask.id},ctx);commit(result,null);status('coverDeleted');refreshCopy();}
   function duplicateSelected(){
     const mask=currentMask();if(!mask||busy||mode!=='create')return;
@@ -593,7 +640,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function reviewGuided(kind){if(studySession?.mode!=='guided')return;const previous=core.summary(studySession),next=core.makeReviewSession(doc,studySession,kind,ctx);if(!next)return;previousStudySummary=previous;studySession=next;studyMode='guided';studyConflict=false;scheduleStudySave();const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);}
   function editCurrentQuestion(){
     const qid=currentGuidedId();if(mode!=='study'||studySession?.mode!=='guided'||!qid)return;const question=doc.questions.find(item=>item.id===qid);if(!question)return;
-    studyEditActive=true;studyEditImpact={changed:new Set(),deleted:new Set(),added:new Set()};mode='create';selectedId=question.pageId;selectedMaskId=question.maskIds[0]||null;selectedMaskIds=new Set(question.maskIds);refreshCopy();showPreview();
+    studyEditActive=true;studyEditImpact={changed:new Set(),deleted:new Set(),added:new Set()};mode='create';editTool='draw';mobilePagesOpen=false;selectedId=question.pageId;selectedMaskId=question.maskIds[0]||null;selectedMaskIds=new Set(question.maskIds);refreshCopy();showPreview();
   }
   function returnToStudy(){
     if(!studyEditActive||!studySession)return;studyEditActive=false;mode='study';selectedMaskId=null;selectedMaskIds.clear();const impact=studyEditImpact||{changed:new Set(),deleted:new Set(),added:new Set()};studyEditImpact=null;const pageChanged=syncGuidedPage();status('studyEditSummary',{changed:impact.changed.size,deleted:impact.deleted.size,added:impact.added.size});studyConflict=false;scheduleStudySave();refreshCopy();if(pageChanged)showPreview(true);else showPreview();
@@ -612,9 +659,9 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     }else{
       studyRecordGeneration=0;studyIdentityToken=identity?identityToken(identity):'';studySession=core.startSession(doc,{mode:studyMode,...(studyMode==='guided'?{otherAnswers:doc.defaults.otherAnswers}:{})},ctx);scheduleStudySave();
     }
-    mode='study';const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);
+    mode='study';mobilePagesOpen=false;const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);
   }
-  function beginCreate(){cancelTransientInteraction();scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='create';studySession=null;previousStudySummary=null;refreshCopy();$('addButton').focus({preventScroll:true});}
+  function beginCreate(){cancelTransientInteraction();scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='create';mobilePagesOpen=false;studySession=null;previousStudySummary=null;refreshCopy();$('addButton').focus({preventScroll:true});}
   async function prepareSaveExports(){
     if(!doc.pages.length)return null;
     const token=exportGeneration,snapshot=doc;exportBusy=true;preparedJsonExport=null;preparedLessonExport=null;status('exportPreparing');refreshCopy();
@@ -635,12 +682,12 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     }
   }
   function beginSave(){
-    if(!doc.pages.length||busy||exportBusy)return;scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='save';studySession=null;selectedMaskId=null;preparedJsonExport=null;preparedLessonExport=null;
+    if(!doc.pages.length||busy||exportBusy)return;scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='save';mobilePagesOpen=false;studySession=null;selectedMaskId=null;preparedJsonExport=null;preparedLessonExport=null;
     refreshCopy();$('outputFilename').focus({preventScroll:true});prepareSaveExports();
   }
   function applyImported(envelope,{fromLocal=false}={}){
     generation++;cancelStudyTimer();studyRecordGeneration=0;studyIdentityToken='';studyConflict=false;invalidatePreparedExport();controller?.abort();imageIO.releaseAll();doc=envelope.document;selectedId=doc.pages[0]?.id||null;selectedMaskId=null;selectedMaskIds.clear();undo=[];redo=[];failures=[];studySession=null;studyEditActive=false;studyEditImpact=null;mode='create';viewKey='';
-    filenameBase=doc.title&&doc.title!==t('untitled')?doc.title:'reveal-sheet';$('outputFilename').value=filenameBase;status(fromLocal?'draftRestored':'sheetOpened');refreshCopy();showPreview(true);if(!fromLocal)scheduleDraftSave();
+    editTool='draw';mobilePagesOpen=false;activeTouches.clear();filenameBase=doc.title&&doc.title!==t('untitled')?doc.title:'reveal-sheet';$('outputFilename').value=filenameBase;status(fromLocal?'draftRestored':'sheetOpened');refreshCopy();showPreview(true);if(!fromLocal)scheduleDraftSave();
   }
   async function openSheet(file){
     if(busy||!file)return;busy=true;status('openingSheet');refreshCopy();const localController=new env.AbortController();controller=localController;
@@ -695,6 +742,18 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   }
   function destroy(){generation++;invalidatePreparedExport();cancelDraftTimer();cancelStudyTimer();resetLessonPreview();controller?.abort();imageIO.releaseAll();studyView.destroy();image.hidden=true;setSvgHidden(true);image.removeAttribute('src');}
   $('addButton').addEventListener('click',()=>$('imageInput').click());
+  $('cameraButton').addEventListener('click',()=>$('cameraInput').click());
+  $('cameraInput').addEventListener('change',event=>{const files=Array.from(event.target.files||[]);event.target.value='';addImages(files);});
+  $('mobilePageToggle').addEventListener('click',()=>{if(mode!=='create'||!currentPage())return;mobilePagesOpen=!mobilePagesOpen;refreshMobileEditor();});
+  $('mobilePrevPage').addEventListener('click',()=>stepPage(-1));
+  $('mobileNextPage').addEventListener('click',()=>stepPage(1));
+  $('drawModeButton').addEventListener('click',()=>setEditTool('draw'));
+  $('panModeButton').addEventListener('click',()=>setEditTool('pan'));
+  $('maskAdjustMove').addEventListener('click',()=>{maskAdjustMode='move';refreshMobileEditor();});
+  $('maskAdjustResize').addEventListener('click',()=>{maskAdjustMode='size';refreshMobileEditor();});
+  $('maskQuickActions').querySelectorAll('[data-mask-direction]').forEach(button=>button.addEventListener('click',()=>adjustSelected(button.dataset.maskDirection)));
+  $('maskQuickDuplicate').addEventListener('click',duplicateSelected);
+  $('maskQuickDelete').addEventListener('click',deleteSelected);
   $('retryButton').addEventListener('click',()=>$('imageInput').click());
   $('imageInput').addEventListener('change',event=>{const files=Array.from(event.target.files||[]);event.target.value='';addImages(files);});
   $('cancelButton').addEventListener('click',()=>{controller?.abort();status('cancelling');refreshCopy();});
