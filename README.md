@@ -20,12 +20,13 @@ Selected images and saved-sheet data are processed on your device. The app does 
 ## Features
 
 - **Create covers directly on an image** — Drag over an answer to place a cover, then move, resize, duplicate, delete, Undo, or Redo it.
-- **Edit on a phone** — Switch between Place covers and Move image, pinch to zoom, and adjust a selected cover by 1, 5, or 10 image pixels using the on-screen arrow buttons.
+- **Edit on a phone** — Switch between Place covers and Move image, pinch to zoom, and adjust a selected cover by 1, 5, or 10 image pixels using an inline toolbar that leaves the image visible. At 100%, Move image shows a zoom-in tip.
 - **Capture a page** — The Take photo button opens the device's camera-capable file chooser where supported. Imported photos follow the same on-device processing and format limits as other images.
 - **Choose the question order** — Select an answer cover and use Move earlier / Move later in Question content. Grouped covers move as one question; Undo/Redo and both saved formats preserve the order. The current study session keeps its existing order until you start a new session.
 - **Choose the cover color** — The selected color is stored with the sheet and used consistently while editing and studying.
 - **Turn several covers into one question** — Group related answers so they reveal together, or keep hint areas covered while studying.
 - **Study freely or one question at a time** — Reveal any answer manually, or use the guided flow with Recalled / Review again self-assessment.
+- **Keep your place while navigating** — Moving between Create, Study and Save in the same tab retains the current in-memory study session even with optional study-progress saving turned off. Reloading still requires opted-in persistence and a matching document.
 - **Edit without losing your place** — Fix the current question during guided study and return to the same question and view position.
 - **Manage multi-page material** — Rename pages, add optional descriptions, reorder with a drag handle, delete, and Undo. On phones, tap the page title to open the horizontal page-card carousel.
 - **Save an editable sheet** — Export a `.reveal.json` file that contains normalized images, covers, questions, and page structure.
