@@ -115,6 +115,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('editModeToolbar').hidden=!editable;
     $('drawModeButton').setAttribute('aria-pressed',String(editTool==='draw'));
     $('panModeButton').setAttribute('aria-pressed',String(editTool==='pan'));
+    $('editorGuide').textContent=t(editTool==='pan'?'editorGuidePan':'editorGuide');
     env.document.body.classList.toggle('pan-tool-active',editable&&editTool==='pan');
     const chosen=currentMask(),showMaskTools=editable&&Boolean(chosen)&&chosen.pageId===selectedId;
     $('maskQuickActions').hidden=!showMaskTools;
