@@ -17,6 +17,8 @@
 
 ![Reveal Sheet mobile screenshot](assets/screenshot-mobile.png)
 
+![出力した教材HTMLのスマホ学習画面](assets/screenshot-lesson-mobile.png)
+
 ## Features
 
 - **問題の順番を変更** — 答えの覆いを選び、問題欄の「順番を前へ／順番を後ろへ」でページ内の出題順を変更できます。グループは一問のまま移動し、元に戻す／やり直すと両保存形式に対応します。進行中の学習回の順番は維持され、次の回から新しい順番になります。
