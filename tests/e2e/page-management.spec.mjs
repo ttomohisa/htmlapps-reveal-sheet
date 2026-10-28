@@ -55,6 +55,7 @@ test('T05: card editing replaces the old page action row and stays compact',asyn
 test('T05: mobile page cards stay horizontal and reorder from the drag handle',async({page})=>{
   await page.setViewportSize({width:390,height:780});await openApp(page);
   await page.locator('#imageInput').setInputFiles([imagePath('static.png'),imagePath('static.jpg'),imagePath('static.webp')]);
+  await expect(page.locator('.page-panel')).toBeHidden();await page.locator('#mobilePageToggle').click();
   const list=page.locator('#pageList'),titles=list.locator('.page-card-title');await expect(titles).toHaveCount(3);await expect(titles.nth(0)).toHaveValue(/Page 1|ページ1/);
   expect(await list.evaluate(node=>getComputedStyle(node).flexDirection)).toBe('row');
   expect(await list.evaluate(node=>node.scrollWidth>node.clientWidth)).toBe(true);
