@@ -461,7 +461,7 @@ button:disabled,input:disabled { cursor:not-allowed; }
   }
   .has-pages.create-mode.fine-adjust-open .main #maskFineControls:not([hidden]) {
     display:flex;align-items:center;flex-wrap:nowrap;
-    grid-column:1;grid-row:2;gap:8px;min-width:0;
+    grid-column:1/-1;grid-row:2;gap:8px;min-width:0;
     margin:0;padding:3px 5px;height:56px;overflow-x:auto;
   }
   .has-pages.create-mode.fine-adjust-open .main #maskFineControls .mask-adjust-mode {
