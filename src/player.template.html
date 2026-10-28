@@ -158,6 +158,10 @@ html,.lesson-body{max-width:100%;overflow-x:hidden}
 .lesson-zoom-controls button:hover:not(:disabled){background:#edf4f0}
 @media(max-width:720px){.lesson-zoom-controls{grid-template-columns:44px 58px 44px;top:7px;right:7px}.lesson-zoom-controls button{height:44px}}
 
+/* The editor shared CSS includes a global mobile body-padding reserved for its
+   own fixed navigation. Exported lessons have no such navigation. */
+.lesson-body{padding:0}
+.lesson-body.lesson-active{padding:0}
 /* Keep the document itself within the viewport. Long questions and settings scroll
    in their own regions, without pushing the image or controls below the screen. */
 @media(max-width:720px){
