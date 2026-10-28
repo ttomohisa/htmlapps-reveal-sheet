@@ -461,15 +461,15 @@ button:disabled,input:disabled { cursor:not-allowed; }
   }
   .has-pages.create-mode.fine-adjust-open .main #maskFineControls:not([hidden]) {
     display:flex;align-items:center;flex-wrap:nowrap;
-    grid-column:1/-1;grid-row:2;gap:8px;min-width:0;
+    grid-column:1/-1;grid-row:2;gap:6px;min-width:0;
     margin:0;padding:3px 5px;height:56px;overflow-x:auto;
   }
   .has-pages.create-mode.fine-adjust-open .main #maskFineControls .mask-adjust-mode {
-    display:grid;flex:0 0 140px;grid-template-columns:1fr 1fr;
+    display:grid;flex:0 0 112px;grid-template-columns:1fr 1fr;
   }
-  .has-pages.create-mode.fine-adjust-open .main #maskFineControls .mask-adjust-step { flex:0 0 85px; }
+  .has-pages.create-mode.fine-adjust-open .main #maskFineControls .mask-adjust-step { flex:0 0 68px; }
   .has-pages.create-mode.fine-adjust-open .main #maskFineControls .mask-adjust-arrows {
-    display:grid;flex:1 0 190px;
+    display:grid;flex:1 0 200px;
   }
   .has-pages.create-mode.fine-adjust-open .main #maskFineControls #maskFineClose {
     flex:0 0 44px;
