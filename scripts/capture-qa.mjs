@@ -75,6 +75,7 @@ try {
 
  const mobile=await browser.newPage({viewport:{width:390,height:844},locale:'ja-JP'});
  await prepareSheet(mobile,'ja');
+ await mobile.screenshot({path:output+'/screenshot-mobile-edit.png'});
  await mobile.locator('#studyButton').click();await mobile.locator('#guidedModeButton').click();
  if(await mobile.locator('#appConfirmDialog').isVisible())await mobile.locator('#appConfirmOk').click();
  await mobile.screenshot({path:output+'/screenshot-mobile.png',fullPage:true});await mobile.close();
@@ -83,6 +84,7 @@ try {
   copyFileSync(output+'/screenshot.png','assets/screenshot.png');
   copyFileSync(output+'/screenshot-en.png','assets/screenshot-en.png');
   copyFileSync(output+'/screenshot-mobile.png','assets/screenshot-mobile.png');
+  copyFileSync(output+'/screenshot-mobile-edit.png','assets/screenshot-mobile-edit.png');
  }
 
  let commit='unknown';try{commit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();}catch{}
