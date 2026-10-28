@@ -4,6 +4,17 @@
 
 This record contains the v1.1.0 mobile-editor verification below and the historical release/CI evidence that follows it. It does not mark all 48 formal acceptance items complete. The automated matrix includes runtime-network/CSP/hostile-input auditing, repeated standard-size round trips and the configured 30-page / 1,000-cover boundary in addition to editing, study, persistence, lesson, mobile/touch and bilingual accessibility work. Physical phones, real screen readers, Safari, Firefox, background/screen-lock behavior and OS save-cancel/file-handoff behavior remain untested.
 
+## v1.1.0 follow-up: navigation, errors, inline adjustments — 2026-10-28
+
+This follow-up on PR #16 addresses four reviewed items without changing the saved lesson schema or the local-only processing boundary:
+
+- **Error visibility:** loaded-sheet errors now use the existing localized warning toast. While a native mobile settings dialog is open, the same warning is also displayed in that dialog's alert, rather than behind its top-layer backdrop. Invalid cover creation and grouping are handled as user-facing failures instead of uncaught exceptions.
+- **Session continuity:** navigating among Create, Study and Save in the same tab retains the in-memory free/guided study session even when device saving is off. Ordinary edits reconcile the existing session with changed questions; new sheets and replacement imports still clear it. Persistent cross-reload resumption remains explicitly opt-in.
+- **Precise cover editing:** fine adjustments use an inline, undimmed toolbar that replaces the editor dock, not a modal bottom sheet. The close button and Escape restore the dock; 320 × 480, 480 × 360 and 700 × 320 layouts are included in regression coverage.
+- **Pan guidance:** at or below 100% image zoom, selecting Move image shows a bilingual reminder to zoom in. The reminder disappears at higher zoom and when leaving that mode.
+
+Browser regression sources: `tests/e2e/mobile-polish.spec.mjs`, `mobile-editor-ux.spec.mjs`, `native-workspace.spec.mjs`, `page-management.spec.mjs`, and `resume-and-clear.spec.mjs`. Test outcomes are recorded by the current PR's GitHub Actions; changes to the screenshot-only commit do not represent a new app build. This automated coverage does **not** replace physical Android/iPhone testing of gestures, the software keyboard, camera or OS save dialogs.
+
 ## v1.1.0 mobile editor correction — 2026-10-28
 
 The user reported that moving an enlarged image was too slow and that the smartphone interface still felt unlike a native app. Verification used the revised source on PR #16, based on commit `98fc3f5725aa52ea3c180cd19475ea7b7c4c6435`. The generated readable HTML SHA-256 was `9f08ed63f4906797a3de8d7129399b0e133eeea2060f22cac9257af68b745efa`. Hosted CI/preview results for the resulting commit are recorded in the PR; the table here records the completed local run.
