@@ -181,7 +181,7 @@ function createPlayer({core,projectIO,persistence,env,envelope}) {
   function finish(){if(session.mode!=='guided')return;session=core.finishSession(session,session.epoch);scheduleStudySave();render();}
   function review(kind){const next=core.makeReviewSession(doc,session,kind);if(!next)return;session=next;mode='guided';syncGuidedPage();scheduleStudySave();render();}
   function applyLanguage(){
-    env.document.documentElement.lang=language;$('lessonTitle').textContent=doc.title;
+    env.document.documentElement.lang=language;$('lessonTitle').textContent=doc.title+' · '+t('titleSuffix');
     $('lessonSubtitle').textContent=t('subtitle');
     for(const [id,key] of [['lessonPrevPage','previousPage'],['lessonNextPage','nextPage'],['lessonPageToggle','openPages'],['lessonSettingsButton','settings'],['lessonQuestionsButton','questions'],['lessonSheetClose','close']]){
       $(id).setAttribute('aria-label',t(key));
