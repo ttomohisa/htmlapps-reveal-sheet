@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0 - 2026-10-28
+
+- Added a phone camera input for photos, using the same existing JPEG/static PNG/static WebP validation and on-device normalization flow.
+- Added mobile Place covers / Move image controls, two-finger pinch zoom, and precise cover move/resize buttons with 1 / 5 / 10 px steps, plus nearby duplicate and delete.
+- Collapsed the mobile page-card carousel behind an accessible page-title switcher with Previous and Next buttons.
+- Preserved desktop draw/Shift-pan editing, mobile guided study, Undo/Redo, grouping, JSON/lesson HTML compatibility, and local-only processing.
+- Removed the outdated development-stage disclosure from Japanese and English UI and its unused styles (stacked on PR #15).
+- Extended browser regression tests for camera-file import, mobile page switching, edits and pinch zoom; physical smartphone verification remains pending.
+
 ## 1.0.2 - 2026-10-27
 
 - Keep the header version visible on narrow smartphones without overlapping the app name or language/Help controls.
