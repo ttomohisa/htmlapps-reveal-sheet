@@ -207,6 +207,18 @@ html,.lesson-body{max-width:100%;overflow-x:hidden}
 }
 .lesson-body .button.primary:hover:not(:disabled){background:#0f503f;border-color:#0f503f}
 .lesson-body .button:disabled{opacity:.45;box-shadow:none;cursor:not-allowed}
+/* The segmented study-mode switch is a separate button variant. */
+.lesson-body .lesson-mode-switch .button{
+  min-height:42px;border:1px solid transparent;background:transparent;
+  font-size:13px;font-weight:650;color:var(--lesson-muted);
+}
+.lesson-body .lesson-mode-switch .button[aria-pressed="true"]{
+  border-color:transparent;background:#fff;color:var(--lesson-green);
+  box-shadow:0 1px 4px rgba(20,41,27,.12);font-weight:750;
+}
+.lesson-body .lesson-mode-switch .button:hover:not(:disabled):not([aria-pressed="true"]){
+  border-color:transparent;background:#e2eae3;
+}
 .lesson-body .lesson-icon-button{
   -webkit-appearance:none;appearance:none;border:0;background:transparent;
   color:var(--lesson-ink);box-shadow:none;
