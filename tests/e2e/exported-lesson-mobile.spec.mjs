@@ -85,7 +85,9 @@ test('exported lesson: mobile pages, settings, language and editable save remain
   await lesson.locator('#lessonSettingsButton').click();
   await expect(lesson.locator('#lessonSheet #lessonStudyOptIn')).toBeVisible();
   await expect(lesson.locator('#lessonSheet #lessonSaveEditableButton')).toBeVisible();
+  await lesson.locator('#lessonSheetClose').click();
   await lesson.locator('#lessonLanguage').click();
+  await lesson.locator('#lessonSettingsButton').click();
   await expect(lesson.locator('#lessonSheetTitle')).toContainText('設定');
   const download=lesson.waitForEvent('download');
   await lesson.locator('#lessonSaveEditableButton').click();
