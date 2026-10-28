@@ -34,7 +34,7 @@ test('mobile: page switcher keeps cards collapsed until needed',async({page})=>{
   await page.locator('#mobilePageToggle').click();
   await expect(page.locator('.page-panel')).toBeVisible();
   await expect(page.locator('#mobilePageToggle')).toHaveAttribute('aria-expanded','true');
-  await page.locator('#pageList .page-item').first().click();
+  await page.locator('#pageList .page-item').first().locator('.page-card-meta').click();
   await expect(page.locator('.page-panel')).toBeHidden();
   await expect(page.locator('#mobilePagePosition')).toHaveText('Page 1 of 3');
 });
