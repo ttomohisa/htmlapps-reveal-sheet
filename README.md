@@ -26,6 +26,7 @@ Selected images and saved-sheet data are processed on your device. The app does 
 - **Choose the cover color** — The selected color is stored with the sheet and used consistently while editing and studying.
 - **Turn several covers into one question** — Group related answers so they reveal together, or keep hint areas covered while studying.
 - **Study freely or one question at a time** — Reveal any answer manually, or use the guided flow with Recalled / Review again self-assessment.
+- **Use the exported lesson on a phone** — The standalone `.reveal.html` provides an image-first screen, page and question selectors, large Reveal / assessment controls, zoom and pan/pinch, and a settings sheet for optional study-progress saving and editable export. No account or external runtime network is required.
 - **Keep your place while navigating** — Moving between Create, Study and Save in the same tab retains the current in-memory study session even with optional study-progress saving turned off. Reloading still requires opted-in persistence and a matching document.
 - **Edit without losing your place** — Fix the current question during guided study and return to the same question and view position.
 - **Manage multi-page material** — Rename pages, add optional descriptions, reorder with a drag handle, delete, and Undo. On phones, tap the page title to open the horizontal page-card carousel.
