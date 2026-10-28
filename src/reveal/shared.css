@@ -258,3 +258,55 @@ button:disabled,input:disabled { cursor:not-allowed; }
 
 .question-order-controls { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px; }
 .question-order-controls > span { color:var(--muted);font-size:12px; }
+
+/* Mobile editor v1.1: keep the image and its controls together. */
+.mobile-camera-button,.mobile-page-switch,.edit-mode-toolbar,.mask-quick-actions { display:none; }
+.pan-tool-active .mask-layer,.pan-tool-active .mask-rect,.pan-tool-active .mask-resize-handle { cursor:grab; }
+.pan-tool-active .mask-layer:active { cursor:grabbing; }
+@media (max-width:767px) {
+  .mobile-camera-button:not([hidden]) { display:inline-flex; }
+  .reveal-tools { align-items:stretch; }
+  .reveal-tools>.mobile-camera-button { min-width:0; }
+  .mobile-page-switch:not([hidden]) {
+    display:grid;grid-template-columns:44px minmax(0,1fr) 44px;
+    gap:7px;align-items:center;width:100%;min-width:0;margin-bottom:0;
+  }
+  .mobile-page-switch .button { min-width:0;min-height:44px;padding:6px 8px; }
+  .mobile-page-arrow { display:grid;place-items:center; }
+  .mobile-page-arrow svg { width:19px;height:19px; }
+  .mobile-page-current { display:flex;min-width:0;gap:6px;align-items:center;justify-content:center; }
+  .mobile-page-current>span { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:700; }
+  .mobile-page-current small { font-size:11px;color:var(--muted);white-space:nowrap; }
+  .mobile-page-current svg { width:14px;height:14px;flex:0 0 auto; }
+  .page-list-open .mobile-page-current svg { transform:rotate(180deg); }
+  .has-pages.create-mode:not(.page-list-open) .page-panel { display:none; }
+  .page-list-open.create-mode .page-panel { margin-bottom:2px; }
+  .page-list-open.create-mode .page-panel h3 { margin-bottom:3px; }
+  .edit-mode-toolbar:not([hidden]) { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px; }
+  .edit-mode-toolbar .button { min-width:0;min-height:44px;padding:7px 5px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px; }
+  .edit-mode-toolbar svg { width:18px;height:18px;flex:0 0 auto; }
+  .edit-mode-toolbar .button[aria-pressed="true"],.mask-adjust-mode .button[aria-pressed="true"] { border-color:var(--accent);color:var(--accent);background:#edf4f0;font-weight:700; }
+  .create-mode .preview-column { gap:7px; }
+  .create-mode .preview-surface { height:min(45dvh,440px);min-height:235px; }
+  .mask-quick-actions:not([hidden]) { display:block;min-width:0;padding:8px 9px;border:1px solid var(--line);border-radius:11px;background:#f8faf7; }
+  .mask-quick-heading { display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;margin-bottom:6px; }
+  .mask-quick-heading strong { font-size:12px;font-weight:700; }
+  .mask-quick-heading label { display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted); }
+  .mask-quick-heading select { min-height:36px;padding:4px 23px 4px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);font:inherit;font-size:12px; }
+  .mask-quick-buttons { display:flex;align-items:center;gap:5px;flex-wrap:wrap; }
+  .mask-adjust-mode { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;flex:1 1 100%; }
+  .mask-adjust-mode .button { min-width:0;min-height:42px;padding:5px 8px;font-size:12px; }
+  .mask-adjust-arrows { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));flex:1 1 auto;min-width:0;gap:5px; }
+  .mask-adjust-arrows .button { min-width:0;min-height:44px;padding:6px;display:grid;place-items:center; }
+  .mask-adjust-arrows svg,.mask-quick-action svg { width:19px;height:19px; }
+  .mask-quick-action { min-width:44px;width:44px;min-height:44px;display:grid;place-items:center;padding:5px;flex:0 0 auto; }
+  .mask-quick-delete { color:var(--danger,#b3261e); }
+  .mask-inline-action { display:none; }
+  .create-mode .editor-guide { font-size:11px; }
+}
+@media (max-width:359px) {
+  .mobile-page-current small { font-size:10px; }
+  .create-mode .preview-surface { min-height:210px; }
+  .mask-quick-actions:not([hidden]) { padding:7px; }
+  .mask-adjust-arrows { gap:3px; }
+}
