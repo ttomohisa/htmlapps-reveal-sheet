@@ -24,6 +24,7 @@ Selected images and saved-sheet data are processed on your device. The app does 
 - **Create covers directly on an image** — Drag over an answer to place a cover, then move, resize, duplicate, delete, Undo, or Redo it.
 - **Edit on a phone** — Switch between Place covers and Move image, pinch to zoom, and adjust a selected cover by 1, 5, or 10 image pixels using an inline toolbar that leaves the image visible. At 100%, Move image shows a zoom-in tip.
 - **Capture a page** — The Take photo button opens the device's camera-capable file chooser where supported. Imported photos follow the same on-device processing and format limits as other images.
+- **Reduce exported file size** — **Compress images** is on by default for newly imported pictures. WebP at quality 0.86 is used when it saves at least 10% versus PNG; otherwise PNG is retained. Disable it to preserve lossless PNG rendering of small text and graphics. Dimensions and cover coordinates remain unchanged. PNG-only exports stay format 1; exports containing WebP use format 2 and need an updated Reveal Sheet to reopen.
 - **Choose the question order** — Select an answer cover and use Move earlier / Move later in Question content. Grouped covers move as one question; Undo/Redo and both saved formats preserve the order. The current study session keeps its existing order until you start a new session.
 - **Choose the cover color** — The selected color is stored with the sheet and used consistently while editing and studying.
 - **Turn several covers into one question** — Group related answers so they reveal together, or keep hint areas covered while studying.
@@ -63,7 +64,7 @@ The generated app is written to `dist/index.html`. A self-extracting single-HTML
 
 ## Usage
 
-1. **Add images** — Use the file picker, desktop drag-and-drop, or paste an image file. Accepted images are normalized to orientation-fixed PNG without resizing.
+1. **Add images** — Use the file picker, desktop drag-and-drop, or paste an image file. Imported images retain their orientation-fixed dimensions. Compression is on by default: WebP (quality 0.86) is used only if at least 10% smaller than a normalized PNG; otherwise PNG is used.
 2. **Create covers** — Drag over each answer. Drag a selected cover to move it and use the corner handles to resize it.
 3. **Organize pages** — Edit page names and optional descriptions directly in the cards. On mobile, tap the page title to open the horizontal carousel; swipe normally and start reordering only from the drag handle.
 4. **Build questions** — Select several answer covers and choose **Reveal together** when they should behave as one question. Use **Keep covered while studying** for auxiliary hint covers.
@@ -139,7 +140,7 @@ Unsupported input includes GIF, APNG, animated WebP, SVG, HEIC / HEIF, AVIF, PDF
 | Input image | 20 MiB |
 | Dimensions | 8192 px per side |
 | Total pixels per image | 16,000,000 |
-| Normalized PNG | 32 MiB per image |
+| Normalized image (PNG or WebP) | 32 MiB per image |
 | Images in one sheet | 64 MiB total |
 | Pages | 30 |
 | Covers | 1,000 total / 200 per page |
