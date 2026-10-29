@@ -489,24 +489,37 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       return true;
     }
   }
+  function renderOverlaySafe(){
+    try{renderOverlay();return true;}
+    catch(error){
+      // The image decoded successfully. Do not hide it or misreport a
+      // drawing-layer error as a corrupt source photo.
+      setSvgHidden(true);
+      env.console?.warn?.('Reveal Sheet: cover overlay failed to render',error);
+      env.AppToast?.show({message:t('error_OVERLAY_FAILED'),tone:'warning',duration:6000});
+      return false;
+    }
+  }
   async function showPreview(force=false) {
     const page=doc.pages.find(p=>p.id===selectedId),asset=page&&doc.assets.find(a=>a.id===page.imageId);
     if(!asset){viewKey='';displayGeneration++;image.hidden=true;setSvgHidden(true);image.removeAttribute('src');$('previewWait').hidden=true;return;}
-    if(!force&&viewKey===asset.id){renderOverlay();return;}
+    if(!force&&viewKey===asset.id){renderOverlaySafe();return;}
     viewKey=asset.id;const token=++displayGeneration,sourceGeneration=generation;
     image.hidden=true;setSvgHidden(true);$('previewWait').hidden=false;$('previewWait').textContent=t('preparing');
-    try {
-      const ready=await decodePreviewWithRetry(asset,token,sourceGeneration);
-      if(!ready||token!==displayGeneration||sourceGeneration!==generation)return;
-      image.alt=t('imageAlt',{name:page.title});image.hidden=false;$('previewWait').hidden=true;renderOverlay();
-    }catch{
+    let ready=false;
+    try{ready=await decodePreviewWithRetry(asset,token,sourceGeneration);}
+    catch{
       if(token!==displayGeneration||sourceGeneration!==generation)return;
       image.hidden=true;setSvgHidden(true);image.removeAttribute('src');viewKey='';
       const wait=$('previewWait');wait.textContent=t('error_DECODE_FAILED');
       const retry=env.document.createElement('button');
       retry.type='button';retry.className='button';retry.textContent=t('retryImageDisplay');
       retry.addEventListener('click',()=>showPreview(true),{once:true});wait.append(retry);
+      return;
     }
+    if(!ready||token!==displayGeneration||sourceGeneration!==generation)return;
+    image.alt=t('imageAlt',{name:page.title});image.hidden=false;$('previewWait').hidden=true;
+    renderOverlaySafe();
   }
   function derivedMutation(oldDoc,nextDoc){
     const oldIds=new Set(oldDoc.questions.map(question=>question.id)),nextIds=new Set(nextDoc.questions.map(question=>question.id));
