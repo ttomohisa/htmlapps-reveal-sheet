@@ -11,7 +11,7 @@ Set-Location $root
 
 $config = Get-Content -Raw -Encoding UTF8 'app.config.json' | ConvertFrom-Json
 $package = Get-Content -Raw -Encoding UTF8 'package.json' | ConvertFrom-Json
-$lock = Get-Content -Raw -Encoding UTF8 'package-lock.json' | ConvertFrom-Json
+$lock = Get-Content -Raw -Encoding UTF8 'package-lock.json' | ConvertFrom-Json -AsHashtable
 if ($config.version -ne $version -or $package.version -ne $version -or $lock.version -ne $version) {
   throw 'Release versions differ from v1.2.0.'
 }
