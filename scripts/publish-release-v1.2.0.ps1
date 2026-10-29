@@ -1,3 +1,4 @@
+param([switch]$PrepareOnly)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
@@ -14,12 +15,6 @@ $lock = Get-Content -Raw -Encoding UTF8 'package-lock.json' | ConvertFrom-Json
 if ($config.version -ne $version -or $package.version -ne $version -or $lock.version -ne $version) {
   throw 'Release versions differ from v1.2.0.'
 }
-if (-not $env:GH_TOKEN -or -not $env:GITHUB_REPOSITORY -or -not $env:GITHUB_SHA) {
-  throw 'Authenticated GitHub Actions release context is required.'
-}
-if ($env:GITHUB_REF -ne 'refs/heads/main') { throw 'Refusing to publish from anything other than main.' }
-if ($env:GITHUB_REPOSITORY -ne 'ttomohisa/htmlapps-reveal-sheet') { throw 'Unexpected repository.' }
-
 $required = @(
   'dist/index.html', 'dist/index.self-extract.html',
   'dist/dependency-manifest.json', 'dist/self-extract-manifest.json',
@@ -54,6 +49,15 @@ $checksums = foreach ($asset in $assets) {
 Write-Host 'Release bundle and checksums prepared:'
 Get-ChildItem $out | Select-Object Name, Length | Format-Table -AutoSize
 
+if ($PrepareOnly) {
+  Write-Host '[OK] Release candidate package prepared without publishing.'
+  exit 0
+}
+if (-not $env:GH_TOKEN -or -not $env:GITHUB_REPOSITORY -or -not $env:GITHUB_SHA) {
+  throw 'Authenticated GitHub Actions release context is required.'
+}
+if ($env:GITHUB_REF -ne 'refs/heads/main') { throw 'Refusing to publish from anything other than main.' }
+if ($env:GITHUB_REPOSITORY -ne 'ttomohisa/htmlapps-reveal-sheet') { throw 'Unexpected repository.' }
 # Recheck after tests and packaging; do not alter an existing tag or release.
 $published = @(gh api "repos/$env:GITHUB_REPOSITORY/releases?per_page=100" --jq '.[].tag_name')
 if ($LASTEXITCODE -ne 0) { throw 'Could not check GitHub releases.' }
