@@ -2,6 +2,9 @@
 
 ## 1.1.0 - 2026-10-28
 
+- Fixed save-error diagnostics visibility: the expandable error details now appear immediately below the Save heading instead of after the export buttons; the same short diagnostic code is included in the warning toast, which previously showed only the generic error. Added a discreet note so users can recognize that the newly loaded page supports diagnostics. Mobile viewport regression covers an explicit preparation failure and verifies that details remain in view.
+
+
 - Added a privacy-preserving, copyable save-error diagnostic code (RS-SAVE-3) reporting the output format, preparation/download phase, error classification and running version, without exposing file contents or filenames. Retained safe exception classes across export/download error wrapping so recurring Android failures can be investigated rather than incorrectly declared fixed.
 
 
