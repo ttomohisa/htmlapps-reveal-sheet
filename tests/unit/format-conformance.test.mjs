@@ -49,7 +49,7 @@ test('T13 accepts the v0.2.0 format-1 fixture and rejects future schema versions
   assert.equal(core.validateEnvelope(fixture).ok,true);
   const loaded=await io.readJson(asFile(fixture));
   assert.equal(loaded.appVersion,'0.2.0');
-  const future=clone(fixture);future.schemaVersion=2;
+  const future=clone(fixture);future.schemaVersion=3;
   const checked=core.validateEnvelope(future);
   assert.equal(checked.ok,false);
   assert.equal(checked.errors[0].code,'UNSUPPORTED_SCHEMA');
