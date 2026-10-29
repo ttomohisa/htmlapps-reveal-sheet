@@ -3,7 +3,7 @@
 ## 1.1.0 - 2026-10-28
 
 - Fixed a high-memory save path affecting large image-based sheets: entering Save no longer eagerly materializes *both* editable JSON and lesson HTML. Each format is prepared on demand, and a failure to produce one format does not prevent saving the other.
-- Constructed exported HTML as three Blob parts (template before data, escaped JSON, template after data) and used Blob.size rather than materializing a second entire HTML string and full-size UTF-8 byte array. Base64 JSON escaping is performed in one pass.
+- Constructed both editable JSON and exported HTML as segmented Blob parts, reusing validated Base64 asset strings without materializing full JSON or HTML strings. Output bytes remain compatible with the existing formats; Blob.size replaces the full-size UTF-8 byte array allocation.
 - Delayed download Blob URL revocation to allow mobile browsers time to start large downloads; the original document remains unchanged if preparation fails.
 - Save-screen file sizes now display “calculated when saving” until that file has actually been prepared, rather than claiming both files have been measured.
 
