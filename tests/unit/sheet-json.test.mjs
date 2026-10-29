@@ -71,7 +71,7 @@ test('T04 readJson verifies every embedded PNG before returning a new document',
 
 test('T04 rejects invalid or future editable data atomically',async()=>{
   const io=project();
-  const future=envelope();future.schemaVersion=2;
+  const future=envelope();future.schemaVersion=3;
   await assert.rejects(io.readJson(new Blob([JSON.stringify(future)])),{code:'UNSUPPORTED_SCHEMA'});
 
   await assert.rejects(io.readJson(new Blob(['{"format":'])),{code:'INVALID_SHEET'});
