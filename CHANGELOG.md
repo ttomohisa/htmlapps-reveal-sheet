@@ -2,6 +2,9 @@
 
 ## 1.1.0 - 2026-10-28
 
+- Fixed the identified root cause of multi-megabyte image export failures: the grouped/repeated Base64-validation regex could raise a JavaScript `RangeError: Maximum call stack size exceeded` on large strings. Both document validation and image Base64 decoding now use a linear, stack-safe form, preserving the existing format and padding restrictions.
+
+
 - Fixed a high-memory save path affecting large image-based sheets: entering Save no longer eagerly materializes *both* editable JSON and lesson HTML. Each format is prepared on demand, and a failure to produce one format does not prevent saving the other.
 - Constructed both editable JSON and exported HTML as segmented Blob parts, reusing validated Base64 asset strings without materializing full JSON or HTML strings. Output bytes remain compatible with the existing formats; Blob.size replaces the full-size UTF-8 byte array allocation.
 - Delayed download Blob URL revocation to allow mobile browsers time to start large downloads; the original document remains unchanged if preparation fails.
