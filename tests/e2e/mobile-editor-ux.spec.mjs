@@ -92,3 +92,54 @@ test('mobile: two-finger touch pinch zooms without adding accidental covers',asy
   await expect.poll(()=>page.locator('#maskSvg').evaluate(svg=>+svg.dataset.viewZoom)).toBeGreaterThan(1.5);
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(0);
 });
+
+test('mobile: initial action layout and cover color before adding an image',async({page})=>{
+  await page.setViewportSize({width:390,height:780});await openApp(page);
+  await expect(page.locator('#cameraButton')).toBeVisible();
+  await expect(page.locator('#newButton')).toBeHidden();
+  await expect(page.locator('.page-panel')).toBeHidden();
+  await expect(page.locator('#coverColor')).toBeEnabled();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.locator('#coverColor').fill('#aabbcc');
+  await page.locator('#coverColor').dispatchEvent('change');
+  await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
+  await expect(page.locator('#previewImage')).toBeVisible();
+  await expect(page.locator('#coverColor')).toHaveValue('#aabbcc');
+  await page.locator('#mobileMoreButton').click();
+  await expect(page.locator('#newButton')).toBeVisible();
+  await page.locator('#editorSheetClose').click();
+});
+
+test('desktop: live camera preview captures locally and releases tracks',async({page})=>{
+  await page.addInitScript(()=>{
+    Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{
+      getUserMedia:async()=>{
+        const canvas=document.createElement('canvas');canvas.width=160;canvas.height=120;
+        const ctx=canvas.getContext('2d');ctx.fillStyle='#a1b2c3';ctx.fillRect(0,0,160,120);
+        const stream=canvas.captureStream(15);window.__testCameraStream=stream;return stream;
+      }
+    }});
+  });
+  await openApp(page);
+  await expect(page.locator('#cameraButton')).toBeVisible();
+  await page.locator('#cameraButton').click();
+  await expect(page.locator('#cameraDialog')).toBeVisible();
+  await expect(page.locator('#cameraShutterButton')).toBeEnabled();
+  await page.locator('#cameraShutterButton').click();
+  await expect(page.locator('#previewImage')).toBeVisible();
+  await expect(page.locator('#cameraDialog')).toBeHidden();
+  expect(await page.evaluate(()=>window.__testCameraStream.getTracks().every(track=>track.readyState==='ended'))).toBe(true);
+});
+
+test('desktop: denied camera access shows a useful error and preserves an empty sheet',async({page})=>{
+  await page.addInitScript(()=>Object.defineProperty(navigator,'mediaDevices',{
+    configurable:true,value:{getUserMedia:async()=>{throw new DOMException('denied','NotAllowedError');}}
+  }));
+  await openApp(page);
+  await page.locator('#cameraButton').click();
+  await expect(page.locator('#cameraStatus')).toContainText(/denied|許可され/i);
+  await expect(page.locator('#cameraShutterButton')).toBeDisabled();
+  await page.locator('#cameraCancelButton').click();
+  await expect(page.locator('#cameraDialog')).toBeHidden();
+  await expect(page.locator('#pageList .page-item')).toHaveCount(0);
+});

@@ -17,7 +17,9 @@ function createProjectIO({core,imageIO,env}) {
     };
   }
   function envelope(doc,kind,appVersion){
-    return {format:'reveal-sheet',schemaVersion:1,appVersion,kind,document:cleanDocument(doc)};
+    // PNG-only documents remain schema v1 for compatibility with older readers.
+    const schemaVersion=doc.assets.some(asset=>asset.mime==='image/webp')?2:1;
+    return {format:'reveal-sheet',schemaVersion,appVersion,kind,document:cleanDocument(doc)};
   }
   function assertSupportedEditable(value){
     if(value.kind!=='editable')fail('INVALID_SHEET');
@@ -108,7 +110,7 @@ function createProjectIO({core,imageIO,env}) {
     if(!jsonDepthWithin(json,16))fail('INVALID_SHEET');
     let value;
     try{value=JSON.parse(json);}catch{fail('INVALID_SHEET');}
-    if(value&&value.format==='reveal-sheet'&&value.schemaVersion!==1)fail('UNSUPPORTED_SCHEMA');
+    if(value&&value.format==='reveal-sheet'&&![1,2].includes(value.schemaVersion))fail('UNSUPPORTED_SCHEMA');
     const checked=core.validateEnvelope(value);
     if(!checked.ok)fail(validationFailureCode(checked));
     if(value.kind!=='lesson')fail('INVALID_SHEET');
@@ -158,7 +160,7 @@ function createProjectIO({core,imageIO,env}) {
     if(!jsonDepthWithin(text,16))fail('INVALID_SHEET');
     let value;
     try{value=JSON.parse(text);}catch{fail('INVALID_SHEET');}
-    if(value&&value.format==='reveal-sheet'&&value.schemaVersion!==1)fail('UNSUPPORTED_SCHEMA');
+    if(value&&value.format==='reveal-sheet'&&![1,2].includes(value.schemaVersion))fail('UNSUPPORTED_SCHEMA');
     const checked=core.validateEnvelope(value);
     if(!checked.ok)fail(validationFailureCode(checked));
     assertSupportedEditable(value);

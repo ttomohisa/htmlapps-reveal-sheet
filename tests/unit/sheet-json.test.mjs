@@ -71,8 +71,31 @@ test('T04 readJson verifies every embedded PNG before returning a new document',
 
 test('T04 rejects invalid or future editable data atomically',async()=>{
   const io=project();
-  const future=envelope();future.schemaVersion=2;
+  const future=envelope();future.schemaVersion=3;
   await assert.rejects(io.readJson(new Blob([JSON.stringify(future)])),{code:'UNSUPPORTED_SCHEMA'});
 
   await assert.rejects(io.readJson(new Blob(['{"format":'])),{code:'INVALID_SHEET'});
+});
+
+test('T04 schema v2 accepts WebP assets while schema v1 remains PNG-only',async()=>{
+  const bytes=fs.readFileSync('tests/fixtures/images/static.webp');
+  const ctx=testContext();
+  let doc=core.newDocument(ctx,'WebP sheet');
+  doc=core.appendAsset(doc,{id:'image_webp',mime:'image/webp',width:120,height:80,byteLength:bytes.length,dataBase64:bytes.toString('base64')},ctx,'WebP page');
+  doc=core.applyCommand(doc,{type:'ADD_ANSWER_MASK',pageId:doc.pages[0].id,rect:{x:.1,y:.1,w:.3,h:.3}},ctx).document;
+  let verified=0;
+  const io=project(async asset=>{verified++;assert.equal(asset.mime,'image/webp');});
+  const exported=JSON.parse(io.serialize(doc,'editable','1.2.0'));
+  assert.equal(exported.schemaVersion,2);
+  assert.equal(exported.document.assets[0].mime,'image/webp');
+  assert.equal(core.validateEnvelope(exported).ok,true);
+  const loaded=await io.readJson(new Blob([JSON.stringify(exported)]));
+  assert.equal(loaded.schemaVersion,2);
+  assert.equal(loaded.document.assets[0].byteLength,bytes.length);
+  assert.equal(verified,1);
+  const legacy=structuredClone(exported);legacy.schemaVersion=1;
+  assert.equal(core.validateEnvelope(legacy).ok,false);
+  const wrongSignature=structuredClone(exported);
+  wrongSignature.document.assets[0].dataBase64=wrongSignature.document.assets[0].dataBase64.replace(/^UklGR/,'iVBOR');
+  assert.equal(core.validateEnvelope(wrongSignature).ok,false);
 });

@@ -3,9 +3,9 @@
   "name": "Reveal Sheet",
   "nameJa": "めくる暗記シート",
   "slug": "reveal-sheet",
-  "version": "1.1.0",
-  "description": "Create local-first image study sheets with camera import, touch-friendly cover editing, pinch zoom, bilingual study modes, and self-contained lesson HTML.",
-  "descriptionJa": "撮影・画像追加から覆いを作成。スマホ向けの操作切替・微調整・ピンチ拡大、日英の学習モード、単一HTML保存に対応。",
+  "version": "1.2.0",
+  "description": "Create local-first image study sheets with default WebP compression, camera import, touch-friendly cover editing, pinch zoom, bilingual study modes, and self-contained lesson HTML.",
+  "descriptionJa": "WebPへの軽量化と撮影・画像追加から覆いを作成。スマホ向けの操作切替・微調整・ピンチ拡大、日英の学習モード、単一HTML保存に対応。",
   "defaultLanguage": "auto",
   "repository": {
     "owner": "ttomohisa",

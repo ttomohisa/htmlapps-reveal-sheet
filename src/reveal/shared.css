@@ -260,7 +260,7 @@ button:disabled,input:disabled { cursor:not-allowed; }
 .question-order-controls > span { color:var(--muted);font-size:12px; }
 
 /* Mobile editor: the stage stays in place while optional controls use a sheet. */
-.mobile-camera-button,.mobile-page-switch,.edit-mode-toolbar,.mask-quick-slot,.mask-quick-actions,.mask-fine-controls { display:none; }
+.mobile-page-switch,.edit-mode-toolbar,.mask-quick-slot,.mask-quick-actions,.mask-fine-controls { display:none; }
 .pan-tool-active .mask-layer,.pan-tool-active .mask-rect,.pan-tool-active .mask-resize-handle { cursor:grab; }
 .pan-tool-active .mask-layer:active { cursor:grabbing; }
 .editor-sheet { width:min(640px,calc(100vw - 24px));max-width:100%;max-height:calc(100dvh - 24px);padding:0;overflow:hidden;border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:var(--shadow-md); }
@@ -301,9 +301,9 @@ button:disabled,input:disabled { cursor:not-allowed; }
 .mask-adjust-arrows .button { min-width:48px;min-height:56px;padding:8px;display:grid;place-items:center; }
 .mask-adjust-arrows svg { width:22px;height:22px; }
 @media (max-width:767px) {
-  .mobile-camera-button:not([hidden]) { display:inline-flex; }
+  .camera-button:not([hidden]) { display:inline-flex; }
   .reveal-tools { align-items:stretch; }
-  .reveal-tools>.mobile-camera-button { min-width:0; }
+  .reveal-tools>.camera-button { min-width:0; }
   /* A flex shell measures the real header, including larger text and safe areas. */
   body.has-pages.create-mode { display:flex;flex-direction:column;height:100dvh;min-height:0;padding-bottom:0;overflow:hidden;overscroll-behavior-y:none; }
   .has-pages.create-mode .app-header { flex:0 0 auto;padding-top:env(safe-area-inset-top); }
@@ -486,3 +486,60 @@ button:disabled,input:disabled { cursor:not-allowed; }
   .editor-sheet #pageList { display:flex;flex-flow:row nowrap;overflow-x:auto;overflow-y:hidden; }
   .editor-sheet #pageList>.page-item { flex:0 0 clamp(250px,78vw,320px); }
 }
+/* Import-only compression control: same native checkbox as local settings. */
+.image-compression-control{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:7px 10px;border:1px solid var(--line,#dadbd6);border-radius:10px;background:var(--surface,#fff);color:var(--text,#20211f);font-size:12px;font-weight:650;line-height:1.4;cursor:pointer;white-space:nowrap}
+.image-compression-control input[type="checkbox"]{width:18px;height:18px;min-width:18px;min-height:18px;flex:0 0 18px;margin:0;padding:0;accent-color:#16624f;cursor:pointer}
+.image-compression-control:has(input:checked){background:#edf4f0;border-color:#aac6b6}
+.image-compression-control:has(input:disabled){opacity:.55;cursor:not-allowed}
+@media(max-width:420px){.image-compression-control{font-size:12px;padding:6px 9px}}
+
+/* Keep unavailable actions off the empty screen. All page actions return after import. */
+.reveal-tools .button[hidden],.reveal-tools .secondary-tools[hidden]{display:none!important}
+.create-mode:not(.has-pages) .page-panel{display:none}
+.create-mode:not(.has-pages) .reveal-grid{display:block}
+.create-mode:not(.has-pages) .preview-surface{height:220px;min-height:180px;max-height:260px;border-style:dashed;background:#f8faf8}
+.create-mode:not(.has-pages) .empty-preview{padding:16px 20px}
+.create-mode:not(.has-pages) .empty-preview svg{width:38px;height:38px}
+.create-mode:not(.has-pages) .empty-preview h2{margin:6px 0;font-size:15px}
+.create-mode:not(.has-pages) .empty-preview p{font-size:12px;line-height:1.55}
+.create-mode:not(.has-pages) .input-status-row:has(.empty-status-only){display:none}
+.create-mode:not(.has-pages) .input-note{margin:8px 0 12px}
+@media(max-width:767px){
+ .header-inner{padding-inline:max(16px,env(safe-area-inset-left)) max(18px,env(safe-area-inset-right))}
+ .header-actions #helpButton{display:grid;place-items:center;width:44px;min-height:44px;padding:8px}
+ .create-mode:not(.has-pages) .page-intro{padding-bottom:12px}
+ .create-mode:not(.has-pages) .reveal-shell{padding:14px;border-radius:16px}
+ .create-mode:not(.has-pages) .reveal-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:9px}
+ .create-mode:not(.has-pages) .reveal-tools>.button{flex:none;min-width:0;width:100%;font-size:13px;padding:10px 6px}
+ .create-mode:not(.has-pages) #addButton,.create-mode:not(.has-pages) #cameraButton{min-height:52px}
+ .create-mode:not(.has-pages) #openButton{grid-column:1/-1;min-height:44px;background:var(--surface-muted);font-size:12px}
+ .create-mode:not(.has-pages) .image-compression-control{min-width:0;white-space:normal;justify-content:center;text-align:center}
+ .create-mode:not(.has-pages) .cover-color-control{min-width:0;justify-content:center;color:var(--text)}
+ .create-mode:not(.has-pages) .cover-color-control span{display:inline;font-size:11px}
+ .create-mode:not(.has-pages) .secondary-tools{grid-column:1/-1;margin:0}
+ .create-mode:not(.has-pages) .preview-surface{height:170px;min-height:150px;max-height:200px}
+}
+/* Free-study question chips share the compact mobile presentation. */
+.study-mode #freeStudyPanel>.question-list{display:flex;flex-wrap:wrap;gap:7px;overflow-x:visible}
+.study-mode #freeStudyPanel>.question-list .question-item{flex:0 0 auto;min-height:42px;padding:7px 12px;border:1px solid var(--line);border-radius:999px;font-size:12px;font-weight:650;background:white;max-width:100%;overflow-wrap:anywhere;text-align:left}
+.study-mode #freeStudyPanel>.question-list .question-item:hover{background:var(--surface-hover)}
+@media(max-width:767px){
+ .study-mode #freeStudyPanel>.question-list{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden}
+ .study-mode #freeStudyPanel>.question-list .question-item{min-height:40px;padding:6px 9px;font-size:11px;white-space:nowrap}
+}
+.camera-dialog{width:min(660px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:white}
+.camera-dialog[open]{display:flex;flex-direction:column}
+.camera-dialog::backdrop{background:#101810a8}
+.camera-dialog .dialog-header .icon-button{display:grid;place-items:center;min-width:44px;min-height:44px}
+.camera-dialog .dialog-header .icon-button svg{width:21px;height:21px}
+.camera-body{min-height:0;overflow:auto;padding:14px}
+.camera-body video{display:block;width:100%;aspect-ratio:4/3;max-height:60dvh;object-fit:contain;border-radius:11px;background:#20211f}
+.camera-body p{min-height:1.6em;font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.camera-actions{display:flex;gap:8px;flex-wrap:wrap}
+.camera-actions .button{flex:1 1 160px;min-height:48px}
+@media(max-width:520px){.camera-dialog{max-height:calc(100dvh - 12px)}.camera-body{padding:10px}.camera-actions{display:grid;grid-template-columns:1fr 1fr}}
+
+.study-mode #freeStudyPanel>.question-list .question-item[aria-pressed="true"]{border-color:#aac6b6;background:#edf4f0;color:var(--accent)}
+.study-mode #freeStudyPanel>.question-list .question-item[aria-pressed="true"]:hover{background:#e1eee6}
+.has-pages.create-mode .secondary-tools #newButton{margin-left:10px;border-color:var(--line-strong);background:var(--surface-muted)}
+@media(max-width:767px){.has-pages.create-mode .secondary-tools #newButton{margin-left:0}}

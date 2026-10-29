@@ -49,7 +49,7 @@ test('T13 accepts the v0.2.0 format-1 fixture and rejects future schema versions
   assert.equal(core.validateEnvelope(fixture).ok,true);
   const loaded=await io.readJson(asFile(fixture));
   assert.equal(loaded.appVersion,'0.2.0');
-  const future=clone(fixture);future.schemaVersion=2;
+  const future=clone(fixture);future.schemaVersion=3;
   const checked=core.validateEnvelope(future);
   assert.equal(checked.ok,false);
   assert.equal(checked.errors[0].code,'UNSUPPORTED_SCHEMA');
@@ -172,4 +172,28 @@ test('T13 object-for-array and oversized stored dimensions are rejected',()=>{
   assert.equal(core.validateEnvelope(wrongArray).ok,false);
   const huge=clone(fixture);huge.document.assets[0].width=core.limits.maxSide+1;
   assert.equal(core.validateEnvelope(huge).ok,false);
+});
+
+test('T13 published schemas reflect the optional coverColor field in PNG v1 and WebP v2 exports',()=>{
+  const io=project();
+  const pngDoc=clone(fixture.document);
+  pngDoc.defaults={...pngDoc.defaults,coverColor:'#16624f'};
+  const webpBytes=fs.readFileSync('tests/fixtures/images/static.webp');
+  const webpDoc=clone(pngDoc);
+  webpDoc.assets[0]={...webpDoc.assets[0],mime:'image/webp',width:120,height:80,byteLength:webpBytes.length,dataBase64:webpBytes.toString('base64')};
+  for(const [version,doc] of [[1,pngDoc],[2,webpDoc]]){
+    const exported=JSON.parse(io.serialize(doc,'editable','1.2.0'));
+    assert.equal(exported.schemaVersion,version);
+    const schema=JSON.parse(fs.readFileSync('schemas/reveal-sheet-v'+version+'.schema.json','utf8'));
+    const field=schema.$defs.document.properties.defaults;
+    assert.equal(field.additionalProperties,false);
+    for(const key of Object.keys(exported.document.defaults)){
+      assert.equal(Object.hasOwn(field.properties,key),true,'v'+version+' missing '+key);
+    }
+    assert.equal(field.required.includes('coverColor'),false,'legacy documents may omit color');
+    const colorPattern=new RegExp(field.properties.coverColor.pattern);
+    assert.match(exported.document.defaults.coverColor,colorPattern);
+    assert.doesNotMatch('not-a-color',colorPattern);
+    assert.equal(core.validateEnvelope(exported).ok,true);
+  }
 });
