@@ -66,9 +66,22 @@ test('T11 large lesson HTML streams document and template as Blob parts without 
   const io=createProjectIO({core,imageIO:{verifyStoredAsset:async()=>{}},env:{Blob:InspectBlob,TextDecoder,TextEncoder:RejectEncoder}});
   const output=io.prepareHtml(doc,playerTemplate,'1.1.0');
   assert.equal(partsSeen.length,1);
-  assert.equal(partsSeen[0].length,3);
+  assert.ok(partsSeen[0].length>=8);
+  assert.ok(partsSeen[0].some(part=>part===doc.assets[0].dataBase64));
+  assert.equal(partsSeen[0].filter(part=>part===doc.assets[0].dataBase64).length,1);
   const html=await output.text();
   assert.equal(output.size,Buffer.byteLength(html,'utf8'));
   assert.equal(html.includes('__REVEAL_LESSON_JSON__'),false);
   assert.equal(JSON.parse(html.match(/<script id="reveal-sheet-data" type="application\/json">([^<]*)<\/script>/)[1]).kind,'lesson');
+});
+
+
+test('T11 segmented JSON and lesson HTML are byte-for-byte compatible with original serialization',async()=>{
+  const io=project(),doc=makeDoc('Unicode 日本語, & and </script> 👀');
+  const json=await io.prepareJson(doc,'1.1.0').text();
+  assert.equal(json,io.serialize(doc,'editable','1.1.0'));
+  const output=await io.prepareHtml(doc,playerTemplate,'1.1.0').text();
+  const expected=playerTemplate.replace('__REVEAL_LESSON_JSON__',io.escapeJsonForHtml(io.serialize(doc,'lesson','1.1.0')));
+  assert.equal(output,expected);
+  assert.deepEqual(JSON.parse(json).document.pages,JSON.parse(io.serialize(doc,'editable','1.1.0')).document.pages);
 });
