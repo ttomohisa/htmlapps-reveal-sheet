@@ -64,3 +64,48 @@ test('T02: language switch retains page and view; no persistent content is writt
  await page.locator('#languageButton').click();await expect(page.locator('#pageList .page-item')).toHaveCount(1);await loaded(page);
  expect(await page.evaluate(()=>{try{return Object.keys(localStorage).filter(k=>k.includes('reveal'));}catch{return [];}})).toEqual([]);
 });
+
+
+test('T02: tall 2160x3840 photo remains visible after a transient preview decode failure',async({page})=>{
+  test.setTimeout(120000);
+  await openApp(page);
+  // Generate synthetic high-detail pixels: no user photo is added to the repo.
+  const dataUrl=await page.evaluate(async()=>{
+    const c=document.createElement('canvas');c.width=2160;c.height=3840;
+    const ctx=c.getContext('2d'),pixels=ctx.createImageData(c.width,c.height);
+    let state=0x68a2d421;
+    for(let n=0;n<pixels.data.length;n+=4){
+      state=(Math.imul(state,1664525)+1013904223)>>>0;
+      pixels.data[n]=(state>>>24)&0xf0;
+      pixels.data[n+1]=(state>>>16)&0xf0;
+      pixels.data[n+2]=(state>>>8)&0xf0;
+      pixels.data[n+3]=255;
+    }
+    ctx.putImageData(pixels,0,0);
+    return c.toDataURL('image/jpeg',.84);
+  });
+  await page.evaluate(()=>{
+    const original=HTMLImageElement.prototype.decode;
+    let rejected=false;
+    HTMLImageElement.prototype.decode=function(...args){
+      if(this.id==='previewImage'&&!rejected){
+        rejected=true;
+        return Promise.reject(new Error('Simulated transient mobile image decode failure'));
+      }
+      return original.apply(this,args);
+    };
+  });
+  await page.locator('#imageInput').setInputFiles({
+    name:'synthetic-tall-photo.jpg',mimeType:'image/jpeg',
+    buffer:Buffer.from(dataUrl.split(',')[1],'base64')
+  });
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1,{timeout:60000});
+  await expect(page.locator('#previewImage')).toBeVisible({timeout:60000});
+  await expect(page.locator('#previewWait')).toBeHidden();
+  const image=page.locator('#previewImage');
+  expect(await image.evaluate(node=>[node.naturalWidth,node.naturalHeight])).toEqual([2160,3840]);
+  await expect(page.locator('#imageBytes')).not.toHaveText('');
+  await page.locator('#studyButton').click();
+  await page.locator('#createButton').click();
+  await expect(image).toBeVisible({timeout:15000});
+});
