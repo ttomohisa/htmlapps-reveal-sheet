@@ -1,0 +1,116 @@
+name: Publish Reveal Sheet v1.2.0
+
+# The release is created only after a checked main-branch commit passes all checks.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: reveal-sheet-v1.2.0-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.repository == 'ttomohisa/htmlapps-reveal-sheet'
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Check v1.2.0 is eligible for publication
+        id: gate
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $config = Get-Content -Raw -Encoding UTF8 app.config.json | ConvertFrom-Json
+          $package = Get-Content -Raw -Encoding UTF8 package.json | ConvertFrom-Json
+          $lock = Get-Content -Raw -Encoding UTF8 package-lock.json | ConvertFrom-Json
+          if ($config.version -ne '1.2.0' -or $package.version -ne '1.2.0' -or $lock.version -ne '1.2.0') {
+            Write-Host 'Repository version is not 1.2.0. Skipping one-time release.'
+            Add-Content -Path $env:GITHUB_OUTPUT -Value 'publish=false' -Encoding utf8
+            exit 0
+          }
+          $published = @(gh api "repos/$env:GITHUB_REPOSITORY/releases?per_page=100" --jq '.[].tag_name')
+          if ($LASTEXITCODE -ne 0) { throw 'Could not check published GitHub releases.' }
+          if ($published -contains 'v1.2.0') {
+            Write-Host 'v1.2.0 is already released; no duplicate will be created.'
+            Add-Content -Path $env:GITHUB_OUTPUT -Value 'publish=false' -Encoding utf8
+            exit 0
+          }
+          if (@(git tag --list 'v1.2.0').Count -ne 0) {
+            throw 'v1.2.0 tag exists without a release. Refusing to move the tag.'
+          }
+          Add-Content -Path $env:GITHUB_OUTPUT -Value 'publish=true' -Encoding utf8
+
+      - name: Install locked development packages
+        if: steps.gate.outputs.publish == 'true'
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Check Windows syntax and assembly
+        if: steps.gate.outputs.publish == 'true'
+        shell: powershell
+        run: |
+          .\scripts\check-powershell-syntax.ps1
+          .\scripts\test-reveal-build.ps1
+
+      - name: Verify and build standalone HTML
+        if: steps.gate.outputs.publish == 'true'
+        shell: pwsh
+        run: |
+          ./scripts/check-repository.ps1
+          ./scripts/test-reveal-build.ps1
+
+      - name: Unit tests
+        if: steps.gate.outputs.publish == 'true'
+        run: npm run test:unit
+
+      - name: Install Chromium
+        if: steps.gate.outputs.publish == 'true'
+        run: npx playwright install chromium
+
+      - name: Readable HTML browser tests
+        if: steps.gate.outputs.publish == 'true'
+        run: npm run test:e2e -- --project=chromium
+
+      - name: Self-extracting HTML browser tests
+        if: steps.gate.outputs.publish == 'true'
+        env:
+          APP_VARIANT: self-extract
+        run: npm run test:e2e -- --project=chromium
+
+      - name: Capture rendered UI regression scenes
+        if: steps.gate.outputs.publish == 'true'
+        run: node scripts/capture-qa.mjs
+
+      - name: Assemble release package and checksums
+        if: steps.gate.outputs.publish == 'true'
+        shell: pwsh
+        run: ./scripts/publish-release-v1.2.0.ps1 -PrepareOnly
+
+      - name: Save release candidate artifacts
+        if: steps.gate.outputs.publish == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: reveal-sheet-v1.2.0
+          path: release-out/
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Publish GitHub Release and attach verified files
+        if: steps.gate.outputs.publish == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/publish-release-v1.2.0.ps1
