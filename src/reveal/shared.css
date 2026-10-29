@@ -496,6 +496,7 @@ button:disabled,input:disabled { cursor:not-allowed; }
 /* Keep unavailable actions off the empty screen. All page actions return after import. */
 .reveal-tools .button[hidden],.reveal-tools .secondary-tools[hidden]{display:none!important}
 .create-mode:not(.has-pages) .page-panel{display:none}
+.create-mode:not(.has-pages) .reveal-grid{display:block}
 .create-mode:not(.has-pages) .preview-surface{height:220px;min-height:180px;max-height:260px;border-style:dashed;background:#f8faf8}
 .create-mode:not(.has-pages) .empty-preview{padding:16px 20px}
 .create-mode:not(.has-pages) .empty-preview svg{width:38px;height:38px}
