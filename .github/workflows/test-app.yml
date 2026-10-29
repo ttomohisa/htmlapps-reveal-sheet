@@ -29,6 +29,14 @@ jobs:
         run: |
           ./scripts/check-repository.ps1
           ./scripts/test-reveal-build.ps1
+      - name: Verify v1.2.0 release packaging (no publication)
+        shell: pwsh
+        run: |
+          $version = (Get-Content -Raw -Encoding UTF8 app.config.json | ConvertFrom-Json).version
+          if ($version -eq '1.2.0') {
+            ./scripts/publish-release-v1.2.0.ps1 -PrepareOnly
+          }
+
       - name: Unit tests
         shell: pwsh
         run: |

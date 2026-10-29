@@ -205,3 +205,16 @@ for(const viewport of [{width:320,height:480},{width:700,height:390}]){
     await lesson.close();
   });
 }
+
+test('exported lesson: neutral header and comfortable Help spacing on a 320px phone',async({page,context},testInfo)=>{
+  const path=await exportLesson(page,testInfo);
+  const lesson=await openLesson(context,path,{width:320,height:640});
+  await expect(lesson.locator('.lesson-header')).toHaveCSS('background-color','rgb(245, 245, 242)');
+  const help=await lesson.locator('#lessonHelpButton').boundingBox();
+  expect(help.width).toBeGreaterThanOrEqual(44);
+  expect(320-(help.x+help.width)).toBeGreaterThanOrEqual(16);
+  expect(await lesson.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await lesson.locator('#lessonHelpButton').click();
+  await expect(lesson.locator('#lessonHelpDialog')).toBeVisible();
+  await lesson.close();
+});
