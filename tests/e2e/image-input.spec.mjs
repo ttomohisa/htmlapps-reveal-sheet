@@ -123,8 +123,23 @@ test('T02: 2160x3840 phone photo remains visible through Save/Create navigation'
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
   await page.locator('#saveButton').click();
   await expect(page.locator('#inputStatus')).toContainText(/保存する形式|Choose a format/i);
-  const jsonPromise=page.waitForEvent('download');
+  const jsonPromise=page.waitForEvent('download',{timeout:20000});
+  page.on('console',msg=>{if(msg.text().includes('Reveal Sheet save failed'))console.log('Large-photo save console:',msg.text());});
   await page.locator('#downloadJsonButton').click();
+  try{await expect(page.locator('#inputStatus')).toContainText(/保存を開始|Started saving/,{timeout:15000});}
+  catch(error){
+    const values=await page.evaluate(()=>({
+      status:document.querySelector('#inputStatus')?.textContent,
+      jsonSize:document.querySelector('#saveJsonBytes')?.textContent,
+      htmlSize:document.querySelector('#saveHtmlBytes')?.textContent,
+      jsonDisabled:document.querySelector('#downloadJsonButton')?.disabled,
+      htmlDisabled:document.querySelector('#downloadHtmlButton')?.disabled,
+      questionCount:document.querySelector('#saveQuestionCount')?.textContent,
+      pageCount:document.querySelector('#savePageCount')?.textContent
+    }));
+    console.error('Large-photo save diagnosis',JSON.stringify(values));
+    throw error;
+  }
   const jsonDownload=await jsonPromise;
   expect(jsonDownload.suggestedFilename()).toMatch(/\.reveal\.json$/);
   const htmlPromise=page.waitForEvent('download');
