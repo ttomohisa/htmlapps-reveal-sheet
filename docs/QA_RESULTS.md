@@ -6,6 +6,9 @@ This record contains the v1.1.0 mobile-editor verification below and the histori
 
 ## Save-error details hidden below the fold — 2026-10-29
 
+CI follow-up: the first full test run passed the new save diagnostic checks but had a separate intermittent failure in the pre-existing self-extracting mobile page-carousel test. Its test clicked Page list as soon as a three-image import yielded DOM page cards; the editor intentionally ignores sheet-opening clicks while import remains busy. The test now waits for the import controls to be enabled, for the image to be visible and for the native page dialog actually to open before checking horizontal overflow. The assertion was not removed or weakened.
+
+
 A further report showed the generic save message without visible diagnostics. Current code inspection found the diagnostic `details` element **after** the Save output buttons, where it could be below the phone viewport; additionally, `shared.css` visually hides the normal input-status row for populated documents (`.has-pages:not(.is-busy) .input-status-row p`). The generic error survived in the toast, while the diagnostic code was not included in the toast and could go unnoticed. An already-open tab running older JavaScript is another possible explanation; neither observation proves which occurred on the user's device.
 
 The diagnostic panel has been moved directly under the Save heading and opens automatically after an error. The error toast also includes the short `RS-SAVE-3` code; a visible quiet hint on the new Save screen distinguishes diagnostic-capable builds without exposing implementation details. A phone-width browser regression injects a `RangeError` into JSON Blob preparation and asserts the inline details are open, inside the viewport, and duplicated in the warning toast; both the Save panel and other original content remain unchanged.
