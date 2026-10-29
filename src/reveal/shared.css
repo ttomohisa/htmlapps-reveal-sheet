@@ -478,3 +478,11 @@ button:disabled,input:disabled { cursor:not-allowed; }
 /* Recoverable image-display errors leave the normalized asset intact. */
 .preview-wait:not([hidden]){display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
 .preview-wait>.button{min-height:44px;min-width:0;max-width:100%;background:var(--surface);border:1px solid var(--line);color:var(--accent);font-size:13px}
+/* Bottom-sheet page carousel must be constrained by the dialog width, even
+   while the native dialog is opening or after self-extract initialization. */
+@media(max-width:767px){
+  .editor-sheet #pageList,
+  .editor-sheet .page-panel { box-sizing:border-box;min-width:0;width:100%;max-width:100%; }
+  .editor-sheet #pageList { display:flex;flex-flow:row nowrap;overflow-x:auto;overflow-y:hidden; }
+  .editor-sheet #pageList>.page-item { flex:0 0 clamp(250px,78vw,320px); }
+}
