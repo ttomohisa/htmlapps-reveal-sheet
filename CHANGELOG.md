@@ -1,6 +1,11 @@
 # Changelog
 
 ## 1.1.0 - 2026-10-28
+- Corrected exported lesson UI to match the authoring app's actual white/green button styles instead of a separate pale-green design; the editable-data save button now uses the same primary-green style as the editor.
+- Enabled the Settings & Save gear on desktop (previously blocked by a mobile-only guard), preserving Escape/focus restoration and original settings placement on close.
+- Hardened display of high-resolution imported photos: check already-complete image loads, retry a transient Blob URL decode failure with a new URL and load event, then provide a localized **Retry image display** action without discarding the stored image.
+- Added offline browser regressions for desktop settings and a synthetic 2160×3840 tall JPEG with a simulated image-decode failure. The user's uploaded photo itself is not included in the public repository.
+
 
 - Refined the exported lesson Settings & Save sheet after real Android Chrome screenshot feedback: fixed native checkbox/radio dimensions, unified card selections and save controls, replaced the malformed gear with a clean SVG, and normalized button typography, borders, corners and pressed states without affecting the main editor.
 
