@@ -486,3 +486,9 @@ button:disabled,input:disabled { cursor:not-allowed; }
   .editor-sheet #pageList { display:flex;flex-flow:row nowrap;overflow-x:auto;overflow-y:hidden; }
   .editor-sheet #pageList>.page-item { flex:0 0 clamp(250px,78vw,320px); }
 }
+/* Import-only compression control: same native checkbox as local settings. */
+.image-compression-control{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:7px 10px;border:1px solid var(--line,#dadbd6);border-radius:10px;background:var(--surface,#fff);color:var(--text,#20211f);font-size:12px;font-weight:650;line-height:1.4;cursor:pointer;white-space:nowrap}
+.image-compression-control input[type="checkbox"]{width:18px;height:18px;min-width:18px;min-height:18px;flex:0 0 18px;margin:0;padding:0;accent-color:#16624f;cursor:pointer}
+.image-compression-control:has(input:checked){background:#edf4f0;border-color:#aac6b6}
+.image-compression-control:has(input:disabled){opacity:.55;cursor:not-allowed}
+@media(max-width:420px){.image-compression-control{font-size:12px;padding:6px 9px}}
