@@ -1,5 +1,10 @@
 ## 1.2.0 - 2026-10-29
 
+- Polished the empty phone editor: removed inactive reset/history controls and empty page list, grouped image/photo/import settings, and allowed choosing the cover color before adding an image.
+- Added a real desktop camera capture dialog with an explicit permission request, live preview, local JPEG capture, and track cleanup; kept the native mobile camera picker.
+- Made the exported lesson header neutral and inset mobile Help; aligned free-study question pills on desktop and mobile, and shortened Japanese/English import guidance.
+- Added browser tests for mobile entry layout, camera success/permission denial, and exported-lesson Help spacing. These new tests are not yet CI-verified while PR #17 targets the #16 feature branch.
+
 - New image imports use **Compress images** (default ON). On-device, orientation-corrected images are encoded into PNG and WebP (quality 0.86), selecting WebP only if it is at least 10% smaller. Disable compression to use PNG. Dimensions, mask coordinates, alpha, and input format validation are retained.
 - Show the actual normalized WebP or PNG MIME and file size in the image info rather than always claiming PNG. The input preference applies to new images only, not already imported pages.
 - Introduce **schemaVersion 2** for JSON/lesson HTML containing WebP, while PNG-only exports remain schemaVersion 1. All schema-v1 PNG documents remain readable. Added `schemas/reveal-sheet-v2.schema.json`, WebP import verification, data-MIME rendering in standalone lesson HTML, and IndexedDB draft restoration for both formats.

@@ -23,10 +23,10 @@ Selected images and saved-sheet data are processed on your device. The app does 
 
 - **Create covers directly on an image** — Drag over an answer to place a cover, then move, resize, duplicate, delete, Undo, or Redo it.
 - **Edit on a phone** — Switch between Place covers and Move image, pinch to zoom, and adjust a selected cover by 1, 5, or 10 image pixels using an inline toolbar that leaves the image visible. At 100%, Move image shows a zoom-in tip.
-- **Capture a page** — The Take photo button opens the device's camera-capable file chooser where supported. Imported photos follow the same on-device processing and format limits as other images.
+- **Capture a page** — Phones use their native camera-capable picker; on desktop, Take photo opens a live camera preview and captures a local JPEG after permission is granted. If the camera is unavailable or permission is denied, an explanation is shown. The same on-device processing and image limits apply.
 - **Reduce exported file size** — **Compress images** is on by default for newly imported pictures. WebP at quality 0.86 is used when it saves at least 10% versus PNG; otherwise PNG is retained. Disable it to preserve lossless PNG rendering of small text and graphics. Dimensions and cover coordinates remain unchanged. PNG-only exports stay format 1; exports containing WebP use format 2 and need an updated Reveal Sheet to reopen.
 - **Choose the question order** — Select an answer cover and use Move earlier / Move later in Question content. Grouped covers move as one question; Undo/Redo and both saved formats preserve the order. The current study session keeps its existing order until you start a new session.
-- **Choose the cover color** — The selected color is stored with the sheet and used consistently while editing and studying.
+- **Choose the cover color** — Choose a cover color even before importing an image. The selected color is stored with the sheet and used while editing and studying.
 - **Turn several covers into one question** — Group related answers so they reveal together, or keep hint areas covered while studying.
 - **Study freely or one question at a time** — Reveal any answer manually, or use the guided flow with Recalled / Review again self-assessment.
 - **Use the exported lesson on a phone** — The standalone `.reveal.html` provides an image-first screen, page and question selectors, large Reveal / assessment controls, zoom and pan/pinch, and a settings sheet for optional study-progress saving and editable export. No account or external runtime network is required.
