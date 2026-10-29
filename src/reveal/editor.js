@@ -337,7 +337,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     if(selectedId===pageId){refreshMobileEditor();return;}
     cancelTransientInteraction();selectedId=pageId;selectedMaskId=null;selectedMaskIds.clear();
     $('pageList').querySelectorAll('.page-item').forEach(card=>card.setAttribute('aria-current',card.dataset.pageId===pageId?'page':'false'));
-    const asset=currentAsset();if(asset){$('imageDimensions').textContent=`${asset.width} × ${asset.height} px`;$('imageBytes').textContent=formatBytes(asset.byteLength);}
+    const asset=currentAsset();if(asset){$('imageDimensions').textContent=`${asset.width} × ${asset.height} px`;$('imageFormat').textContent=asset.mime==='image/webp'?'WebP':'PNG';$('imageBytes').textContent=formatBytes(asset.byteLength);}
     refreshCoverPanel();refreshMobileEditor();showPreview();refreshViewControls();
   }
   function movePageTo(pageId,targetIndex){
@@ -419,6 +419,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('newButton').disabled=!doc.pages.length&&!busy;
     $('addButton').disabled=busy||doc.pages.length>=core.limits.maxPages;
     $('imageInput').disabled=busy;
+    $('compressImages').disabled=busy;
     $('cameraInput').disabled=busy||doc.pages.length>=core.limits.maxPages;
     $('cameraButton').disabled=busy||doc.pages.length>=core.limits.maxPages;
     $('cancelButton').hidden=!busy;
@@ -439,7 +440,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       name.textContent=failure.name;reason.textContent=t('error_'+failure.code);li.append(name,reason);$('failureList').append(li);
     }
     const page=doc.pages.find(p=>p.id===selectedId),asset=page&&doc.assets.find(a=>a.id===page.imageId);
-    if(asset){$('imageDimensions').textContent=`${asset.width} × ${asset.height} px`;$('imageBytes').textContent=formatBytes(asset.byteLength);}
+    if(asset){$('imageDimensions').textContent=`${asset.width} × ${asset.height} px`;$('imageFormat').textContent=asset.mime==='image/webp'?'WebP':'PNG';$('imageBytes').textContent=formatBytes(asset.byteLength);}
     const totalAssetBytes=doc.assets.reduce((sum,a)=>sum+a.byteLength,0);
     $('totalBytes').textContent=formatBytes(totalAssetBytes);$('savePageCount').textContent=String(doc.pages.length);$('saveQuestionCount').textContent=String(doc.questions.length);$('saveAuxCount').textContent=String(doc.masks.filter(mask=>mask.kind==='auxiliary').length);$('saveImageBytes').textContent=formatBytes(totalAssetBytes);$('saveJsonBytes').textContent=preparedJsonExport?formatBytes(preparedJsonExport.size):t('saveSizeOnDemand');$('saveHtmlBytes').textContent=preparedLessonExport?formatBytes(preparedLessonExport.size):t('saveSizeOnDemand');$('downloadJsonButton').disabled=busy||exportBusy||doc.pages.length===0;$('downloadHtmlButton').disabled=busy||exportBusy||doc.questions.length===0||!playerTemplate;$('previewLessonButton').disabled=busy||exportBusy||doc.questions.length===0||!playerTemplate;
     if(!$('outputFilename').value)$('outputFilename').value=filenameBase;
@@ -561,7 +562,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     cancelTransientInteraction();closeEditorSheet();
     // A cancelled decoder must settle before another is started. This prevents
     // two costly decodes overlapping after a quick Cancel -> Add sequence.
-    busy=true;const currentBatch=++batchId,currentGeneration=generation;
+    busy=true;const compress=$('compressImages').checked,currentBatch=++batchId,currentGeneration=generation;
     controller=new env.AbortController();const signal=controller.signal;
     failures=[];let added=0,done=0;
     status('processing',{done:0,total:files.length});refreshCopy();
@@ -569,7 +570,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       if(signal.aborted||currentGeneration!==generation||currentBatch!==batchId)break;
       try {
         if(doc.pages.length>=core.limits.maxPages)throw core.error('LIMIT_EXCEEDED');
-        const asset=await imageIO.normalize(file,{signal,ctx});
+        const asset=await imageIO.normalize(file,{signal,ctx,compress});
         if(signal.aborted||currentGeneration!==generation||currentBatch!==batchId)break;
         commit(core.appendAsset(doc,asset,ctx,t('pageName',{number:doc.pages.length+1})));
         selectedId=doc.pages.at(-1).id;mobilePagesOpen=false;added++;
