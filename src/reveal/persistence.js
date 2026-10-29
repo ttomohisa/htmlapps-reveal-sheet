@@ -12,7 +12,7 @@ function createPersistence({core,env,backend=null}) {
   async function reconstruct(stored){
     if(!stored)return null;const byId=new Map(stored.assets.map(asset=>[asset.id,asset])),assets=[];
     for(const meta of stored.draft.document.assets){const saved=byId.get(meta.id);if(!saved||!(saved.blob instanceof env.Blob))throw appError('LOCAL_SAVE_FAILED');const bytes=new Uint8Array(await saved.blob.arrayBuffer());if(bytes.byteLength!==meta.byteLength)throw appError('LOCAL_SAVE_FAILED');assets.push({...meta,dataBase64:bytesToBase64(bytes)});}
-    const document={...stored.draft.document,assets},validation=core.validateEnvelope({format:'reveal-sheet',schemaVersion:1,appVersion:'0.0.0',kind:'editable',document});if(!validation.ok)throw appError('LOCAL_SAVE_FAILED');
+    const document={...stored.draft.document,assets},validation=core.validateEnvelope({format:'reveal-sheet',schemaVersion:assets.some(asset=>asset.mime==='image/webp')?2:1,appVersion:'0.0.0',kind:'editable',document});if(!validation.ok)throw appError('LOCAL_SAVE_FAILED');
     return {document,generation:stored.draft.generation,savedAt:stored.draft.savedAt};
   }
   async function probe(){
