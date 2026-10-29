@@ -131,6 +131,7 @@ test('T14: failed browser download handoff shows a different, safe diagnosis',as
   await page.locator('#downloadJsonButton').click();
   await expect(page.locator('#saveDiagnostics')).toBeVisible();
   await expect(page.locator('#saveDiagnosticText')).toContainText(/JSON \/ DOWNLOAD \/ EXPORT_FAILED \/ SecurityError/);
+  await expect(page.locator('#inputStatus')).toContainText(/ダウンロードを開始できませんでした|download could not start/i);
   await page.evaluate(()=>{URL.createObjectURL=window.__RevealOriginalCreateUrl;delete window.__RevealOriginalCreateUrl;});
   const downloaded=page.waitForEvent('download');
   await page.locator('#downloadJsonButton').click();
