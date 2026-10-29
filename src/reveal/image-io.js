@@ -4,6 +4,9 @@
 function createImageIO({ core, env }) {
   const { limits, error } = core;
   const urls = new Map();
+  // A just-normalized PNG can be viewed directly from its Blob. Avoid
+  // immediately expanding its large base64 text to a second byte array.
+  const pendingPreviewBlobs = new Map();
   const checkDimensions = (width, height) => ({ok:
     Number.isInteger(width) && Number.isInteger(height) && width > 0 && height > 0 &&
     width <= limits.maxSide && height <= limits.maxSide && width * height <= limits.maxPixels});
@@ -150,7 +153,11 @@ function createImageIO({ core, env }) {
       const bytes=new Uint8Array(await blob.arrayBuffer());abort(signal);
       const output=inspectHeader(bytes);
       if(output.mime!=='image/png'||output.width!==width||output.height!==height)throw error('DECODE_FAILED');
-      return {id:ctx.newId('image'),mime:'image/png',width,height,byteLength:bytes.length,dataBase64:encode(bytes)};
+      const id=ctx.newId('image');
+      const asset={id,mime:'image/png',width,height,byteLength:bytes.length,dataBase64:encode(bytes)};
+      pendingPreviewBlobs.set(id,blob);
+      while(pendingPreviewBlobs.size>2)pendingPreviewBlobs.delete(pendingPreviewBlobs.keys().next().value);
+      return asset;
     } catch(e) { if(e.code)throw e;throw error('DECODE_FAILED'); }
     finally { if(bitmap)bitmap.close();if(canvas){canvas.width=0;canvas.height=0;} }
   }
@@ -168,12 +175,15 @@ function createImageIO({ core, env }) {
   }
   function urlFor(asset) {
     if(urls.has(asset.id)){const value=urls.get(asset.id);urls.delete(asset.id);urls.set(asset.id,value);return value;}
-    const url=env.URL.createObjectURL(new env.Blob([decodeBase64(asset.dataBase64)],{type:'image/png'}));urls.set(asset.id,url);
+    const cached=pendingPreviewBlobs.get(asset.id);
+    pendingPreviewBlobs.delete(asset.id);
+    const source=cached||new env.Blob([decodeBase64(asset.dataBase64)],{type:'image/png'});
+    const url=env.URL.createObjectURL(source);urls.set(asset.id,url);
     // Display cache holds current + previous only. Document/Undo share strings.
     while(urls.size>2)release(urls.keys().next().value);
     return url;
   }
   function release(assetId) {if(urls.has(assetId)){env.URL.revokeObjectURL(urls.get(assetId));urls.delete(assetId);}}
-  function releaseAll() {for(const id of urls.keys())release(id);}
+  function releaseAll() {for(const id of urls.keys())release(id);pendingPreviewBlobs.clear();}
   return Object.freeze({inspectHeader,checkDimensions,inspectInput,normalize,verifyStoredAsset,decodeBase64,urlFor,release,releaseAll});
 }
