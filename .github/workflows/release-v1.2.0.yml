@@ -36,7 +36,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $config = Get-Content -Raw -Encoding UTF8 app.config.json | ConvertFrom-Json
           $package = Get-Content -Raw -Encoding UTF8 package.json | ConvertFrom-Json
-          $lock = Get-Content -Raw -Encoding UTF8 package-lock.json | ConvertFrom-Json
+          $lock = Get-Content -Raw -Encoding UTF8 package-lock.json | ConvertFrom-Json -AsHashtable
           if ($config.version -ne '1.2.0' -or $package.version -ne '1.2.0' -or $lock.version -ne '1.2.0') {
             Write-Host 'Repository version is not 1.2.0. Skipping one-time release.'
             Add-Content -Path $env:GITHUB_OUTPUT -Value 'publish=false' -Encoding utf8
