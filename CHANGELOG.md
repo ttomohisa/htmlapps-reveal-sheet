@@ -1,6 +1,12 @@
 # Changelog
 
 ## 1.1.0 - 2026-10-28
+
+- Fixed a high-memory save path affecting large image-based sheets: entering Save no longer eagerly materializes *both* editable JSON and lesson HTML. Each format is prepared on demand, and a failure to produce one format does not prevent saving the other.
+- Constructed exported HTML as three Blob parts (template before data, escaped JSON, template after data) and used Blob.size rather than materializing a second entire HTML string and full-size UTF-8 byte array. Base64 JSON escaping is performed in one pass.
+- Delayed download Blob URL revocation to allow mobile browsers time to start large downloads; the original document remains unchanged if preparation fails.
+- Save-screen file sizes now display “calculated when saving” until that file has actually been prepared, rather than claiming both files have been measured.
+
 - Corrected exported lesson UI to match the authoring app's actual white/green button styles instead of a separate pale-green design; the editable-data save button now uses the same primary-green style as the editor.
 - Enabled the Settings & Save gear on desktop (previously blocked by a mobile-only guard), preserving Escape/focus restoration and original settings placement on close.
 - Hardened display of high-resolution imported photos: check already-complete image loads, retry a transient Blob URL decode failure with a new URL and load event, then provide a localized **Retry image display** action without discarding the stored image.
