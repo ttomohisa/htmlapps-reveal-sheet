@@ -188,101 +188,90 @@ html,.lesson-body{max-width:100%;overflow-x:hidden}
   .lesson-active .lesson-guided-secondary .button{font-size:10px}
 }
 
-/* Exported lesson controls: scoped component styles, not inherited browser buttons.
-   In particular, radio/checkbox dimensions must not inherit the text-field rule. */
+/* Exported lesson buttons use the same palette, shape and state as the editor's
+   .button and .button.primary controls; do not layer a separate green-tinted variant. */
 .lesson-body .button{
-  -webkit-appearance:none;appearance:none;display:inline-flex;align-items:center;justify-content:center;
-  min-width:0;min-height:44px;margin:0;padding:9px 14px;
-  border:1px solid var(--lesson-stroke);border-radius:11px;
-  background:#fff;color:var(--lesson-ink);box-shadow:none;
-  font:600 13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;
-  text-align:center;white-space:normal;overflow-wrap:anywhere;cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
+  appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;justify-content:center;
+  min-width:0;min-height:48px;margin:0;padding:10px 16px;
+  border:1px solid var(--line,#dadbd6);border-radius:11px;
+  background:#fff;color:var(--text,#20211f);box-shadow:none;
+  font:600 14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;
+  text-align:center;white-space:normal;overflow-wrap:anywhere;
+  -webkit-tap-highlight-color:transparent;cursor:pointer;
 }
-.lesson-body .button:hover:not(:disabled){background:#f2f6f2;border-color:#c7d4cc}
-.lesson-body .button:active:not(:disabled){background:#e9f2eb}
-.lesson-body .button.primary{
-  background:var(--lesson-green);border-color:var(--lesson-green);color:#fff;
-  font-weight:700;
-}
-.lesson-body .button.primary:hover:not(:disabled){background:#0f503f;border-color:#0f503f}
-.lesson-body .button:disabled{opacity:.45;box-shadow:none;cursor:not-allowed}
-/* The segmented study-mode switch is a separate button variant. */
+.lesson-body .button:hover:not(:disabled){background:var(--surface-hover,#e9e9e5);border-color:var(--line,#dadbd6)}
+.lesson-body .button:active:not(:disabled){background:#e1e5df}
+.lesson-body .button.primary{background:#16624f;color:white;border-color:#16624f}
+.lesson-body .button.primary:hover:not(:disabled){background:#0e503f;border-color:#0e503f}
+.lesson-body .button:disabled{opacity:.5;box-shadow:none;cursor:not-allowed}
 .lesson-body .lesson-mode-switch .button{
-  min-height:42px;border:1px solid transparent;background:transparent;
-  font-size:13px;font-weight:650;color:var(--lesson-muted);
+  min-height:42px;padding:6px 10px;border:1px solid transparent;background:transparent;
+  color:var(--lesson-muted);font-size:13px;font-weight:650;
 }
 .lesson-body .lesson-mode-switch .button[aria-pressed="true"]{
-  border-color:transparent;background:#fff;color:var(--lesson-green);
-  box-shadow:0 1px 4px rgba(20,41,27,.12);font-weight:750;
+  border-color:transparent;background:#fff;color:#16624f;
+  box-shadow:0 1px 4px #14291b1f;font-weight:750;
 }
-.lesson-body .lesson-mode-switch .button:hover:not(:disabled):not([aria-pressed="true"]){
-  border-color:transparent;background:#e2eae3;
-}
+.lesson-body .lesson-mode-switch .button:hover:not(:disabled):not([aria-pressed="true"]){background:#e2eae3;border-color:transparent}
 .lesson-body .lesson-icon-button{
-  -webkit-appearance:none;appearance:none;border:0;background:transparent;
-  color:var(--lesson-ink);box-shadow:none;
+  appearance:none;-webkit-appearance:none;display:grid;place-items:center;
+  padding:6px;border:0;background:transparent;color:var(--muted,#666963);box-shadow:none;
 }
-.lesson-body .lesson-icon-button:hover:not(:disabled){background:#ecf2ed}
-.lesson-body .lesson-settings-button svg{width:21px;height:21px}
-.lesson-body .lesson-sheet-body{font-size:14px;line-height:1.55}
-.lesson-body .lesson-sheet-body>section+section{margin-top:18px;padding-top:18px;border-top:1px solid #e0e6e1}
-.lesson-body .lesson-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0;margin:0;padding:0;border:0}
-.lesson-body .lesson-options legend{display:block;grid-column:1/-1;width:100%;padding:0 0 10px;margin:0;font-size:13px;font-weight:700;color:var(--lesson-ink)}
+.lesson-body .lesson-icon-button:hover:not(:disabled){background:transparent;color:var(--text,#20211f)}
+.lesson-body .lesson-settings-button svg{width:20px;height:20px}
+.lesson-body .lesson-sheet-body{font-size:14px;line-height:1.6}
+.lesson-body .lesson-sheet-body>section+section{margin-top:16px;padding-top:16px;border-top:1px solid #dadbd6}
+.lesson-body .lesson-options{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+  min-width:0;margin:0;padding:0;border:0
+}
+.lesson-body .lesson-options legend{
+  display:block;grid-column:1/-1;width:100%;padding:0 0 10px;margin:0;
+  font-size:13px;font-weight:700;color:var(--text,#20211f);
+}
 .lesson-body .lesson-options label{
-  display:flex;align-items:center;gap:9px;min-width:0;min-height:52px;
-  padding:10px 11px;border:1px solid var(--lesson-stroke);border-radius:11px;
-  background:#fff;color:var(--lesson-ink);font-size:12px;font-weight:600;
-  line-height:1.5;cursor:pointer;
+  display:flex;align-items:center;gap:8px;min-width:0;min-height:48px;
+  padding:8px 10px;border:1px solid var(--line,#dadbd6);border-radius:11px;
+  background:white;color:var(--text,#20211f);font-size:12px;font-weight:600;line-height:1.5;cursor:pointer;
 }
 .lesson-body .lesson-options label:has(input:checked){
-  background:#edf5ef;border-color:#8fb9a2;color:var(--lesson-green);
+  border-color:#16624f;background:#edf4f0;color:#16624f;
 }
 .lesson-body .lesson-options input[type="radio"]{
-  -webkit-appearance:auto;appearance:auto;
-  flex:0 0 18px;box-sizing:border-box;
+  appearance:auto;-webkit-appearance:auto;flex:0 0 18px;box-sizing:border-box;
   width:18px;height:18px;min-width:18px;min-height:18px;
-  padding:0;margin:0;border:0;box-shadow:none;
-  accent-color:var(--lesson-green);cursor:pointer;
+  padding:0;margin:0;border:0;box-shadow:none;accent-color:#16624f;cursor:pointer;
 }
 .lesson-body .lesson-setting{
-  display:flex;align-items:flex-start;flex-direction:row;gap:11px;
+  display:flex;flex-direction:row;align-items:flex-start;gap:10px;
   min-width:0;min-height:0;margin:0;padding:0;cursor:pointer;
 }
 .lesson-body .lesson-setting>input[type="checkbox"]{
-  -webkit-appearance:auto;appearance:auto;
-  flex:0 0 20px;box-sizing:border-box;
+  appearance:auto;-webkit-appearance:auto;flex:0 0 20px;box-sizing:border-box;
   width:20px;height:20px;min-width:20px;min-height:20px;
-  padding:0;margin:2px 0 0;border:0;box-shadow:none;
-  accent-color:var(--lesson-green);cursor:pointer;
+  padding:0;margin:2px 0 0;border:0;box-shadow:none;accent-color:#16624f;cursor:pointer;
 }
 .lesson-body .lesson-setting>span{display:block;flex:1 1 auto;min-width:0}
-.lesson-body .lesson-setting strong{display:block;font-size:13px;font-weight:700;line-height:1.5;color:var(--lesson-ink)}
-.lesson-body .lesson-setting small{display:block;margin-top:4px;font-size:12px;line-height:1.55;color:var(--lesson-muted);overflow-wrap:anywhere}
-.lesson-body .lesson-persistence .lesson-status{margin:9px 0 0 31px;font-size:12px;line-height:1.45;color:var(--lesson-muted)}
-.lesson-body .lesson-save label{display:grid;gap:7px;margin:0;font-size:13px;font-weight:650}
+.lesson-body .lesson-setting strong{display:block;font-size:13px;font-weight:700;line-height:1.5;color:var(--text,#20211f)}
+.lesson-body .lesson-setting small{display:block;margin-top:4px;font-size:12px;line-height:1.6;color:var(--muted,#666963);overflow-wrap:anywhere}
+.lesson-body .lesson-persistence .lesson-status{margin:8px 0 0 30px;font-size:12px;color:var(--muted,#666963)}
+.lesson-body .lesson-save label{display:grid;gap:7px;margin:0;font-size:13px;font-weight:600}
 .lesson-body .lesson-save input[type="text"]{
   display:block;box-sizing:border-box;width:100%;height:46px;min-height:46px;min-width:0;
-  margin:0;padding:9px 12px;border:1px solid #cfd9d1;border-radius:10px;
-  background:#fff;color:var(--lesson-ink);font-size:16px;line-height:1.4;
-  box-shadow:none;appearance:none;
+  margin:0;padding:10px 12px;border:1px solid var(--line,#dadbd6);border-radius:8px;
+  background:white;color:var(--text,#20211f);font-size:16px;line-height:1.4;box-shadow:none;appearance:none;
 }
 .lesson-body .lesson-save-actions{display:block;margin:12px 0 0}
-.lesson-body #lessonSaveEditableButton{
-  display:flex;width:100%;min-height:46px;
-  background:#eaf4ee;color:var(--lesson-green);border-color:#bcd8c7;
-  font-weight:700;
-}
-.lesson-body #lessonSaveEditableButton:hover:not(:disabled){background:#dcefe3;border-color:#a0c7af}
+.lesson-body #lessonSaveEditableButton{display:flex;width:100%;min-height:48px;font-weight:600}
 .lesson-body .lesson-dialog-actions .button{min-width:90px}
-.lesson-body .lesson-sheet-header h2{font-size:17px;font-weight:750}
+.lesson-body .lesson-sheet-header h2{font-size:17px;font-weight:700}
 @media(max-width:359px){
   .lesson-body .lesson-options{grid-template-columns:1fr}
   .lesson-body .lesson-options label{min-height:44px}
 }
 @media(forced-colors:active){
   .lesson-body .lesson-options label:has(input:checked){outline:2px solid Highlight;outline-offset:-2px}
-  .lesson-body .button.primary,.lesson-body #lessonSaveEditableButton{border:1px solid ButtonText}
+  .lesson-body .button.primary{border:1px solid ButtonText}
 }
 </style>
 </head>
@@ -364,7 +353,7 @@ html,.lesson-body{max-width:100%;overflow-x:hidden}
           </div>
           <div class="lesson-mobile-extras"><button class="button" id="lessonQuestionsButton" type="button" aria-controls="lessonSheet" aria-haspopup="dialog"></button></div>
           <section id="lessonPersistence" class="lesson-persistence"><label class="lesson-setting"><input id="lessonStudyOptIn" type="checkbox"><span><strong id="lessonStudyOptInText"></strong><small id="lessonStudyOptInNote"></small></span></label><p id="lessonStudyStatus" class="lesson-status" role="status" aria-live="polite"></p></section>
-          <section id="lessonSave" class="lesson-save"><label><span id="lessonFilenameLabel"></span><input id="lessonFilename" type="text" value="reveal-sheet" autocomplete="off" spellcheck="false"></label><div class="lesson-save-actions"><button class="button lesson-download-button" id="lessonSaveEditableButton" type="button"></button></div></section>
+          <section id="lessonSave" class="lesson-save"><label><span id="lessonFilenameLabel"></span><input id="lessonFilename" type="text" value="reveal-sheet" autocomplete="off" spellcheck="false"></label><div class="lesson-save-actions"><button class="button primary lesson-download-button" id="lessonSaveEditableButton" type="button"></button></div></section>
         </div>
       </section>
     </div>
