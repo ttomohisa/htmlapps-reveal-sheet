@@ -70,5 +70,5 @@ test('T11 large lesson HTML streams document and template as Blob parts without 
   const html=await output.text();
   assert.equal(output.size,Buffer.byteLength(html,'utf8'));
   assert.equal(html.includes('__REVEAL_LESSON_JSON__'),false);
-  assert.equal(JSON.parse(html.match(/<script id="reveal-sheet-data" type="application\/json">([^<]*)<\\/script>/)[1]).kind,'lesson');
+  assert.equal(JSON.parse(html.match(/<script id="reveal-sheet-data" type="application\/json">([^<]*)<\/script>/)[1]).kind,'lesson');
 });
