@@ -461,6 +461,34 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   async function openLessonPreview(){
     if(busy||!doc.questions.length||!playerTemplate)return;resetLessonPreview();lessonPreviewSession=core.startSession(doc,{mode:'free'},ctx);lessonPreviewPageId=doc.pages[0].id;$('lessonPreviewDialog').showModal();$('lessonPreviewStatus').textContent=t('preparing');await showLessonPreviewPage(lessonPreviewPageId);
   }
+  async function decodePreviewWithRetry(asset,token,sourceGeneration){
+    const current=()=>token===displayGeneration&&sourceGeneration===generation;
+    image.src=imageIO.urlFor(asset);
+    try { await image.decode();return true; }
+    catch {
+      if(!current())return false;
+      // Android browsers can reject decode() while the Blob image is being
+      // loaded. A loaded bitmap is valid even when decode() rejects.
+      if(image.complete&&image.naturalWidth>0)return true;
+      // Recreate the Blob URL and wait for a real load event. This retries only
+      // the view, never re-imports or mutates the user's saved image.
+      image.removeAttribute('src');
+      imageIO.release(asset.id);
+      const source=imageIO.urlFor(asset);
+      await new Promise((resolve,reject)=>{
+        let settled=false;
+        const clean=()=>{image.removeEventListener('load',loaded);image.removeEventListener('error',failed);env.clearTimeout(timer);};
+        const finish=(error)=>{if(settled)return;settled=true;clean();error?reject(error):resolve();};
+        const loaded=()=>finish(null),failed=()=>finish(core.error('DECODE_FAILED'));
+        const timer=env.setTimeout(()=>finish(core.error('DECODE_FAILED')),10000);
+        image.addEventListener('load',loaded);
+        image.addEventListener('error',failed);
+        image.src=source;
+        if(image.complete&&image.naturalWidth>0)finish(null);
+      });
+      return true;
+    }
+  }
   async function showPreview(force=false) {
     const page=doc.pages.find(p=>p.id===selectedId),asset=page&&doc.assets.find(a=>a.id===page.imageId);
     if(!asset){viewKey='';displayGeneration++;image.hidden=true;setSvgHidden(true);image.removeAttribute('src');$('previewWait').hidden=true;return;}
@@ -468,13 +496,16 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     viewKey=asset.id;const token=++displayGeneration,sourceGeneration=generation;
     image.hidden=true;setSvgHidden(true);$('previewWait').hidden=false;$('previewWait').textContent=t('preparing');
     try {
-      image.src=imageIO.urlFor(asset);
-      await image.decode();
-      if(token!==displayGeneration||sourceGeneration!==generation)return;
+      const ready=await decodePreviewWithRetry(asset,token,sourceGeneration);
+      if(!ready||token!==displayGeneration||sourceGeneration!==generation)return;
       image.alt=t('imageAlt',{name:page.title});image.hidden=false;$('previewWait').hidden=true;renderOverlay();
     }catch{
       if(token!==displayGeneration||sourceGeneration!==generation)return;
-      image.hidden=true;setSvgHidden(true);image.removeAttribute('src');viewKey='';$('previewWait').textContent=t('error_DECODE_FAILED');
+      image.hidden=true;setSvgHidden(true);image.removeAttribute('src');viewKey='';
+      const wait=$('previewWait');wait.textContent=t('error_DECODE_FAILED');
+      const retry=env.document.createElement('button');
+      retry.type='button';retry.className='button';retry.textContent=t('retryImageDisplay');
+      retry.addEventListener('click',()=>showPreview(true),{once:true});wait.append(retry);
     }
   }
   function derivedMutation(oldDoc,nextDoc){
