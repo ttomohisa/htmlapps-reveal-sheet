@@ -37,15 +37,21 @@ function createProjectIO({core,imageIO,env}) {
     return new env.Blob([serialize(doc,'editable',appVersion)],{type:'application/json;charset=utf-8'});
   }
   function escapeJsonForHtml(text){
-    return String(text).replace(/</g,'\\u003C').replace(/>/g,'\\u003E').replace(/&/g,'\\u0026').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
+    const escapes={'<':'\\u003C','>':'\\u003E','&':'\\u0026','\u2028':'\\u2028','\u2029':'\\u2029'};
+    return String(text).replace(/[<>&\u2028\u2029]/g,ch=>escapes[ch]);
   }
   function prepareHtml(doc,playerTemplate,appVersion='0.6.0'){
     if(typeof playerTemplate!=='string'||!playerTemplate)fail('INVALID_SHEET');
     const marker='__REVEAL_'+'LESSON_JSON__',matches=playerTemplate.split(marker).length-1;
     if(matches!==1)fail('INVALID_SHEET');
-    const json=serialize(doc,'lesson',appVersion),html=playerTemplate.replace(marker,escapeJsonForHtml(json));
-    if(new env.TextEncoder().encode(html).byteLength>core.limits.maxHtmlBytes)fail('LIMIT_EXCEEDED');
-    return new env.Blob([html],{type:'text/html;charset=utf-8'});
+    // Keep the embedded Base64 PNG in one JSON string rather than making
+    // another full-size HTML copy and then a full-size TextEncoder Uint8Array.
+    // Blob.size gives the actual UTF-8 byte size without an extra allocation.
+    const markerAt=playerTemplate.indexOf(marker);
+    const json=escapeJsonForHtml(serialize(doc,'lesson',appVersion));
+    const blob=new env.Blob([playerTemplate.slice(0,markerAt),json,playerTemplate.slice(markerAt+marker.length)],{type:'text/html;charset=utf-8'});
+    if(blob.size>core.limits.maxHtmlBytes)fail('LIMIT_EXCEEDED');
+    return blob;
   }
   function jsonDepthWithin(text,maxDepth=16){
     let depth=0,inString=false,escaped=false;
@@ -178,7 +184,8 @@ function createProjectIO({core,imageIO,env}) {
       url=env.URL.createObjectURL(prepared.blob);
       anchor=env.document.createElement('a');anchor.href=url;anchor.download=prepared.filename;anchor.hidden=true;
       env.document.body.append(anchor);anchor.click();anchor.remove();anchor=null;
-      env.setTimeout(()=>env.URL.revokeObjectURL(url),0);
+      // Large downloads may start asynchronously in mobile browsers.
+      env.setTimeout(()=>env.URL.revokeObjectURL(url),60000);
       return Object.freeze({started:true,filename:prepared.filename,size:prepared.size,kind:prepared.kind,generation:prepared.generation});
     }catch{
       try{anchor?.remove();}catch{}
