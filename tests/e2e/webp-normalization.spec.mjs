@@ -66,6 +66,14 @@ test('T02/T11: default WebP saves schema v2 in both JSON and offline lesson HTML
   await expect(player.locator('#previewImage')).toHaveAttribute('src',/^data:image\/webp;base64,/);
   await player.close();
 
+  // A portable WebP lesson must also be editable again, not merely viewable.
+  const importedLesson=await context.newPage();await openApp(importedLesson);
+  await importedLesson.locator('#sheetInput').setInputFiles(htmlFile);
+  await expect(importedLesson.locator('#previewImage')).toBeVisible();
+  await expect(importedLesson.locator('#imageFormat')).toHaveText('WebP');
+  await expect(importedLesson.locator('#maskSvg .mask-rect')).toHaveCount(1);
+  await importedLesson.close();
+
   const imported=await context.newPage();await openApp(imported);
   await imported.locator('#sheetInput').setInputFiles(jsonFile);
   await expect(imported.locator('#previewImage')).toBeVisible();

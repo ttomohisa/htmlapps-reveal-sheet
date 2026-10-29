@@ -78,3 +78,24 @@ test('T02 unsupported browser WebP encoder falls back to orientation-fixed PNG',
   const asset=await io.normalize(new Blob([input],{type:'image/jpeg'}),{ctx:testContext()});
   assert.equal(asset.mime,'image/png');
 });
+
+test('T02 invalid WebP encoder bytes fall back to valid PNG without losing the imported page',async()=>{
+  const core=loadFactory('src/reveal/core.js','createRevealCore')();
+  const png=fs.readFileSync('tests/fixtures/images/static.png');
+  const input=fs.readFileSync('tests/fixtures/images/static.jpg');
+  const env={
+    Blob,atob,btoa,createImageBitmap:async()=>({width:120,height:80,close(){}}),
+    document:{createElement(){return {
+      width:0,height:0,getContext:()=>({drawImage(){}}),
+      toBlob(fn,mime){
+        fn(mime==='image/webp'
+          ? new Blob([new Uint8Array(16)],{type:'image/webp'})
+          : new Blob([png],{type:'image/png'}));
+      }
+    };}}
+  };
+  const io=loadFactory('src/reveal/image-io.js','createImageIO')({core,env});
+  const asset=await io.normalize(new Blob([input],{type:'image/jpeg'}),{ctx:testContext(),compress:true});
+  assert.equal(asset.mime,'image/png');
+  assert.equal(asset.dataBase64,png.toString('base64'));
+});
