@@ -28,3 +28,14 @@ test('T02: stored image uses exact decoded PNG, rejects falsified size and nonca
  await io.verifyStoredAsset(asset);assert.equal(closed,1);await assert.rejects(io.verifyStoredAsset({...asset,byteLength:1}),{code:'INVALID_SHEET'});
  for(const value of ['','AA=','AB==','AA==\n','data:image/png,AA=='])assert.throws(()=>io.decodeBase64(value),{code:'INVALID_SHEET'});
 });
+
+test('T02 canonical multi-megabyte Base64 decodes without regexp stack overflow',()=>{
+  const {core}=base();
+  const io=loadFactory('src/reveal/image-io.js','createImageIO')({core,env:{Blob,atob,btoa}});
+  const bytes=Buffer.alloc(6*1024*1024,0x58);
+  const encoded=bytes.toString('base64');
+  const decoded=io.decodeBase64(encoded);
+  assert.equal(decoded.length,bytes.length);
+  assert.equal(decoded[0],0x58);
+  assert.equal(decoded[decoded.length-1],0x58);
+});
