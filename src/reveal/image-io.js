@@ -1,4 +1,4 @@
-/** Strict local image input and orientation-fixed PNG normalization.
+/** Strict local image input and orientation-fixed PNG / WebP normalization.
  * env owns browser-specific decoding/Canvas/Blob APIs; no network access here.
  */
 function createImageIO({ core, env }) {
@@ -134,7 +134,7 @@ function createImageIO({ core, env }) {
     if(env.btoa(binary)!==value)throw error('INVALID_SHEET');
     return bytes;
   }
-  async function normalize(file,{signal,ctx}={}) {
+  async function normalize(file,{signal,ctx,compress=true}={}) {
     abort(signal);const info=await inspectInput(file);abort(signal);
     let bitmap=null,canvas=null;
     try {
@@ -147,14 +147,33 @@ function createImageIO({ core, env }) {
       canvas=env.document.createElement('canvas');canvas.width=width;canvas.height=height;
       const context=canvas.getContext('2d');if(!context)throw error('DECODE_FAILED');
       context.drawImage(bitmap,0,0);bitmap.close();bitmap=null;
-      const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(error('DECODE_FAILED')),'image/png'));
+      const png=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(error('DECODE_FAILED')),'image/png'));
       abort(signal);
+      // Canvas encoders may ignore WebP or fall back to PNG. Only use WebP
+      // when the returned signature matches and the result is >=10% smaller
+      // than the orientation-corrected PNG. A failed WebP encode is not fatal.
+      let blob=png,mime='image/png';
+      if(compress){
+        let candidate=null;
+        try{
+          candidate=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',0.86));
+          abort(signal);
+          if(candidate&&candidate.type==='image/webp'&&candidate.size>0&&candidate.size<=limits.maxPngBytes
+             &&candidate.size<=png.size*.90){
+            const signature=new Uint8Array(await candidate.slice(0,12).arrayBuffer());
+            if(signature[0]===82&&signature[1]===73&&signature[2]===70&&signature[3]===70
+               &&signature[8]===87&&signature[9]===69&&signature[10]===66&&signature[11]===80){
+              blob=candidate;mime='image/webp';
+            }
+          }
+        }catch(e){if(e?.code==='CANCELLED')throw e; /* unsupported encoder: retain PNG */}
+      }
       if(blob.size>limits.maxPngBytes)throw error('IMAGE_TOO_LARGE');
       const bytes=new Uint8Array(await blob.arrayBuffer());abort(signal);
       const output=inspectHeader(bytes);
-      if(output.mime!=='image/png'||output.width!==width||output.height!==height)throw error('DECODE_FAILED');
+      if(output.mime!==mime||output.width!==width||output.height!==height)throw error('DECODE_FAILED');
       const id=ctx.newId('image');
-      const asset={id,mime:'image/png',width,height,byteLength:bytes.length,dataBase64:encode(bytes)};
+      const asset={id,mime,width,height,byteLength:bytes.length,dataBase64:encode(bytes)};
       pendingPreviewBlobs.set(id,blob);
       while(pendingPreviewBlobs.size>2)pendingPreviewBlobs.delete(pendingPreviewBlobs.keys().next().value);
       return asset;
@@ -163,21 +182,21 @@ function createImageIO({ core, env }) {
   }
   async function verifyStoredAsset(asset,{signal}={}) {
     abort(signal);
-    if(asset.mime!=='image/png' || !Number.isSafeInteger(asset.byteLength) || asset.byteLength<1 || asset.byteLength>limits.maxPngBytes ||
+    if(!['image/png','image/webp'].includes(asset.mime) || !Number.isSafeInteger(asset.byteLength) || asset.byteLength<1 || asset.byteLength>limits.maxPngBytes ||
        typeof asset.dataBase64!=='string' || asset.dataBase64.length>Math.ceil(limits.maxPngBytes/3)*4)throw error('INVALID_SHEET');
     const bytes=decodeBase64(asset.dataBase64);
     if(bytes.length!==asset.byteLength)throw error('INVALID_SHEET');
     const h=inspectHeader(bytes);
-    if(h.mime!=='image/png'||h.width!==asset.width||h.height!==asset.height)throw error('INVALID_SHEET');
+    if(h.mime!==asset.mime||h.width!==asset.width||h.height!==asset.height)throw error('INVALID_SHEET');
     let bitmap;
-    try{bitmap=await env.createImageBitmap(new env.Blob([bytes],{type:'image/png'}));abort(signal);if(bitmap.width!==asset.width||bitmap.height!==asset.height)throw error('INVALID_SHEET');}
+    try{bitmap=await env.createImageBitmap(new env.Blob([bytes],{type:asset.mime}));abort(signal);if(bitmap.width!==asset.width||bitmap.height!==asset.height)throw error('INVALID_SHEET');}
     catch(e){if(e.code)throw e;throw error('DECODE_FAILED');}finally{bitmap?.close();}
   }
   function urlFor(asset) {
     if(urls.has(asset.id)){const value=urls.get(asset.id);urls.delete(asset.id);urls.set(asset.id,value);return value;}
     const cached=pendingPreviewBlobs.get(asset.id);
     pendingPreviewBlobs.delete(asset.id);
-    const source=cached||new env.Blob([decodeBase64(asset.dataBase64)],{type:'image/png'});
+    const source=cached||new env.Blob([decodeBase64(asset.dataBase64)],{type:asset.mime});
     const url=env.URL.createObjectURL(source);urls.set(asset.id,url);
     // Display cache holds current + previous only. Document/Undo share strings.
     while(urls.size>2)release(urls.keys().next().value);
