@@ -70,9 +70,6 @@ button:disabled,input:disabled { cursor:not-allowed; }
 .failure-list { padding-left:20px;max-height:220px;overflow:auto; }
 .failure-list li { margin-bottom:12px;overflow-wrap:anywhere; }
 .failure-list strong,.failure-list span { display:block;line-height:1.7;font-size:13px; }
-.future-section { margin-top:20px; }
-.future-section summary { font-size:13px;color:var(--muted);cursor:pointer;min-height:48px;display:flex;align-items:center; }
-.future-section p { font-size:13px;color:var(--muted);line-height:1.7; }
 #outputFilename { max-width:100%;min-width:0; }
 .reveal-nav { display:flex;gap:8px;margin:16px 0; }
 .reveal-nav button { min-height:48px;border:1px solid var(--line);border-radius:12px;display:flex;gap:8px;align-items:center;justify-content:center;background:white;padding:10px 20px;font-size:14px; }
@@ -134,7 +131,7 @@ button:disabled,input:disabled { cursor:not-allowed; }
  .study-mode .guided-secondary-actions .button{min-height:40px;padding:5px 7px;font-size:11px}
  .study-mode .guided-tools-row{grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
  .study-mode .guided-disclosure>summary{min-height:40px;padding:6px 8px;font-size:11px}
- .save-mode .reveal-grid,.save-mode .local-persistence-panel,.save-mode .data-notice,.save-mode .failure-section,.save-mode .future-section,.save-mode .input-note{display:none!important;}
+ .save-mode .reveal-grid,.save-mode .local-persistence-panel,.save-mode .data-notice,.save-mode .failure-section,.save-mode .input-note{display:none!important;}
  .save-mode .save-panel{margin-bottom:8px;}
  @supports (height:100dvh){.preview-surface{height:min(44dvh,430px)}}
 }
@@ -162,7 +159,7 @@ button:disabled,input:disabled { cursor:not-allowed; }
 
 .button:disabled { color:#707a74;background:#edf0ed;border-color:#d5dbd6;box-shadow:none; }
 @media(max-width:767px) {
- .has-pages .page-intro,.has-pages .input-note,.has-pages #openButton { display:none; }
+ .has-pages .page-intro,.has-pages .input-note,.has-pages .main #openButton { display:none; }
 }
 
 /* T03: one image coordinate system for editing and free reveal. */
@@ -185,7 +182,7 @@ button:disabled,input:disabled { cursor:not-allowed; }
 .question-list { display:flex;flex-wrap:wrap;gap:8px;margin-top:12px; }
 .question-item { min-height:48px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:8px 12px;font:inherit;font-size:13px; }
 .question-item:hover { background:var(--surface-hover); }
-.study-mode .input-note,.study-mode .input-status-row,.study-mode .failure-section,.study-mode .data-notice,.study-mode .future-section { display:none; }
+.study-mode .input-note,.study-mode .input-status-row,.study-mode .failure-section,.study-mode .data-notice { display:none; }
 @media(max-width:767px) {
  .cover-tools { order:3;width:100%; }
  .cover-tools .button { flex:1 1 30%;min-width:0;padding-inline:8px; }
@@ -227,7 +224,7 @@ button:disabled,input:disabled { cursor:not-allowed; }
 
 
 /* T08: persistent per-page view controls and study/edit return. */
-.view-controls{display:flex;flex:0 0 auto;flex-wrap:wrap;align-items:center;gap:6px;margin:0}.preview-view-controls{position:absolute;top:8px;right:8px;z-index:7}.view-controls .button{min-height:40px;padding:4px 8px;font-size:12px;background:#ffffffee;box-shadow:0 2px 8px rgba(25,28,24,.10)}.zoom-control{display:inline-flex;align-items:stretch}.zoom-control .button{border-radius:0;margin-left:-1px}.zoom-control .button:first-child{margin-left:0;border-radius:10px 0 0 10px}.zoom-control .button:last-child{border-radius:0 10px 10px 0}.zoom-control .zoom-percent{min-width:56px;color:var(--text);font-variant-numeric:tabular-nums}.zoom-control .zoom-symbol{width:40px;min-width:40px;padding:0;font-size:20px;font-weight:500}.zoom-control .zoom-percent:hover{background:#edf4f0}.preview-surface img,.mask-layer{will-change:transform;transition:transform .12s ease}.study-mode .image-meta-row{display:none!important}
+.view-controls{display:flex;flex:0 0 auto;flex-wrap:wrap;align-items:center;gap:6px;margin:0}.preview-view-controls{position:absolute;top:8px;right:8px;z-index:7}.view-controls .button{min-height:40px;padding:4px 8px;font-size:12px;background:#ffffffee;box-shadow:0 2px 8px rgba(25,28,24,.10)}.zoom-control{display:inline-flex;align-items:stretch}.zoom-control .button{border-radius:0;margin-left:-1px}.zoom-control .button:first-child{margin-left:0;border-radius:10px 0 0 10px}.zoom-control .button:last-child{border-radius:0 10px 10px 0}.zoom-control .zoom-percent{min-width:56px;color:var(--text);font-variant-numeric:tabular-nums}.zoom-control .zoom-symbol{width:40px;min-width:40px;padding:0;font-size:20px;font-weight:500}.zoom-control .zoom-percent:hover{background:#edf4f0}.preview-surface img,.mask-layer{will-change:transform}.study-mode .image-meta-row{display:none!important}
 @media(max-width:767px){.image-meta-row{align-items:flex-start;flex-direction:column}.view-controls{display:flex}.zoom-control{display:grid;grid-template-columns:40px 60px 40px;width:auto}.view-controls .button{min-width:0;padding-inline:4px}.view-controls #focusQuestionButton{width:auto}.editor-guide{width:100%}}
 @media(prefers-reduced-motion:reduce){.preview-surface img,.mask-layer{transition:none}}
 
@@ -261,3 +258,288 @@ button:disabled,input:disabled { cursor:not-allowed; }
 
 .question-order-controls { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px; }
 .question-order-controls > span { color:var(--muted);font-size:12px; }
+
+/* Mobile editor: the stage stays in place while optional controls use a sheet. */
+.mobile-page-switch,.edit-mode-toolbar,.mask-quick-slot,.mask-quick-actions,.mask-fine-controls { display:none; }
+.pan-tool-active .mask-layer,.pan-tool-active .mask-rect,.pan-tool-active .mask-resize-handle { cursor:grab; }
+.pan-tool-active .mask-layer:active { cursor:grabbing; }
+.editor-sheet { width:min(640px,calc(100vw - 24px));max-width:100%;max-height:calc(100dvh - 24px);padding:0;overflow:hidden;border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:var(--shadow-md); }
+.editor-sheet[open] { display:flex;flex-direction:column; }
+.editor-sheet::backdrop { background:rgba(15,25,20,.42); }
+.editor-sheet .dialog-header { min-height:64px;padding:8px 14px; }
+.editor-sheet .dialog-header h2 { min-width:0;font-size:17px;overflow-wrap:anywhere; }
+.editor-sheet .dialog-header .icon-button { flex:0 0 48px;width:48px;height:48px;border:0;background:var(--surface-muted); }
+.editor-sheet .dialog-header .icon-button svg { width:22px;height:22px; }
+.editor-sheet .dialog-body { min-height:0;max-width:100%;padding:14px 16px calc(18px + env(safe-area-inset-bottom));line-height:1.5; }
+.editor-sheet .button,.editor-sheet select,.editor-sheet .page-drag-handle,.editor-sheet .page-delete-button,.editor-sheet .page-description-summary { min-height:48px; }
+.editor-sheet .page-drag-handle,.editor-sheet .page-delete-button { width:48px;min-width:48px; }
+.editor-sheet .page-card-head { grid-template-columns:48px minmax(0,1fr) 48px; }
+.editor-sheet input:not([type="checkbox"]):not([type="color"]),.editor-sheet textarea,.editor-sheet select { font-size:16px; }
+.editor-sheet .page-panel>h3 { margin:0 0 8px; }
+.editor-sheet .cover-panel { margin:0;padding:0;border:0;border-radius:0; }
+.editor-sheet .cover-list-item { min-height:48px;padding:7px 10px;font-size:12px; }
+.editor-sheet .cover-list-actions .button { min-height:48px;font-size:12px; }
+.editor-sheet .local-persistence-panel { margin-top:16px;padding:14px 0 0;border-width:1px 0 0;border-radius:0;background:transparent; }
+.editor-sheet .data-notice { margin:14px 0 0;padding-top:14px;font-size:12px; }
+.editor-sheet .image-meta-row { margin-top:14px;gap:8px; }
+.editor-sheet .image-meta { justify-content:flex-start; }
+.editor-sheet .image-meta>span:last-child { display:inline; }
+.editor-sheet .editor-guide { font-size:12px;line-height:1.6; }
+.editor-sheet .cover-color-control { min-height:48px;padding:6px 10px; }
+.editor-sheet .cover-color-control span { display:inline; }
+.editor-sheet #editControls { display:flex;gap:8px; }
+.editor-sheet #editControls>.button { flex:1 1 calc(50% - 8px); }
+.editor-sheet #editControls .secondary-tools { flex-wrap:wrap;width:100%;margin-left:0; }
+.editor-sheet #openButton { display:inline-flex; }
+.editor-sheet #maskFineControls { display:grid;gap:14px; }
+.mask-adjust-step { display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--muted);font-size:13px; }
+.mask-adjust-step select { min-width:112px;min-height:48px;padding:8px 12px;border:1px solid var(--line);border-radius:11px;background:var(--surface);color:var(--text);font:inherit; }
+.mask-adjust-step select:focus-visible { outline:3px solid var(--focus);outline-offset:2px; }
+.mask-adjust-mode { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px; }
+.mask-adjust-mode .button[aria-pressed="true"] { border-color:var(--accent);color:var(--accent);background:var(--accent-soft); }
+.mask-adjust-arrows { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px; }
+.mask-adjust-arrows .button { min-width:48px;min-height:56px;padding:8px;display:grid;place-items:center; }
+.mask-adjust-arrows svg { width:22px;height:22px; }
+@media (max-width:767px) {
+  .camera-button:not([hidden]) { display:inline-flex; }
+  .reveal-tools { align-items:stretch; }
+  .reveal-tools>.camera-button { min-width:0; }
+  /* A flex shell measures the real header, including larger text and safe areas. */
+  body.has-pages.create-mode { display:flex;flex-direction:column;height:100dvh;min-height:0;padding-bottom:0;overflow:hidden;overscroll-behavior-y:none; }
+  .has-pages.create-mode .app-header { flex:0 0 auto;padding-top:env(safe-area-inset-top); }
+  .has-pages.create-mode .header-inner { min-height:56px;padding:4px max(10px,env(safe-area-inset-right)) 4px max(10px,env(safe-area-inset-left)); }
+  .has-pages.create-mode .header-actions { gap:4px; }
+  .has-pages.create-mode .header-actions .language-button,.has-pages.create-mode .header-actions .header-icon-button { width:48px;min-width:48px;min-height:48px; }
+  .has-pages.create-mode .main { display:flex;flex:1 1 auto;flex-direction:column;min-height:0;margin:0;padding:0 0 calc(var(--mobile-bar-height) + env(safe-area-inset-bottom)); }
+  .has-pages.create-mode .main .reveal-shell { display:flex;flex:1 1 auto;flex-direction:column;min-height:0;padding:6px max(8px,env(safe-area-inset-right)) 8px max(8px,env(safe-area-inset-left));border:0;border-radius:0;overflow:hidden;background:var(--surface); }
+  /* These controls retain one DOM instance and become visible inside editorSheet. */
+  .has-pages.create-mode .main #editControls,.has-pages.create-mode .main #loadedSection,.has-pages.create-mode .main .page-panel,.has-pages.create-mode .main #coverPanel,.has-pages.create-mode .main #localDraftPanel,.has-pages.create-mode .main .data-notice,.has-pages.create-mode .main .image-meta-row { display:none; }
+  .has-pages.create-mode .main .input-status-row { flex:0 0 auto;margin:0; }
+  .has-pages.create-mode.is-busy .main .input-status-row { min-height:48px;margin-bottom:6px; }
+  .has-pages.create-mode .main .failure-section { flex:0 1 auto;min-height:0;max-height:22dvh;margin:6px 0 0;padding:8px 12px;overflow:auto;overscroll-behavior:contain; }
+  .has-pages.create-mode .main .failure-list { max-height:none;margin-block:8px; }
+  .has-pages.create-mode .main .reveal-grid { display:flex;flex:1 1 auto;flex-direction:column;min-height:0;gap:6px; }
+  .has-pages.create-mode .main .preview-column { display:flex;flex:1 1 auto;flex-direction:column;min-height:0;gap:6px; }
+  .has-pages.create-mode .main .preview-surface { flex:1 1 auto;height:auto;min-height:0;max-height:none;border-radius:14px;background:#edf0ec; }
+  .mobile-page-switch:not([hidden]) {
+    display:grid;grid-template-columns:48px minmax(0,1fr) repeat(3,48px);
+    flex:0 0 48px;gap:2px;align-items:center;width:100%;min-width:0;height:48px;margin:0;
+  }
+  .mobile-page-switch .button { min-width:48px;min-height:48px;height:48px;padding:5px;border:0;background:transparent; }
+  .mobile-page-arrow,.mobile-history-button { display:grid;place-items:center; }
+  .mobile-page-arrow svg,.mobile-history-button svg { width:20px;height:20px; }
+  .mobile-page-switch .mobile-page-current { display:grid;grid-template-columns:minmax(0,1fr) 14px;grid-template-rows:auto auto;column-gap:5px;row-gap:0;min-width:0;align-content:center;text-align:left;border-radius:11px;background:var(--surface-muted); }
+  .mobile-page-current>span { grid-column:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:700; }
+  .mobile-page-current small { grid-column:1;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--muted);white-space:nowrap; }
+  .mobile-page-current svg { grid-column:2;grid-row:1/3;width:14px;height:14px;align-self:center; }
+  .mobile-page-current[aria-expanded="true"] svg { transform:rotate(180deg); }
+  .mobile-page-switch .button:disabled { color:#8a948f; }
+  .edit-mode-toolbar:not([hidden]) { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px; }
+  .edit-mode-toolbar { flex:0 0 64px;min-height:64px;margin:0;padding:4px 0;border-top:1px solid var(--line); }
+  .edit-mode-toolbar .button { min-width:48px;min-height:48px;padding:5px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--muted);font-size:11px;line-height:1.2; }
+  .edit-mode-toolbar .button>span { max-width:100%;white-space:normal;overflow-wrap:anywhere; }
+  .edit-mode-toolbar svg { width:21px;height:21px;flex:0 0 auto; }
+  .edit-mode-toolbar .button[aria-pressed="true"] { border-color:#c4ded2;color:var(--accent);background:var(--accent-soft);font-weight:750; }
+  .edit-mode-toolbar .button:disabled { color:#8a948f;background:transparent; }
+  /* Always reserve this row so selecting or deleting a cover cannot move the stage. */
+  .has-pages.create-mode .main .mask-quick-slot { display:block;flex:0 0 48px;height:48px;min-width:0; }
+  .mask-quick-actions:not([hidden]) { display:flex;align-items:center;gap:4px;width:100%;min-width:0;height:48px;margin:0;padding:0;background:var(--surface); }
+  .mask-quick-actions>strong { flex:1 1 auto;min-width:0;padding-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:700;color:var(--muted); }
+  .mask-quick-action { min-width:48px;width:48px;min-height:48px;height:48px;display:grid;place-items:center;padding:6px;flex:0 0 48px;border-color:transparent;background:transparent; }
+  .mask-quick-action svg,.mask-fine-button svg { width:20px;height:20px;flex:0 0 auto; }
+  .mask-fine-button { display:flex;align-items:center;justify-content:center;gap:5px;flex:0 0 auto;min-height:48px;padding:6px 9px;border-color:transparent;background:var(--surface-muted);font-size:12px; }
+  .mask-quick-delete { color:var(--danger,#b3261e); }
+  .mask-inline-action { display:none; }
+  .has-pages.create-mode .main .zoom-control { grid-template-columns:48px 64px 48px; }
+  .has-pages.create-mode .main .view-controls .button { min-height:48px; }
+  .has-pages.create-mode .main .zoom-control .zoom-symbol { width:48px;min-width:48px; }
+  .has-pages.create-mode .reveal-nav { height:calc(var(--mobile-bar-height) + env(safe-area-inset-bottom));padding:6px max(8px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));gap:4px; }
+  .has-pages.create-mode .reveal-nav button { min-height:48px; }
+  .editor-sheet { width:100%;max-width:100%;max-height:calc(100dvh - max(12px,env(safe-area-inset-top)));margin:auto 0 0;border-width:1px 0 0;border-radius:22px 22px 0 0; }
+  .editor-sheet .dialog-header { padding-inline:max(14px,env(safe-area-inset-left)) max(14px,env(safe-area-inset-right)); }
+  .editor-sheet .dialog-body { padding-inline:max(14px,env(safe-area-inset-left)) max(14px,env(safe-area-inset-right)); }
+  .editor-sheet .page-list { flex-direction:row;max-height:none;overflow-x:auto;overflow-y:hidden; }
+  .editor-sheet .page-item { min-width:clamp(250px,78vw,320px);width:clamp(250px,78vw,320px); }
+}
+@media (max-width:359px) {
+  .mask-quick-actions>strong { padding-left:2px;font-size:10px; }
+  .mask-fine-button { gap:4px;padding-inline:7px;font-size:11px; }
+  .editor-sheet #editControls>.button { flex-basis:100%; }
+}
+@media (max-height:500px) and (max-width:767px) {
+  .has-pages.create-mode .app-header,.has-pages.create-mode .header-inner { min-height:48px; }
+  .has-pages.create-mode .header-inner { padding-block:0; }
+  .has-pages.create-mode .brand-meta { display:none; }
+  .has-pages.create-mode .main .reveal-shell { padding-block:4px 6px; }
+  .has-pages.create-mode .main .reveal-grid,.has-pages.create-mode .main .preview-column { gap:4px; }
+  .has-pages.create-mode .main .preview-column { position:relative; }
+  .has-pages.create-mode .main .mask-quick-slot { position:relative;flex-basis:0;height:0; }
+  .has-pages.create-mode .main .mask-quick-actions { position:absolute;bottom:8px;left:6px;right:6px;z-index:8;width:auto;border-radius:12px;background:#fffffff2;box-shadow:var(--shadow-sm); }
+  .edit-mode-toolbar { flex-basis:56px;min-height:56px;padding-block:3px; }
+  .editor-sheet .dialog-header { min-height:56px;padding-block:4px; }
+}
+@media (forced-colors:active) {
+  .edit-mode-toolbar .button[aria-pressed="true"],.mask-adjust-mode .button[aria-pressed="true"] { outline:2px solid Highlight;outline-offset:-3px; }
+}
+/* A short landscape stage cannot safely host two overlaid control rows.
+   Put selection actions in the editing dock, keeping every tap target separate. */
+@media (min-width:480px) and (max-width:767px) and (max-height:380px) {
+  .has-pages.create-mode .main .preview-column { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr) 56px;gap:4px; }
+  .has-pages.create-mode .main .preview-column:has(#maskQuickActions:not([hidden])) { grid-template-columns:repeat(7,minmax(0,1fr)); }
+  .has-pages.create-mode .main .preview-surface { grid-column:1/-1;grid-row:1; }
+  .has-pages.create-mode .main .mask-quick-slot,.has-pages.create-mode .main .mask-quick-actions:not([hidden]),.has-pages.create-mode .main .edit-mode-toolbar:not([hidden]) { display:contents; }
+  .has-pages.create-mode .main #maskQuickTitle { display:none; }
+  .has-pages.create-mode .main .edit-mode-toolbar>.button,.has-pages.create-mode .main .mask-quick-actions>.button { grid-row:2;min-width:48px;width:100%;height:56px;margin:0; }
+  .has-pages.create-mode .main #drawModeButton { grid-column:1; }
+  .has-pages.create-mode .main #panModeButton { grid-column:2; }
+  .has-pages.create-mode .main #mobileCoversButton { grid-column:3; }
+  .has-pages.create-mode .main #mobileMoreButton { grid-column:4; }
+  .has-pages.create-mode .main #maskFineAdjustButton { grid-column:5;flex-direction:column;gap:4px;padding:5px 2px;font-size:11px; }
+  .has-pages.create-mode .main #maskQuickDuplicate { grid-column:6; }
+  .has-pages.create-mode .main #maskQuickDelete { grid-column:7; }
+}
+
+/* v1.1.0 fine adjustment and feedback */
+.editor-sheet-alert:not([hidden]) {
+  display:block;flex:0 0 auto;margin:8px 14px 0;padding:10px 12px;
+  border:1px solid #d4a458;border-radius:10px;background:#fff6e7;
+  color:#673b06;font-size:13px;line-height:1.55;overflow-wrap:anywhere;
+}
+.pan-mode-hint[hidden],.mask-fine-controls[hidden] { display:none!important; }
+@media (max-width:767px) {
+  .has-pages.create-mode .main .pan-mode-hint:not([hidden]) {
+    display:block;flex:0 0 auto;margin:0;padding:5px 9px;
+    border:1px solid #c4ded2;border-radius:9px;
+    background:var(--accent-soft);color:var(--accent);
+    font-size:12px;line-height:1.4;overflow-wrap:anywhere;
+  }
+  /* Fine adjustment replaces the edit dock while it is active. The picture
+     remains fully visible; there is no modal backdrop or overlapping panel. */
+  .has-pages.create-mode.fine-adjust-open .main .mask-quick-slot,
+  .has-pages.create-mode.fine-adjust-open .main #editModeToolbar {
+    display:none!important;
+  }
+  .has-pages.create-mode .main #maskFineControls:not([hidden]) {
+    display:grid;flex:0 0 auto;min-width:0;
+    grid-template-columns:minmax(0,1fr) 83px 44px;
+    grid-template-rows:44px 48px;gap:4px 5px;
+    margin:0;padding:5px;border:1px solid var(--line);
+    border-radius:12px;background:var(--surface);
+  }
+  .has-pages.create-mode .main #maskFineControls .mask-adjust-mode {
+    display:grid;grid-column:1;grid-row:1;
+    grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;min-width:0;
+  }
+  .has-pages.create-mode .main #maskFineControls .mask-adjust-mode .button {
+    min-width:0;min-height:44px;padding:4px 3px;font-size:12px;
+  }
+  .has-pages.create-mode .main #maskFineControls .mask-adjust-step {
+    display:block;grid-column:2;grid-row:1;min-width:0;
+  }
+  .has-pages.create-mode .main #maskFineControls .mask-adjust-step>span { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
+  .has-pages.create-mode .main #maskFineControls .mask-adjust-step select {
+    display:block;min-width:0;width:100%;min-height:44px;height:44px;
+    padding:5px 6px;font-size:12px;
+  }
+  .has-pages.create-mode .main #maskFineControls .mask-adjust-arrows {
+    display:grid;grid-column:1/-1;grid-row:2;
+    grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;min-width:0;
+  }
+  .has-pages.create-mode .main #maskFineControls .mask-adjust-arrows .button {
+    min-width:0;min-height:48px;height:48px;padding:3px;
+  }
+  .has-pages.create-mode .main #maskFineClose {
+    display:grid;place-items:center;grid-column:3;grid-row:1;
+    min-width:44px;width:44px;min-height:44px;height:44px;
+    padding:4px;border-radius:10px;
+  }
+  .has-pages.create-mode .main #maskFineClose svg { width:20px;height:20px; }
+}
+@media (min-width:480px) and (max-width:767px) and (max-height:380px) {
+  .has-pages.create-mode.fine-adjust-open .main .preview-column {
+    grid-template-rows:minmax(0,1fr) 56px;grid-template-columns:minmax(0,1fr);
+  }
+  .has-pages.create-mode.fine-adjust-open .main #maskFineControls:not([hidden]) {
+    display:flex;align-items:center;flex-wrap:nowrap;
+    grid-column:1/-1;grid-row:2;gap:6px;min-width:0;
+    margin:0;padding:3px 5px;height:56px;overflow-x:auto;
+  }
+  .has-pages.create-mode.fine-adjust-open .main #maskFineControls .mask-adjust-mode {
+    display:grid;flex:0 0 112px;grid-template-columns:1fr 1fr;
+  }
+  .has-pages.create-mode.fine-adjust-open .main #maskFineControls .mask-adjust-step { flex:0 0 68px; }
+  .has-pages.create-mode.fine-adjust-open .main #maskFineControls .mask-adjust-arrows {
+    display:grid;flex:1 0 200px;
+  }
+  .has-pages.create-mode.fine-adjust-open .main #maskFineControls #maskFineClose {
+    flex:0 0 44px;
+  }
+}
+/* Recoverable image-display errors leave the normalized asset intact. */
+.preview-wait:not([hidden]){display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.preview-wait>.button{min-height:44px;min-width:0;max-width:100%;background:var(--surface);border:1px solid var(--line);color:var(--accent);font-size:13px}
+/* Bottom-sheet page carousel must be constrained by the dialog width, even
+   while the native dialog is opening or after self-extract initialization. */
+@media(max-width:767px){
+  .editor-sheet #pageList,
+  .editor-sheet .page-panel { box-sizing:border-box;min-width:0;width:100%;max-width:100%; }
+  .editor-sheet #pageList { display:flex;flex-flow:row nowrap;overflow-x:auto;overflow-y:hidden; }
+  .editor-sheet #pageList>.page-item { flex:0 0 clamp(250px,78vw,320px); }
+}
+/* Import-only compression control: same native checkbox as local settings. */
+.image-compression-control{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:7px 10px;border:1px solid var(--line,#dadbd6);border-radius:10px;background:var(--surface,#fff);color:var(--text,#20211f);font-size:12px;font-weight:650;line-height:1.4;cursor:pointer;white-space:nowrap}
+.image-compression-control input[type="checkbox"]{width:18px;height:18px;min-width:18px;min-height:18px;flex:0 0 18px;margin:0;padding:0;accent-color:#16624f;cursor:pointer}
+.image-compression-control:has(input:checked){background:#edf4f0;border-color:#aac6b6}
+.image-compression-control:has(input:disabled){opacity:.55;cursor:not-allowed}
+@media(max-width:420px){.image-compression-control{font-size:12px;padding:6px 9px}}
+
+/* Keep unavailable actions off the empty screen. All page actions return after import. */
+.reveal-tools .button[hidden],.reveal-tools .secondary-tools[hidden]{display:none!important}
+.create-mode:not(.has-pages) .page-panel{display:none}
+.create-mode:not(.has-pages) .reveal-grid{display:block}
+.create-mode:not(.has-pages) .preview-surface{height:220px;min-height:180px;max-height:260px;border-style:dashed;background:#f8faf8}
+.create-mode:not(.has-pages) .empty-preview{padding:16px 20px}
+.create-mode:not(.has-pages) .empty-preview svg{width:38px;height:38px}
+.create-mode:not(.has-pages) .empty-preview h2{margin:6px 0;font-size:15px}
+.create-mode:not(.has-pages) .empty-preview p{font-size:12px;line-height:1.55}
+.create-mode:not(.has-pages) .input-status-row:has(.empty-status-only){display:none}
+.create-mode:not(.has-pages) .input-note{margin:8px 0 12px}
+@media(max-width:767px){
+ .header-inner{padding-inline:max(16px,env(safe-area-inset-left)) max(18px,env(safe-area-inset-right))}
+ .header-actions #helpButton{display:grid;place-items:center;width:44px;min-height:44px;padding:8px}
+ .create-mode:not(.has-pages) .page-intro{padding-bottom:12px}
+ .create-mode:not(.has-pages) .reveal-shell{padding:14px;border-radius:16px}
+ .create-mode:not(.has-pages) .reveal-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:9px}
+ .create-mode:not(.has-pages) .reveal-tools>.button{flex:none;min-width:0;width:100%;font-size:13px;padding:10px 6px}
+ .create-mode:not(.has-pages) #addButton,.create-mode:not(.has-pages) #cameraButton{min-height:52px}
+ .create-mode:not(.has-pages) #openButton{grid-column:1/-1;min-height:44px;background:var(--surface-muted);font-size:12px}
+ .create-mode:not(.has-pages) .image-compression-control{min-width:0;white-space:normal;justify-content:center;text-align:center}
+ .create-mode:not(.has-pages) .cover-color-control{min-width:0;justify-content:center;color:var(--text)}
+ .create-mode:not(.has-pages) .cover-color-control span{display:inline;font-size:11px}
+ .create-mode:not(.has-pages) .secondary-tools{grid-column:1/-1;margin:0}
+ .create-mode:not(.has-pages) .preview-surface{height:170px;min-height:150px;max-height:200px}
+}
+/* Free-study question chips share the compact mobile presentation. */
+.study-mode #freeStudyPanel>.question-list{display:flex;flex-wrap:wrap;gap:7px;overflow-x:visible}
+.study-mode #freeStudyPanel>.question-list .question-item{flex:0 0 auto;min-height:42px;padding:7px 12px;border:1px solid var(--line);border-radius:999px;font-size:12px;font-weight:650;background:white;max-width:100%;overflow-wrap:anywhere;text-align:left}
+.study-mode #freeStudyPanel>.question-list .question-item:hover{background:var(--surface-hover)}
+@media(max-width:767px){
+ .study-mode #freeStudyPanel>.question-list{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden}
+ .study-mode #freeStudyPanel>.question-list .question-item{min-height:40px;padding:6px 9px;font-size:11px;white-space:nowrap}
+}
+.camera-dialog{width:min(660px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:white}
+.camera-dialog[open]{display:flex;flex-direction:column}
+.camera-dialog::backdrop{background:#101810a8}
+.camera-dialog .dialog-header .icon-button{display:grid;place-items:center;min-width:44px;min-height:44px}
+.camera-dialog .dialog-header .icon-button svg{width:21px;height:21px}
+.camera-body{min-height:0;overflow:auto;padding:14px}
+.camera-body video{display:block;width:100%;aspect-ratio:4/3;max-height:60dvh;object-fit:contain;border-radius:11px;background:#20211f}
+.camera-body p{min-height:1.6em;font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.camera-actions{display:flex;gap:8px;flex-wrap:wrap}
+.camera-actions .button{flex:1 1 160px;min-height:48px}
+@media(max-width:520px){.camera-dialog{max-height:calc(100dvh - 12px)}.camera-body{padding:10px}.camera-actions{display:grid;grid-template-columns:1fr 1fr}}
+
+.study-mode #freeStudyPanel>.question-list .question-item[aria-pressed="true"]{border-color:#aac6b6;background:#edf4f0;color:var(--accent)}
+.study-mode #freeStudyPanel>.question-list .question-item[aria-pressed="true"]:hover{background:#e1eee6}
+.has-pages.create-mode .secondary-tools #newButton{margin-left:10px;border-color:var(--line-strong);background:var(--surface-muted)}
+@media(max-width:767px){.has-pages.create-mode .secondary-tools #newButton{margin-left:0}}

@@ -55,9 +55,21 @@ test('T05: card editing replaces the old page action row and stays compact',asyn
 test('T05: mobile page cards stay horizontal and reorder from the drag handle',async({page})=>{
   await page.setViewportSize({width:390,height:780});await openApp(page);
   await page.locator('#imageInput').setInputFiles([imagePath('static.png'),imagePath('static.jpg'),imagePath('static.webp')]);
-  const list=page.locator('#pageList'),titles=list.locator('.page-card-title');await expect(titles).toHaveCount(3);await expect(titles.nth(0)).toHaveValue(/Page 1|ページ1/);
+  const list=page.locator('#pageList'),titles=list.locator('.page-card-title');
+  await expect(titles).toHaveCount(3);
+  // Import can append the last page before leaving its busy state. An early
+  // click is intentionally ignored by openEditorSheet(), leaving the list
+  // hidden and causing a false "not horizontally scrollable" failure.
+  await expect(page.locator('#imageInput')).toBeEnabled();
+  await expect(page.locator('#mobilePageToggle')).toBeEnabled();
+  await expect(page.locator('#previewImage')).toBeVisible();
+  await expect(page.locator('.page-panel')).toBeHidden();
+  await page.locator('#mobilePageToggle').click();
+  await expect(page.locator('#editorSheet')).toBeVisible();
+  await expect(page.locator('#mobilePageToggle')).toHaveAttribute('aria-expanded','true');
+  await expect(titles.nth(0)).toHaveValue(/Page 1|ページ1/);
   expect(await list.evaluate(node=>getComputedStyle(node).flexDirection)).toBe('row');
-  expect(await list.evaluate(node=>node.scrollWidth>node.clientWidth)).toBe(true);
+  await expect.poll(()=>list.evaluate(node=>node.scrollWidth>node.clientWidth)).toBe(true);
   const first=list.locator('.page-item').nth(0),second=list.locator('.page-item').nth(1),handle=first.locator('.page-drag-handle');
   const hb=await handle.boundingBox(),sb=await second.boundingBox();await page.mouse.move(hb.x+hb.width/2,hb.y+hb.height/2);await page.mouse.down();await page.mouse.move(Math.min(sb.x+70,386),hb.y+hb.height/2,{steps:6});
   const shifted=page.locator('#pageList .page-item.reorder-shift');await expect(shifted).toHaveCount(1);

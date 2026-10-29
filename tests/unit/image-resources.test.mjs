@@ -28,3 +28,74 @@ test('T02: stored image uses exact decoded PNG, rejects falsified size and nonca
  await io.verifyStoredAsset(asset);assert.equal(closed,1);await assert.rejects(io.verifyStoredAsset({...asset,byteLength:1}),{code:'INVALID_SHEET'});
  for(const value of ['','AA=','AB==','AA==\n','data:image/png,AA=='])assert.throws(()=>io.decodeBase64(value),{code:'INVALID_SHEET'});
 });
+
+test('T02 canonical multi-megabyte Base64 decodes without regexp stack overflow',()=>{
+  const {core}=base();
+  const io=loadFactory('src/reveal/image-io.js','createImageIO')({core,env:{Blob,atob,btoa}});
+  const bytes=Buffer.alloc(6*1024*1024,0x58);
+  const encoded=bytes.toString('base64');
+  const decoded=io.decodeBase64(encoded);
+  assert.equal(decoded.length,bytes.length);
+  assert.equal(decoded[0],0x58);
+  assert.equal(decoded[decoded.length-1],0x58);
+});
+
+test('T02 WebP normalization selects smaller output and PNG-only option disables lossy conversion',async()=>{
+  const core=loadFactory('src/reveal/core.js','createRevealCore')();
+  const png=fs.readFileSync('tests/fixtures/images/static.png');
+  const webp=fs.readFileSync('tests/fixtures/images/lossy.webp');
+  const input=fs.readFileSync('tests/fixtures/images/static.jpg');
+  let requested=[];
+  const env={
+    Blob,atob,btoa,createImageBitmap:async()=>({width:120,height:80,close(){}}),
+    document:{createElement(){return {
+      width:0,height:0,getContext:()=>({drawImage(){}}),
+      toBlob(fn,mime){requested.push(mime);fn(new Blob([mime==='image/webp'?webp:png],{type:mime}));}
+    };}}
+  };
+  const io=loadFactory('src/reveal/image-io.js','createImageIO')({core,env});
+  const source=new Blob([input],{type:'image/jpeg'});
+  const chosen=await io.normalize(source,{ctx:testContext(),compress:true});
+  assert.equal(chosen.mime,webp.length<=png.length*.9?'image/webp':'image/png');
+  assert.deepEqual(requested,['image/png','image/webp']);
+  requested=[];
+  const original=await io.normalize(source,{ctx:testContext(),compress:false});
+  assert.equal(original.mime,'image/png');
+  assert.deepEqual(requested,['image/png']);
+});
+test('T02 unsupported browser WebP encoder falls back to orientation-fixed PNG',async()=>{
+  const core=loadFactory('src/reveal/core.js','createRevealCore')();
+  const png=fs.readFileSync('tests/fixtures/images/static.png');
+  const input=fs.readFileSync('tests/fixtures/images/static.jpg');
+  const env={
+    Blob,atob,btoa,createImageBitmap:async()=>({width:120,height:80,close(){}}),
+    document:{createElement(){return {
+      width:0,height:0,getContext:()=>({drawImage(){}}),
+      toBlob(fn){fn(new Blob([png],{type:'image/png'}));}
+    };}}
+  };
+  const io=loadFactory('src/reveal/image-io.js','createImageIO')({core,env});
+  const asset=await io.normalize(new Blob([input],{type:'image/jpeg'}),{ctx:testContext()});
+  assert.equal(asset.mime,'image/png');
+});
+
+test('T02 invalid WebP encoder bytes fall back to valid PNG without losing the imported page',async()=>{
+  const core=loadFactory('src/reveal/core.js','createRevealCore')();
+  const png=fs.readFileSync('tests/fixtures/images/static.png');
+  const input=fs.readFileSync('tests/fixtures/images/static.jpg');
+  const env={
+    Blob,atob,btoa,createImageBitmap:async()=>({width:120,height:80,close(){}}),
+    document:{createElement(){return {
+      width:0,height:0,getContext:()=>({drawImage(){}}),
+      toBlob(fn,mime){
+        fn(mime==='image/webp'
+          ? new Blob([new Uint8Array(16)],{type:'image/webp'})
+          : new Blob([png],{type:'image/png'}));
+      }
+    };}}
+  };
+  const io=loadFactory('src/reveal/image-io.js','createImageIO')({core,env});
+  const asset=await io.normalize(new Blob([input],{type:'image/jpeg'}),{ctx:testContext(),compress:true});
+  assert.equal(asset.mime,'image/png');
+  assert.equal(asset.dataBase64,png.toString('base64'));
+});

@@ -70,3 +70,16 @@ test('T09 SecurityError makes local persistence unavailable without blocking the
   const capability=await store.probe();assert.deepEqual(toPlain(capability),{available:false,reason:'SecurityError'});
   assert.equal(store.settings.draftOptIn,false);
 });
+
+test('T09 schema-v2 WebP draft persists and restores the exact embedded image bytes',async()=>{
+  const backend=new MemoryBackend(),store=makeStore(backend),ctx=testContext();
+  const bytes=fs.readFileSync('tests/fixtures/images/static.webp');
+  let doc=core.newDocument(ctx,'Local WebP draft');
+  doc=core.appendAsset(doc,{id:'image_webp',mime:'image/webp',width:120,height:80,byteLength:bytes.length,dataBase64:bytes.toString('base64')},ctx,'Page');
+  await store.setDraftOptIn(true);
+  await store.saveSnapshot(doc,0);
+  assert.equal(backend.assets.get('image_webp').blob.type,'image/webp');
+  const restored=await store.loadSnapshot();
+  assert.deepEqual(toPlain(restored.document),toPlain(doc));
+  assert.equal(core.validateEnvelope({format:'reveal-sheet',schemaVersion:2,appVersion:'1.2.0',kind:'editable',document:restored.document}).ok,true);
+});

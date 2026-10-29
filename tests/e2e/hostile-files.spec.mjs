@@ -44,7 +44,7 @@ test('T13: structural pollution keys and future schema are rejected atomically',
   });
   await expectRejectedAndPreserved(page);
 
-  const future=editableFixture();future.schemaVersion=2;
+  const future=editableFixture();future.schemaVersion=3;
   await page.locator('#sheetInput').setInputFiles({
     name:'future.reveal.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(future))
   });

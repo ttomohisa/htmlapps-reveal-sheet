@@ -4,6 +4,8 @@ import { chromium } from 'playwright';
 import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import os from 'node:os';
+import {resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
 import { openApp } from '../tests/helpers/app.mjs';
 
 const output='test-results/capture';
@@ -56,8 +58,11 @@ async function prepareSheet(page,language){
  const data=await syntheticWorksheet(page);
  await page.locator('#imageInput').setInputFiles({name:'practice-diagram.png',mimeType:'image/png',buffer:Buffer.from(data,'base64')});
  await page.locator('#previewImage').waitFor({state:'visible'});
+ const pageToggle=page.locator('#mobilePageToggle');
+ if(await pageToggle.isVisible())await pageToggle.click();
  const title=page.locator('#pageList .page-item').first().locator('.page-card-title');
  await title.fill(language==='ja'?'デスクランプの部品':'Desk lamp parts');await title.press('Enter');
+ if(await page.locator('#editorSheet').isVisible())await page.locator('#editorSheetClose').click();
  await dragCover(page,[682,261],[1007,327]);
  await dragCover(page,[682,393],[1007,459]);
  await dragCover(page,[682,551],[1007,617]);
@@ -72,14 +77,43 @@ try {
 
  const mobile=await browser.newPage({viewport:{width:390,height:844},locale:'ja-JP'});
  await prepareSheet(mobile,'ja');
+ await mobile.screenshot({path:output+'/screenshot-mobile-edit.png'});
  await mobile.locator('#studyButton').click();await mobile.locator('#guidedModeButton').click();
  if(await mobile.locator('#appConfirmDialog').isVisible())await mobile.locator('#appConfirmOk').click();
- await mobile.screenshot({path:output+'/screenshot-mobile.png',fullPage:true});await mobile.close();
+ await mobile.screenshot({path:output+'/screenshot-mobile.png',fullPage:true});
+ // Capture the actual exported .reveal.html, not the editor's embedded preview.
+ await mobile.locator('#saveButton').click();
+ const lessonDownload=mobile.waitForEvent('download');
+ await mobile.locator('#downloadHtmlButton').click();
+ const exported=await lessonDownload,lessonFile=resolve(output+'/qa-lesson.reveal.html');
+ await exported.saveAs(lessonFile);
+ const lesson=await browser.newPage({viewport:{width:390,height:844},locale:'ja-JP'});
+ watch(lesson);await lesson.goto(pathToFileURL(lessonFile).href);
+ await lesson.locator('#lessonReady').waitFor({state:'visible'});
+ await lesson.locator('#lessonGuidedMode').click();
+ await lesson.locator('#lessonRevealCurrent').waitFor({state:'visible'});
+ await lesson.screenshot({path:output+'/screenshot-lesson-mobile.png'});
+ await lesson.locator('#lessonSettingsButton').click();
+ await lesson.locator('#lessonSheet').waitFor({state:'visible'});
+ await lesson.screenshot({path:output+'/screenshot-lesson-settings-mobile.png'});
+ await lesson.close();
+ const lessonDesktop=await browser.newPage({viewport:{width:1360,height:900},locale:'ja-JP'});
+ watch(lessonDesktop);await lessonDesktop.goto(pathToFileURL(lessonFile).href);
+ await lessonDesktop.locator('#lessonReady').waitFor({state:'visible'});
+ await lessonDesktop.locator('#lessonSettingsButton').click();
+ await lessonDesktop.locator('#lessonSheet').waitFor({state:'visible'});
+ await lessonDesktop.locator('#lessonSheet #lessonStudyOptIn').waitFor({state:'visible'});
+ await lessonDesktop.screenshot({path:output+'/screenshot-lesson-settings-desktop.png'});
+ await lessonDesktop.close();await mobile.close();
 
  if(process.env.CAPTURE_UPDATE_ASSETS==='1'){
   copyFileSync(output+'/screenshot.png','assets/screenshot.png');
   copyFileSync(output+'/screenshot-en.png','assets/screenshot-en.png');
   copyFileSync(output+'/screenshot-mobile.png','assets/screenshot-mobile.png');
+  copyFileSync(output+'/screenshot-mobile-edit.png','assets/screenshot-mobile-edit.png');
+  copyFileSync(output+'/screenshot-lesson-mobile.png','assets/screenshot-lesson-mobile.png');
+  copyFileSync(output+'/screenshot-lesson-settings-mobile.png','assets/screenshot-lesson-settings-mobile.png');
+  copyFileSync(output+'/screenshot-lesson-settings-desktop.png','assets/screenshot-lesson-settings-desktop.png');
  }
 
  let commit='unknown';try{commit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();}catch{}

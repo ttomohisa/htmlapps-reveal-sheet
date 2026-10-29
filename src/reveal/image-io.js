@@ -1,9 +1,12 @@
-/** Strict local image input and orientation-fixed PNG normalization.
+/** Strict local image input and orientation-fixed PNG / WebP normalization.
  * env owns browser-specific decoding/Canvas/Blob APIs; no network access here.
  */
 function createImageIO({ core, env }) {
   const { limits, error } = core;
   const urls = new Map();
+  // A just-normalized PNG can be viewed directly from its Blob. Avoid
+  // immediately expanding its large base64 text to a second byte array.
+  const pendingPreviewBlobs = new Map();
   const checkDimensions = (width, height) => ({ok:
     Number.isInteger(width) && Number.isInteger(height) && width > 0 && height > 0 &&
     width <= limits.maxSide && height <= limits.maxSide && width * height <= limits.maxPixels});
@@ -124,14 +127,14 @@ function createImageIO({ core, env }) {
     return env.btoa(binary);
   }
   function decodeBase64(value) {
-    if(typeof value!=='string' || value.length===0 || value.length%4!==0 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value))throw error('INVALID_SHEET');
+    if(typeof value!=='string' || value.length===0 || value.length%4!==0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value))throw error('INVALID_SHEET');
     const binary=env.atob(value),bytes=new Uint8Array(binary.length);
     for(let n=0;n<binary.length;n++)bytes[n]=binary.charCodeAt(n);
     // Reject noncanonical trailing pad bits too.
     if(env.btoa(binary)!==value)throw error('INVALID_SHEET');
     return bytes;
   }
-  async function normalize(file,{signal,ctx}={}) {
+  async function normalize(file,{signal,ctx,compress=true}={}) {
     abort(signal);const info=await inspectInput(file);abort(signal);
     let bitmap=null,canvas=null;
     try {
@@ -144,36 +147,65 @@ function createImageIO({ core, env }) {
       canvas=env.document.createElement('canvas');canvas.width=width;canvas.height=height;
       const context=canvas.getContext('2d');if(!context)throw error('DECODE_FAILED');
       context.drawImage(bitmap,0,0);bitmap.close();bitmap=null;
-      const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(error('DECODE_FAILED')),'image/png'));
+      const png=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(error('DECODE_FAILED')),'image/png'));
       abort(signal);
+      // Canvas encoders may ignore WebP or fall back to PNG. Only use WebP
+      // when the returned signature matches and the result is >=10% smaller
+      // than the orientation-corrected PNG. A failed WebP encode is not fatal.
+      let blob=png,mime='image/png',webpBytes=null;
+      if(compress){
+        let candidate=null;
+        try{
+          candidate=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',0.86));
+          abort(signal);
+          if(candidate&&candidate.type==='image/webp'&&candidate.size>0&&candidate.size<=limits.maxPngBytes
+             &&candidate.size<=png.size*.90){
+            const candidateBytes=new Uint8Array(await candidate.arrayBuffer());abort(signal);
+            // Validate an encoded candidate completely *before* choosing it.
+            // A buggy browser WebP encoder must not make an otherwise valid
+            // PNG import fail.
+            const header=inspectHeader(candidateBytes);
+            if(header.mime==='image/webp'&&header.width===width&&header.height===height){
+              blob=candidate;mime='image/webp';webpBytes=candidateBytes;
+            }
+          }
+        }catch(e){if(e?.code==='CANCELLED')throw e; /* unsupported encoder: retain PNG */}
+      }
       if(blob.size>limits.maxPngBytes)throw error('IMAGE_TOO_LARGE');
-      const bytes=new Uint8Array(await blob.arrayBuffer());abort(signal);
+      const bytes=webpBytes||new Uint8Array(await blob.arrayBuffer());abort(signal);
       const output=inspectHeader(bytes);
-      if(output.mime!=='image/png'||output.width!==width||output.height!==height)throw error('DECODE_FAILED');
-      return {id:ctx.newId('image'),mime:'image/png',width,height,byteLength:bytes.length,dataBase64:encode(bytes)};
+      if(output.mime!==mime||output.width!==width||output.height!==height)throw error('DECODE_FAILED');
+      const id=ctx.newId('image');
+      const asset={id,mime,width,height,byteLength:bytes.length,dataBase64:encode(bytes)};
+      pendingPreviewBlobs.set(id,blob);
+      while(pendingPreviewBlobs.size>2)pendingPreviewBlobs.delete(pendingPreviewBlobs.keys().next().value);
+      return asset;
     } catch(e) { if(e.code)throw e;throw error('DECODE_FAILED'); }
     finally { if(bitmap)bitmap.close();if(canvas){canvas.width=0;canvas.height=0;} }
   }
   async function verifyStoredAsset(asset,{signal}={}) {
     abort(signal);
-    if(asset.mime!=='image/png' || !Number.isSafeInteger(asset.byteLength) || asset.byteLength<1 || asset.byteLength>limits.maxPngBytes ||
+    if(!['image/png','image/webp'].includes(asset.mime) || !Number.isSafeInteger(asset.byteLength) || asset.byteLength<1 || asset.byteLength>limits.maxPngBytes ||
        typeof asset.dataBase64!=='string' || asset.dataBase64.length>Math.ceil(limits.maxPngBytes/3)*4)throw error('INVALID_SHEET');
     const bytes=decodeBase64(asset.dataBase64);
     if(bytes.length!==asset.byteLength)throw error('INVALID_SHEET');
     const h=inspectHeader(bytes);
-    if(h.mime!=='image/png'||h.width!==asset.width||h.height!==asset.height)throw error('INVALID_SHEET');
+    if(h.mime!==asset.mime||h.width!==asset.width||h.height!==asset.height)throw error('INVALID_SHEET');
     let bitmap;
-    try{bitmap=await env.createImageBitmap(new env.Blob([bytes],{type:'image/png'}));abort(signal);if(bitmap.width!==asset.width||bitmap.height!==asset.height)throw error('INVALID_SHEET');}
+    try{bitmap=await env.createImageBitmap(new env.Blob([bytes],{type:asset.mime}));abort(signal);if(bitmap.width!==asset.width||bitmap.height!==asset.height)throw error('INVALID_SHEET');}
     catch(e){if(e.code)throw e;throw error('DECODE_FAILED');}finally{bitmap?.close();}
   }
   function urlFor(asset) {
     if(urls.has(asset.id)){const value=urls.get(asset.id);urls.delete(asset.id);urls.set(asset.id,value);return value;}
-    const url=env.URL.createObjectURL(new env.Blob([decodeBase64(asset.dataBase64)],{type:'image/png'}));urls.set(asset.id,url);
+    const cached=pendingPreviewBlobs.get(asset.id);
+    pendingPreviewBlobs.delete(asset.id);
+    const source=cached||new env.Blob([decodeBase64(asset.dataBase64)],{type:asset.mime});
+    const url=env.URL.createObjectURL(source);urls.set(asset.id,url);
     // Display cache holds current + previous only. Document/Undo share strings.
     while(urls.size>2)release(urls.keys().next().value);
     return url;
   }
   function release(assetId) {if(urls.has(assetId)){env.URL.revokeObjectURL(urls.get(assetId));urls.delete(assetId);}}
-  function releaseAll() {for(const id of urls.keys())release(id);}
+  function releaseAll() {for(const id of urls.keys())release(id);pendingPreviewBlobs.clear();}
   return Object.freeze({inspectHeader,checkDimensions,inspectInput,normalize,verifyStoredAsset,decodeBase64,urlFor,release,releaseAll});
 }

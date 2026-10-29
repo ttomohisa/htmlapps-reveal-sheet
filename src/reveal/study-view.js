@@ -1,33 +1,54 @@
 /** Shared image-overlay renderer and per-page view state for editing and study. */
-function createStudyView({core,dom,onAction,translate=key=>key}) {
-  const svg=dom.getElementById('maskSvg'),image=dom.getElementById('previewImage'),surface=image.closest('.preview-surface');
+function createStudyView({core,dom,onAction,translate=key=>key,pointerActions=true}) {
+  const svg=dom.getElementById('maskSvg'),image=dom.getElementById('previewImage'),surface=image.closest('.preview-surface,.lesson-preview');
   const viewStates=new Map();
   let state={document:null,pageId:null,session:null,mode:'edit',selectedMaskId:null,selectedMaskIds:[]};
-  let lastSurfaceBox=null;
+  let lastSurfaceBox=null,viewGeometry=null,viewFrame=null;
   const defaultView=()=>({zoom:1,centerX:.5,centerY:.5});
   function normalizeView(value){
-    const zoom=Math.max(.5,Math.min(16,Number(value?.zoom)||1)),half=.5/zoom;
+    const zoom=Math.max(.5,Math.min(16,Number(value?.zoom)||1)),half=Math.min(.5,.5/zoom);
     const clamp=value=>Math.max(half,Math.min(1-half,Number.isFinite(Number(value))?Number(value):.5));
     return {zoom:Math.round(zoom*1e6)/1e6,centerX:Math.round(clamp(value?.centerX)*1e6)/1e6,centerY:Math.round(clamp(value?.centerY)*1e6)/1e6};
   }
   function getViewState(pageId=state.pageId){return {...(viewStates.get(pageId)||defaultView())};}
+  function getViewGeometry(){
+    const page=state.document?.pages.find(item=>item.id===state.pageId),asset=page&&state.document.assets.find(item=>item.id===page.imageId);
+    if(!surface||!asset)return null;
+    // CSS transforms affect getBoundingClientRect(). Measure the untransformed
+    // viewport, then fit the image exactly as object-fit / SVG xMidYMid meet do.
+    const bounds=surface.getBoundingClientRect(),width=surface.clientWidth,height=surface.clientHeight;
+    if(!(width>0&&height>0))return null;
+    const fit=Math.min(width/asset.width,height/asset.height);
+    const left=bounds.left+(surface.clientLeft||0),top=bounds.top+(surface.clientTop||0);
+    viewGeometry={left,top,width,height,centerX:left+width/2,centerY:top+height/2,fitWidth:asset.width*fit,fitHeight:asset.height*fit};
+    return {...viewGeometry};
+  }
   function applyView(){
     if(!state.pageId)return;
-    const view=getViewState(state.pageId),tx=(.5-view.centerX)*100,ty=(.5-view.centerY)*100,transform=`translate(${tx}% , ${ty}%) scale(${view.zoom})`;
+    const geometry=viewGeometry||getViewGeometry();if(!geometry)return;
+    const view=getViewState(state.pageId),tx=(.5-view.centerX)*geometry.fitWidth*view.zoom,ty=(.5-view.centerY)*geometry.fitHeight*view.zoom,transform=`translate(${tx}px, ${ty}px) scale(${view.zoom})`;
     image.style.transformOrigin='50% 50%';svg.style.transformOrigin='50% 50%';image.style.transform=transform;svg.style.transform=transform;
     svg.dataset.viewZoom=String(view.zoom);svg.dataset.viewCenterX=String(view.centerX);svg.dataset.viewCenterY=String(view.centerY);
   }
-  function setViewState(pageId,value){if(!pageId)return defaultView();const view=normalizeView(value);viewStates.set(pageId,view);if(pageId===state.pageId)applyView();return {...view};}
+  function cancelViewFrame(){if(viewFrame!==null){dom.defaultView?.cancelAnimationFrame?.(viewFrame);viewFrame=null;}}
+  function flushView(){cancelViewFrame();applyView();}
+  function setViewState(pageId,value,{defer=false}={}){
+    if(!pageId)return defaultView();const view=normalizeView(value);viewStates.set(pageId,view);
+    if(pageId===state.pageId){
+      if(defer&&typeof dom.defaultView?.requestAnimationFrame==='function'){
+        if(viewFrame===null)viewFrame=dom.defaultView.requestAnimationFrame(()=>{viewFrame=null;applyView();});
+      }else flushView();
+    }
+    return {...view};
+  }
   function rememberSurfaceBox(){
-    if(!surface)return;
-    const rect=surface.getBoundingClientRect();
-    if(!(rect.width>0&&rect.height>0))return;
-    const next={width:rect.width,height:rect.height};
+    const geometry=getViewGeometry();if(!geometry)return;
+    const next={width:geometry.width,height:geometry.height};
     if(lastSurfaceBox&&state.pageId){
       const resized=core.resizeView(getViewState(state.pageId),lastSurfaceBox,next);
-      viewStates.set(state.pageId,resized);applyView();
+      viewStates.set(state.pageId,normalizeView(resized));
     }
-    lastSurfaceBox=next;
+    lastSurfaceBox=next;flushView();
   }
   const ResizeObserverCtor=dom.defaultView?.ResizeObserver;
   const resizeObserver=surface&&typeof ResizeObserverCtor==='function'?new ResizeObserverCtor(()=>rememberSurfaceBox()):null;
@@ -44,6 +65,7 @@ function createStudyView({core,dom,onAction,translate=key=>key}) {
   }
   function render(){
     const doc=state.document,page=doc&&doc.pages.find(p=>p.id===state.pageId);
+    cancelViewFrame();viewGeometry=null;
     svg.replaceChildren();
     if(!page){svg.removeAttribute('viewBox');image.style.transform='';svg.style.transform='';return;}
     const asset=doc.assets.find(a=>a.id===page.imageId);if(!asset)return;
@@ -62,7 +84,7 @@ function createStudyView({core,dom,onAction,translate=key=>key}) {
       if(interactive){rect.setAttribute('tabindex','0');rect.setAttribute('role','button');rect.setAttribute('aria-label',translate(state.mode==='study'?'coveredAnswerLabel':'coverLabel'));}
       else rect.setAttribute('aria-hidden','true');
       const activate=()=>{if(state.mode==='study'&&mask.kind==='answer'){if(guided)onAction({type:'REVEAL_CURRENT',questionId:mask.questionId});else onAction({type:'TOGGLE_QUESTION',questionId:mask.questionId});}else if(state.mode==='edit')onAction({type:'SELECT_MASK',maskId:mask.id});};
-      if(interactive){
+      if(interactive&&pointerActions){
         let pointerGesture=null;
         rect.addEventListener('pointerdown',event=>{
           if(event.button!==0)return;
@@ -78,8 +100,8 @@ function createStudyView({core,dom,onAction,translate=key=>key}) {
           if(event.detail===0){pointerGesture=null;return;}
           const tap=!pointerGesture||core.isTap(pointerGesture);pointerGesture=null;if(tap)activate();
         });
-        rect.addEventListener('keydown',event=>{if(event.repeat)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}});
       }
+      if(interactive)rect.addEventListener('keydown',event=>{if(event.repeat)return;if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}});
       svg.append(rect);
       if(state.mode==='edit'&&mask.id===state.selectedMaskId){
         const radius=Math.max(1.5,Math.min(32,Math.max(asset.width,asset.height)*.012));
@@ -94,10 +116,10 @@ function createStudyView({core,dom,onAction,translate=key=>key}) {
         addInlineAction(mask,'duplicate',actionX,actionY,actionSize);addInlineAction(mask,'delete',actionX+actionSize+gap,actionY,actionSize);
       }
     }
-    applyView();rememberSurfaceBox();
+    rememberSurfaceBox();
   }
   function mount(next){state={...state,...next};render();}
   function setSelection(maskId){state={...state,selectedMaskId:maskId};render();}
-  function destroy(){resizeObserver?.disconnect();state={document:null,pageId:null,session:null,mode:'edit',selectedMaskId:null,selectedMaskIds:[]};viewStates.clear();svg.replaceChildren();image.style.transform='';svg.style.transform='';lastSurfaceBox=null;}
-  return Object.freeze({mount,render,setSelection,getViewState,setViewState,destroy});
+  function destroy(){cancelViewFrame();resizeObserver?.disconnect();state={document:null,pageId:null,session:null,mode:'edit',selectedMaskId:null,selectedMaskIds:[]};viewStates.clear();svg.replaceChildren();image.style.transform='';svg.style.transform='';lastSurfaceBox=null;viewGeometry=null;}
+  return Object.freeze({mount,render,setSelection,getViewState,setViewState,getViewGeometry,flushView,destroy});
 }

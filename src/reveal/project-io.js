@@ -17,7 +17,9 @@ function createProjectIO({core,imageIO,env}) {
     };
   }
   function envelope(doc,kind,appVersion){
-    return {format:'reveal-sheet',schemaVersion:1,appVersion,kind,document:cleanDocument(doc)};
+    // PNG-only documents remain schema v1 for compatibility with older readers.
+    const schemaVersion=doc.assets.some(asset=>asset.mime==='image/webp')?2:1;
+    return {format:'reveal-sheet',schemaVersion,appVersion,kind,document:cleanDocument(doc)};
   }
   function assertSupportedEditable(value){
     if(value.kind!=='editable')fail('INVALID_SHEET');
@@ -34,18 +36,50 @@ function createProjectIO({core,imageIO,env}) {
     return JSON.stringify(value);
   }
   function prepareJson(doc,appVersion='0.2.0'){
-    return new env.Blob([serialize(doc,'editable',appVersion)],{type:'application/json;charset=utf-8'});
+    const blob=new env.Blob(serializeBlobParts(doc,'editable',appVersion),{type:'application/json;charset=utf-8'});
+    if(blob.size>core.limits.maxJsonBytes)fail('LIMIT_EXCEEDED');
+    return blob;
   }
   function escapeJsonForHtml(text){
-    return String(text).replace(/</g,'\\u003C').replace(/>/g,'\\u003E').replace(/&/g,'\\u0026').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
+    const escapes={'<':'\\u003C','>':'\\u003E','&':'\\u0026','\u2028':'\\u2028','\u2029':'\\u2029'};
+    return String(text).replace(/[<>&\u2028\u2029]/g,ch=>escapes[ch]);
+  }
+  function serializeBlobParts(doc,kind,appVersion,htmlSafe=false){
+    const value=envelope(doc,kind,appVersion);
+    const checked=core.validateEnvelope(value);
+    if(!checked.ok)fail(checked.errors?.[0]?.code||'INVALID_SHEET');
+    if(kind==='editable')assertSupportedEditable(value);
+    const text=htmlSafe?escapeJsonForHtml:value=>value;
+    const skeleton=JSON.stringify({...value,document:{...value.document,assets:[]}});
+    const needle='"assets":[]',at=skeleton.indexOf(needle);
+    if(at<0||skeleton.indexOf(needle,at+needle.length)!==-1)fail('EXPORT_FAILED');
+    const parts=[text(skeleton.slice(0,at)),needle.slice(0,-1)];
+    for(let index=0;index<value.document.assets.length;index++){
+      const asset=value.document.assets[index];
+      // The PNG data is already validated Base64, which is safe inside a
+      // JSON string and HTML script data without allocating a second copy.
+      if(typeof asset.dataBase64!=='string'||!/^[A-Za-z0-9+/]+={0,2}$/.test(asset.dataBase64))fail('INVALID_SHEET');
+      const meta=JSON.stringify({...asset,dataBase64:null});
+      const marker='"dataBase64":null',position=meta.indexOf(marker);
+      if(position<0)fail('EXPORT_FAILED');
+      if(index)parts.push(',');
+      parts.push(text(meta.slice(0,position)),'"dataBase64":"',asset.dataBase64,'"',text(meta.slice(position+marker.length)));
+    }
+    parts.push(']',text(skeleton.slice(at+needle.length)));
+    return parts;
   }
   function prepareHtml(doc,playerTemplate,appVersion='0.6.0'){
     if(typeof playerTemplate!=='string'||!playerTemplate)fail('INVALID_SHEET');
     const marker='__REVEAL_'+'LESSON_JSON__',matches=playerTemplate.split(marker).length-1;
     if(matches!==1)fail('INVALID_SHEET');
-    const json=serialize(doc,'lesson',appVersion),html=playerTemplate.replace(marker,escapeJsonForHtml(json));
-    if(new env.TextEncoder().encode(html).byteLength>core.limits.maxHtmlBytes)fail('LIMIT_EXCEEDED');
-    return new env.Blob([html],{type:'text/html;charset=utf-8'});
+    // Keep the embedded Base64 PNG in one JSON string rather than making
+    // another full-size HTML copy and then a full-size TextEncoder Uint8Array.
+    // Blob.size gives the actual UTF-8 byte size without an extra allocation.
+    const markerAt=playerTemplate.indexOf(marker);
+    const parts=serializeBlobParts(doc,'lesson',appVersion,true);
+    const blob=new env.Blob([playerTemplate.slice(0,markerAt),...parts,playerTemplate.slice(markerAt+marker.length)],{type:'text/html;charset=utf-8'});
+    if(blob.size>core.limits.maxHtmlBytes)fail('LIMIT_EXCEEDED');
+    return blob;
   }
   function jsonDepthWithin(text,maxDepth=16){
     let depth=0,inString=false,escaped=false;
@@ -76,7 +110,7 @@ function createProjectIO({core,imageIO,env}) {
     if(!jsonDepthWithin(json,16))fail('INVALID_SHEET');
     let value;
     try{value=JSON.parse(json);}catch{fail('INVALID_SHEET');}
-    if(value&&value.format==='reveal-sheet'&&value.schemaVersion!==1)fail('UNSUPPORTED_SCHEMA');
+    if(value&&value.format==='reveal-sheet'&&![1,2].includes(value.schemaVersion))fail('UNSUPPORTED_SCHEMA');
     const checked=core.validateEnvelope(value);
     if(!checked.ok)fail(validationFailureCode(checked));
     if(value.kind!=='lesson')fail('INVALID_SHEET');
@@ -126,7 +160,7 @@ function createProjectIO({core,imageIO,env}) {
     if(!jsonDepthWithin(text,16))fail('INVALID_SHEET');
     let value;
     try{value=JSON.parse(text);}catch{fail('INVALID_SHEET');}
-    if(value&&value.format==='reveal-sheet'&&value.schemaVersion!==1)fail('UNSUPPORTED_SCHEMA');
+    if(value&&value.format==='reveal-sheet'&&![1,2].includes(value.schemaVersion))fail('UNSUPPORTED_SCHEMA');
     const checked=core.validateEnvelope(value);
     if(!checked.ok)fail(validationFailureCode(checked));
     assertSupportedEditable(value);
@@ -158,7 +192,10 @@ function createProjectIO({core,imageIO,env}) {
         :prepareJson(doc,options.appVersion||'0.7.0');
     }catch(error){
       if(['INVALID_SHEET','LIMIT_EXCEEDED','UNSUPPORTED_SCHEMA'].includes(error?.code))throw error;
-      fail('EXPORT_FAILED');
+      // Do not leak the error message or the user's document into diagnostics.
+      const failure=core.error('EXPORT_FAILED');
+      failure.causeType=String(error?.name||'Error').slice(0,48);
+      throw failure;
     }
     await Promise.resolve();
     if(!validExportGeneration(generation))fail('EXPORT_FAILED');
@@ -178,12 +215,15 @@ function createProjectIO({core,imageIO,env}) {
       url=env.URL.createObjectURL(prepared.blob);
       anchor=env.document.createElement('a');anchor.href=url;anchor.download=prepared.filename;anchor.hidden=true;
       env.document.body.append(anchor);anchor.click();anchor.remove();anchor=null;
-      env.setTimeout(()=>env.URL.revokeObjectURL(url),0);
+      // Large downloads may start asynchronously in mobile browsers.
+      env.setTimeout(()=>env.URL.revokeObjectURL(url),60000);
       return Object.freeze({started:true,filename:prepared.filename,size:prepared.size,kind:prepared.kind,generation:prepared.generation});
-    }catch{
+    }catch(error){
       try{anchor?.remove();}catch{}
       if(url){try{env.URL.revokeObjectURL(url);}catch{}}
-      fail('EXPORT_FAILED');
+      const failure=core.error('EXPORT_FAILED');
+      failure.causeType=String(error?.name||'Error').slice(0,48);
+      throw failure;
     }
   }
   function stripKnownExtension(value){
