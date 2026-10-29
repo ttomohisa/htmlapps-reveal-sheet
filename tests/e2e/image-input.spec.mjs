@@ -67,7 +67,7 @@ test('T02: language switch retains page and view; no persistent content is writt
 
 
 test('T02: 2160x3840 phone photo remains visible through Save/Create navigation',async({page})=>{
-  test.setTimeout(120000);
+  test.setTimeout(180000);
   await openApp(page);
   // Generate synthetic high-detail pixels: no user photo is added to the repo.
   const dataUrl=await page.evaluate(async()=>{
@@ -111,7 +111,27 @@ test('T02: 2160x3840 phone photo remains visible through Save/Create navigation'
   const image=page.locator('#previewImage');
   expect(await image.evaluate(node=>[node.naturalWidth,node.naturalHeight])).toEqual([2160,3840]);
   await expect(page.locator('#imageBytes')).not.toHaveText('');
+  const points=await page.locator('#maskSvg').evaluate(svg=>{
+    const m=svg.getScreenCTM();
+    return [[360,380],[770,850]].map(([x,y])=>{
+      const p=svg.createSVGPoint();p.x=x;p.y=y;
+      const q=p.matrixTransform(m);return {x:q.x,y:q.y};
+    });
+  });
+  await page.mouse.move(points[0].x,points[0].y);await page.mouse.down();
+  await page.mouse.move(points[1].x,points[1].y,{steps:5});await page.mouse.up();
+  await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
   await page.locator('#saveButton').click();
+  await expect(page.locator('#inputStatus')).toContainText(/保存する形式|Choose a format/i);
+  const jsonPromise=page.waitForEvent('download');
+  await page.locator('#downloadJsonButton').click();
+  const jsonDownload=await jsonPromise;
+  expect(jsonDownload.suggestedFilename()).toMatch(/\.reveal\.json$/);
+  const htmlPromise=page.waitForEvent('download');
+  await page.locator('#downloadHtmlButton').click();
+  const htmlDownload=await htmlPromise;
+  expect(htmlDownload.suggestedFilename()).toMatch(/\.reveal\.html$/);
+  await expect(page.locator('#inputStatus')).toContainText(/保存を開始|Started saving/);
   await page.locator('#createButton').click();
   await expect(image).toBeVisible({timeout:15000});
 });
