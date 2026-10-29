@@ -896,7 +896,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   }
   async function downloadPrepared(kind){
     if(busy||exportBusy||!doc.pages.length||(kind==='html'&&(!doc.questions.length||!playerTemplate)))return;
-    const token=exportGeneration,snapshot=doc;exportBusy=true;status('exportPreparing');refreshCopy();
+    const token=exportGeneration,snapshot=doc;let saveStep='prepare';exportBusy=true;status('exportPreparing');refreshCopy();
     try{
       const desiredName=projectIO.sanitizeFilename($('outputFilename').value,kind);
       let prepared=kind==='html'?preparedLessonExport:preparedJsonExport;
@@ -904,7 +904,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
         prepared=await projectIO.prepareExport(snapshot,{kind,filename:$('outputFilename').value,playerTemplate,appVersion},token);
       }
       if(token!==exportGeneration||snapshot!==doc)return;
-      projectIO.requestDownload(prepared);
+      saveStep='download';projectIO.requestDownload(prepared);
       if(kind==='html')preparedLessonExport=prepared;else preparedJsonExport=prepared;
       filenameBase=prepared.filename.replace(kind==='html'?/\.reveal\.html$/i:/\.reveal\.json$/i,'');$('outputFilename').value=filenameBase;
       status('saveStarted',{name:prepared.filename});refreshCopy();
@@ -912,7 +912,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       if(token!==exportGeneration)return;
       // Keep the original document intact and report only diagnostic metadata.
       // Never log the user's images, titles, filenames or file contents.
-      env.console?.warn?.('Reveal Sheet save failed',{kind,code:error?.code||'EXPORT_FAILED',errorType:error?.name||'Error'});
+      env.console?.warn?.('Reveal Sheet save failed',{kind,step:saveStep,code:error?.code||'EXPORT_FAILED',errorType:error?.name||'Error'});
       status('error_'+(error?.code||'EXPORT_FAILED'));refreshCopy();
     }finally{
       if(token===exportGeneration){exportBusy=false;refreshCopy();}
