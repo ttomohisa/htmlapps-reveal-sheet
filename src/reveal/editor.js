@@ -946,7 +946,9 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       // Keep the original document intact and report only diagnostic metadata.
       // Never log the user's images, titles, filenames or file contents.
       env.console?.warn?.('Reveal Sheet save failed',{kind,step:saveStep,code:error?.code||'EXPORT_FAILED',errorType:error?.name||'Error'});
-      showSaveDiagnostics(kind,saveStep,error);status('error_'+(error?.code||'EXPORT_FAILED'));refreshCopy();
+      showSaveDiagnostics(kind,saveStep,error);
+      const messageKey=saveStep==='download'&&error?.code==='EXPORT_FAILED'?'error_EXPORT_DOWNLOAD_FAILED':'error_'+(error?.code||'EXPORT_FAILED');
+      status(messageKey);refreshCopy();
     }finally{
       if(token===exportGeneration){exportBusy=false;refreshCopy();}
     }
