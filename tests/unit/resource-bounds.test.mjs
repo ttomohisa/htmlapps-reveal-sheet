@@ -60,3 +60,17 @@ test('T18 standard 10-page/100-question sheet survives repeated add-delete-expor
   assert.equal(core.counts(doc).pages,10);assert.equal(core.counts(doc).masks,100);assert.ok(bytes>0);
   console.log('T18_RESOURCE_OBSERVATION '+JSON.stringify({cycles:20,elapsedMs:Math.round(elapsedMs),heapDelta,outputBytes:bytes}));
 });
+
+test('T18 large canonical PNG Base64 validates and prepares editable JSON without regex stack overflow',async()=>{
+  const bytes=Buffer.alloc(6*1024*1024,0x37);
+  png.copy(bytes,0,0,8);
+  const envelope=makeEnvelope(1,1);
+  envelope.document.assets[0]={...envelope.document.assets[0],
+    byteLength:bytes.length,dataBase64:bytes.toString('base64')};
+  const validated=core.validateEnvelope(envelope);
+  assert.equal(validated.ok,true,JSON.stringify(validated.errors));
+  const io=createProjectIO({core,imageIO:{verifyStoredAsset:async()=>{}},env:{Blob,TextDecoder,TextEncoder}});
+  const blob=io.prepareJson(envelope.document,'0.9.0');
+  assert.ok(blob.size>bytes.length);
+  assert.equal(JSON.parse(await blob.text()).document.assets[0].byteLength,bytes.length);
+});

@@ -2,7 +2,107 @@
 
 ## Scope and status
 
-This record contains verified CI evidence through v0.9.0 / T01–T18. It does not mark all 48 formal acceptance items complete. The release-candidate automated matrix now includes runtime-network/CSP/hostile-input auditing, repeated standard-size round trips and the configured 30-page / 1,000-cover boundary in addition to the earlier editing, study, persistence, lesson, mobile/touch and bilingual accessibility work. Physical phones, real screen readers, Safari, Firefox, background/screen-lock behavior and OS save-cancel/file-handoff behavior remain untested.
+This record contains the v1.1.0 mobile-editor verification below and the historical release/CI evidence that follows it. It does not mark all 48 formal acceptance items complete. The automated matrix includes runtime-network/CSP/hostile-input auditing, repeated standard-size round trips and the configured 30-page / 1,000-cover boundary in addition to editing, study, persistence, lesson, mobile/touch and bilingual accessibility work. Physical phones, real screen readers, Safari, Firefox, background/screen-lock behavior and OS save-cancel/file-handoff behavior remain untested.
+
+## Save-error details hidden below the fold — 2026-10-29
+
+CI follow-up: the first full test run passed the new save diagnostic checks but had a separate intermittent failure in the pre-existing self-extracting mobile page-carousel test. Its test clicked Page list as soon as a three-image import yielded DOM page cards; the editor intentionally ignores sheet-opening clicks while import remains busy. The test now waits for the import controls to be enabled, for the image to be visible and for the native page dialog actually to open before checking horizontal overflow. The assertion was not removed or weakened.
+
+
+A further report showed the generic save message without visible diagnostics. Current code inspection found the diagnostic `details` element **after** the Save output buttons, where it could be below the phone viewport; additionally, `shared.css` visually hides the normal input-status row for populated documents (`.has-pages:not(.is-busy) .input-status-row p`). The generic error survived in the toast, while the diagnostic code was not included in the toast and could go unnoticed. An already-open tab running older JavaScript is another possible explanation; neither observation proves which occurred on the user's device.
+
+The diagnostic panel has been moved directly under the Save heading and opens automatically after an error. The error toast also includes the short `RS-SAVE-3` code; a visible quiet hint on the new Save screen distinguishes diagnostic-capable builds without exposing implementation details. A phone-width browser regression injects a `RangeError` into JSON Blob preparation and asserts the inline details are open, inside the viewport, and duplicated in the warning toast; both the Save panel and other original content remain unchanged.
+
+**Not established:** the underlying cause of the repeated Android save failure. The change makes that cause observable; no claim of a device-side fix is made. Do not reload unsaved work just to obtain a diagnostic code.
+
+## Repeat Android save error: explicit local diagnostics — 2026-10-29
+
+Following a second report of the same generic save-error message after the previous CI-green Base64 fix, **the cause of the recurring device error remains unverified**. Existing code collapsed failures from both `prepareExport` and `requestDownload` into `EXPORT_FAILED`, masking whether the issue was preparing a Blob, creating the download URL, triggering the download, or another failure. The same error text can also appear in an already-open browser tab still running previous app JavaScript.
+
+The Save view now displays an expandable, copyable `RS-SAVE-3` diagnostic line after a failure. It contains only the app version, JSON/HTML choice, PREPARE/DOWNLOAD stage, known error code and a safely allowlisted exception class (such as RangeError, SecurityError or QuotaExceededError). No filename, original image content, page text, or user data is included, and nothing is transmitted off-device. The diagnostic clears on a successful export or entering a new Save session. A browser test injects preparation and browser-download exceptions to assert both classifications and retry behavior. **This is an instrumentation fix and not a claim that the particular Android failure has been resolved.** The next occurrence must be reproduced on a newly loaded preview with the diagnostic code preserved for troubleshooting; do not reload an existing unsaved session.
+
+## Large-image export preparation — 2026-10-29
+
+**Root cause confirmed during follow-up:** Both `core.decodedBase64Length` (used to validate the document before export) and `imageIO.decodeBase64` used `/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/`. On Node/V8 a large Base64 string (5 million characters) reproduced `RangeError: Maximum call stack size exceeded`. The error was subsequently converted into the generic `EXPORT_FAILED` message by export preparation. These two validators were changed to `/^[A-Za-z0-9+/]+={0,2}$/` with the existing length-divisible-by-four requirement, preserving valid Base64 syntax without the grouped-repetition stack overhead; canonical pad-bit validation remains enforced by `decodeBase64`. Added multi-megabyte unit regressions and kept the browser test using a synthetic tall JPEG with JSON/HTML exports. Peak-memory reductions remain useful, but the regex overflow is a concrete and separately verified defect.
+
+
+A user encountered the Japanese `EXPORT_FAILED` message (“保存用ファイルを準備できませんでした”) after earlier high-resolution image work. The browser/device and whether the user selected editable JSON or lesson HTML were not determined from this message. The existing Save view *eagerly* generated both entire files on entry. For a 2160×3840 JPEG normalized to approximately 15.6 MiB of PNG, each serialized file embeds roughly 21 MiB of Base64 text; constructing both outputs, replacing an entire template string, and UTF-8-encoding the full resulting HTML can substantially raise peak browser memory. The earlier high-memory export path was a plausible contributor; the Base64-regex stack overflow above is now a confirmed reproducible defect.
+
+Changes: prepare only the chosen export when the user actually clicks it; keep the other format usable if one fails; assemble editable JSON and HTML from small structural Blob parts plus original validated Base64 asset strings, without generating either full-size JSON or HTML strings; revoke download Blob URLs after a short delay instead of immediately; display file sizes only once prepared and label pending sizes accurately. The original sheet data, schema version, CSP, embedded source images, confirmation and local-only processing remain intact.
+
+Regressions cover failure isolation for the HTML vs JSON Blob constructors, retry after a synthetic exception, template JSON escaping and part-based Blob assembly, and exporting both formats from a synthetic tall 2160×3840 image without publishing the user's photo. On-device Android/iPhone saving and memory behavior are not physically verified; passing desktop Chromium is not definitive proof for mobile.
+
+## Exported lesson desktop Settings and large-photo display follow-up — 2026-10-29
+
+A user screenshot showed that the exported lesson's buttons still did not match the authoring app, and that the settings gear did nothing on desktop. The prior Settings & Save polish used a separate pale-green secondary button. The lesson now uses the same white border/background/text and primary-green `#16624F` button tokens as the authoring app; `Save editable sheet` is the primary action, matching the main app's editable JSON save. Study-mode tabs retain their explicit segmented pressed state.
+
+The exported player runtime previously returned early from `openSheet` when the viewport exceeded 720px, which made the visible desktop gear inert. The desktop gear now opens the same Settings & Save dialog with the original controls temporarily moved inside; closing the dialog returns them to their desktop positions and restores focus. Browser coverage checks open, Escape, focus and close on a desktop viewport.
+
+A user-supplied JPEG ZIP was inspected **locally only** and not committed or transmitted to the public GitHub repository. The 2160×3840 JPEG was structurally valid and decoded in desktop Chromium; the browser also normalized it to a valid approximately 15.6 MiB PNG and displayed that PNG. This does **not** prove the Android display failure's exact root cause. The authoring editor previously reported `DECODE_FAILED` after one rejected `img.decode()` call. It now treats an already-loaded image as valid, reuses the just-normalized PNG Blob to avoid immediate Base64 re-expansion, retries an unsuccessful image display with a new Blob URL and real `load` event, and offers a localized retry button after both paths fail; stored assets and covers remain intact. Failures while drawing cover overlays are now handled separately and cannot make a successfully decoded image disappear under a misleading image-corruption message.
+
+The regressions separately check a **synthetic** 2160×3840 photo-like JPEG that normalizes to roughly 15 MiB of PNG data, and a smaller JPEG with an injected transient `HTMLImageElement.decode()` failure. They assert that the image and cover layer remain visible, including after Save/Create navigation; no user image is embedded in tests. Screenshot capture now additionally records the actual exported HTML's desktop Settings & Save dialog. Automated Chromium verification is not equivalent to Android Chrome physical-device verification, especially when opening downloaded HTML via `content://`.
+
+## Exported lesson Settings & Save follow-up — 2026-10-29
+
+The Android Chrome screenshot revealed three presentation regressions in the exported study-only `.reveal.html`: the study-persistence checkbox rendered as a large empty square detached from its label; the two other-answer radio controls were extremely oversized; and the gear icon and secondary buttons looked inconsistent with the app. The root cause for the input sizes was the player CSS rule `.lesson-dialog input { width:100%; min-height:48px }`, which applied text-field dimensions to native checkbox and radio inputs.
+
+The player now scopes 100%-wide text-field rules to `input[type=text]`, sets checkbox and radio sizes to 20 and 18 CSS pixels with branded native accent colors, and keeps each control beside its text. The options are restrained selectable cards; the title/description/status and editable-data action align within the settings sheet. A redesigned gear SVG replaces the malformed path. The player provides explicit button backgrounds, borders, typography, corner radii and clear primary/secondary/segmented states, rather than browser-default buttons.
+
+A new exported-lesson browser test asserts input bounding boxes, green native accents, radio selection, checkbox/text alignment, filename and save-button dimensions, and both 390px and 320px mobile widths. `scripts/capture-qa.mjs` generates the actual export's settings-sheet screenshot `assets/screenshot-lesson-settings-mobile.png` from a synthetic local lesson. The existing tests continue covering English/Japanese, persistence opt-in, local-only `file://` learning and save confirmation. Physical Android/iOS touch and OS file-save behavior have not been retested in the automation environment.
+
+## Exported lesson HTML mobile study UX — 2026-10-29
+
+This review updates the **exported `.reveal.html` study player**, not only the authoring app. The player stays entirely embedded in each generated lesson, with the build-time runtime CSP hash and local-only processing unchanged.
+
+- Mobile portrait: native-style compact header, page selector, image-first workspace, free/guided segmented control, current-question progress, reveal then rating actions, and sheets for pages, questions, other-answer choices, optional study persistence and editable download.
+- Short landscape: image and study controls use a two-column arrangement; long prompts and settings scroll within their own regions.
+- Image inspection: in-stage zoom-out / fit / zoom-in controls, drag panning and two-pointer pinch, with per-page transient view state. Tap targets and covered-answer disclosure remain separated.
+- Desktop: sticky page list and cleaned study panel; app copy and learning modes remain intact.
+- New actual exported-lesson screenshot at `assets/screenshot-lesson-mobile.png`, produced by `scripts/capture-qa.mjs` from a saved sample lesson via `file://` rather than a mockup.
+- Browser regressions in `tests/e2e/exported-lesson-mobile.spec.mjs` cover 390×844, 320×480, 700×390, switching study modes, zoom-and-pan, page/question sheets, language, editable JSON download, error-free offline startup and viewport fit.
+
+**Verified source baseline:** GitHub Actions [application tests run 40777546536](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/runs/40777546536) succeeded with **144 pure unit tests** and **136 browser tests per HTML variant (readable and self-extracting)**. [Standalone validation](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/runs/40777546388) and [preview deployment](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/runs/40777546450) passed. Later screenshot/docs commits do not change the study player source. Physical Android/iPhone touch, software keyboards, OS file downloads, screen readers and background/return behavior have **not** been verified on devices.
+
+## v1.1.0 follow-up: navigation, errors, inline adjustments — 2026-10-28
+
+This follow-up on PR #16 addresses four reviewed items without changing the saved lesson schema or the local-only processing boundary:
+
+- **Error visibility:** loaded-sheet errors now use the existing localized warning toast. While a native mobile settings dialog is open, the same warning is also displayed in that dialog's alert, rather than behind its top-layer backdrop. Invalid cover creation and grouping are handled as user-facing failures instead of uncaught exceptions.
+- **Session continuity:** navigating among Create, Study and Save in the same tab retains the in-memory free/guided study session even when device saving is off. Ordinary edits reconcile the existing session with changed questions; new sheets and replacement imports still clear it. Persistent cross-reload resumption remains explicitly opt-in.
+- **Precise cover editing:** fine adjustments use an inline, undimmed toolbar that replaces the editor dock, not a modal bottom sheet. The close button and Escape restore the dock; 320 × 480, 480 × 360 and 700 × 320 layouts are included in regression coverage.
+- **Pan guidance:** at or below 100% image zoom, selecting Move image shows a bilingual reminder to zoom in. The reminder disappears at higher zoom and when leaving that mode.
+
+Browser regression sources: `tests/e2e/mobile-polish.spec.mjs`, `mobile-editor-ux.spec.mjs`, `native-workspace.spec.mjs`, `page-management.spec.mjs`, and `resume-and-clear.spec.mjs`. Test outcomes are recorded by the current PR's GitHub Actions; changes to the screenshot-only commit do not represent a new app build. This automated coverage does **not** replace physical Android/iPhone testing of gestures, the software keyboard, camera or OS save dialogs.
+
+## v1.1.0 mobile editor correction — 2026-10-28
+
+The user reported that moving an enlarged image was too slow and that the smartphone interface still felt unlike a native app. Verification used the revised source on PR #16, based on commit `98fc3f5725aa52ea3c180cd19475ea7b7c4c6435`. The generated readable HTML SHA-256 was `9f08ed63f4906797a3de8d7129399b0e133eeea2060f22cac9257af68b745efa`. Hosted CI/preview results for the resulting commit are recorded in the PR; the table here records the completed local run.
+
+Environment: Linux `6.18.55`, Node `v24.22.1`, PowerShell `7.5.4`, the repository-pinned Playwright `1.63.0`, and Chrome for Testing `141.0.7390.122` through `CHROMIUM_PATH`. Noto Sans CJK JP was available to the capture browser so Japanese screenshots contain real glyphs. This is an automated browser environment, not a physical phone.
+
+| Verification | Result |
+|---|---|
+| PowerShell syntax preflight | Passed, 13 scripts |
+| Repository build, standalone contracts and header checks | Passed |
+| Assembly negative fixtures | Passed |
+| Unit suite | 24 test files passed, 0 failed |
+| Readable HTML browser suite | 123 passed, 0 failed |
+| Self-extracting HTML browser suite | 123 passed, 0 failed |
+| Actual Japanese/English desktop and mobile captures | Passed; visually inspected |
+| External HTTP(S) requests / page errors during capture | 0 / 0 |
+| Readable / self-extracting HTML size | 484,973 / 159,073 bytes |
+
+### Gesture and layout regressions
+
+The old pan path divided by an already transformed SVG size and by zoom again; its renderer also translated the viewport rather than the fitted image. At approximately 3.81× zoom, a 20-CSS-pixel horizontal drag moved the image only about 1.37 pixels. The previous 120 ms transform transition added visible lag. The corrected renderer and pointer conversion use the same fitted-image geometry, with view updates coalesced into animation frames and no transform easing.
+
+`gesture-response.spec.mjs` verifies 20 × 16 CSS-pixel drags on both portrait and landscape images at 1.25×, approximately 2×, 4× and 8×, and 16×. Every displacement matches within 0.5 CSS pixels while away from the pan boundary. It also verifies the pinch midpoint, continued panning with one remaining finger, cancellation rollback, panning from a covered answer without revealing it, and cover alignment in exported lessons. Baseline failures were reproduced before the corrections; the pinch-continuation regression also failed against the pristine baseline after its CDP touch-end fixture was corrected.
+
+`native-workspace.spec.mjs` verifies the image, editing dock and navigation in one viewport; 48-pixel primary targets; 320 × 480 and 700 × 390 layouts; modal page/cover/tool panels; focus restoration; language changes; desktop resize; and stable image geometry while selecting or adjusting a cover. It also verifies that Undo cancels another pointer's unfinished cover draft.
+
+Independent review found that the selected-cover row intercepted zoom taps at 568 × 320. The short-landscape dock now keeps all seven editing actions separate from zoom; the regression checks actual hit ownership with `elementFromPoint`, then zooms without deleting the cover. That regression and the unfinished-draft Undo regression failed before the corresponding fixes and passed in both final browser suites.
+
+The complete suites also preserve grouped/auxiliary covers, Undo/Redo, free/guided study, optional persistence, old schema-v1 imports and JSON/HTML export. Screenshots in `assets/` show the actual generated app with synthetic study material. Physical Android Chrome and iPhone Safari touch/camera/save behavior, real accessibility services, device safe areas and background/screen-lock recovery remain **unperformed**.
 
 ## v1.0.0 automated release candidate — 2026-10-08
 

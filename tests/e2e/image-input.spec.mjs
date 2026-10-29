@@ -64,3 +64,109 @@ test('T02: language switch retains page and view; no persistent content is writt
  await page.locator('#languageButton').click();await expect(page.locator('#pageList .page-item')).toHaveCount(1);await loaded(page);
  expect(await page.evaluate(()=>{try{return Object.keys(localStorage).filter(k=>k.includes('reveal'));}catch{return [];}})).toEqual([]);
 });
+
+
+test('T02: 2160x3840 phone photo remains visible through Save/Create navigation',async({page})=>{
+  test.setTimeout(180000);
+  await openApp(page);
+  // Generate synthetic high-detail pixels: no user photo is added to the repo.
+  const dataUrl=await page.evaluate(async()=>{
+    const c=document.createElement('canvas');c.width=2160;c.height=3840;
+    const ctx=c.getContext('2d'),pixels=ctx.createImageData(c.width,c.height);
+    let state=0x68a2d421;
+    // 8x8 synthetic blocks normalize to about 15 MiB of PNG data,
+    // comparable to the reported phone JPEG (not an extreme 28 MiB texture).
+    const blocks=new Uint32Array(270*480);
+    for(let i=0;i<blocks.length;i++){
+      state=(Math.imul(state,1664525)+1013904223)>>>0;blocks[i]=state;
+    }
+    for(let y=0;y<3840;y++)for(let x=0;x<2160;x++){
+      const n=(y*2160+x)*4,v=blocks[(y>>3)*270+(x>>3)];
+      pixels.data[n]=v>>>24;
+      pixels.data[n+1]=v>>>16;
+      pixels.data[n+2]=v>>>8;
+      pixels.data[n+3]=255;
+    }
+    ctx.putImageData(pixels,0,0);
+    return c.toDataURL('image/jpeg',.84);
+  });
+  await page.locator('#imageInput').setInputFiles({
+    name:'synthetic-tall-photo.jpg',mimeType:'image/jpeg',
+    buffer:Buffer.from(dataUrl.split(',')[1],'base64')
+  });
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1,{timeout:60000});
+  try{await expect(page.locator('#previewImage')).toBeVisible({timeout:60000});}
+  catch(error){
+    const debug=await page.evaluate(()=>{
+      const image=document.getElementById('previewImage'),wait=document.getElementById('previewWait');
+      return {complete:image.complete,naturalWidth:image.naturalWidth,naturalHeight:image.naturalHeight,
+        srcLength:image.getAttribute('src')?.length||0,waitHidden:wait.hidden,waitText:wait.textContent,
+        busy:document.body.className,status:document.getElementById('inputStatus')?.textContent};
+    });
+    console.error('Tall-photo preview diagnostic',JSON.stringify(debug));
+    throw error;
+  }
+  await expect(page.locator('#previewWait')).toBeHidden();
+  await expect(page.locator('#maskSvg')).toBeVisible();
+  const image=page.locator('#previewImage');
+  expect(await image.evaluate(node=>[node.naturalWidth,node.naturalHeight])).toEqual([2160,3840]);
+  await expect(page.locator('#imageBytes')).not.toHaveText('');
+  const points=await page.locator('#maskSvg').evaluate(svg=>{
+    const m=svg.getScreenCTM();
+    return [[360,380],[770,850]].map(([x,y])=>{
+      const p=svg.createSVGPoint();p.x=x;p.y=y;
+      const q=p.matrixTransform(m);return {x:q.x,y:q.y};
+    });
+  });
+  await page.mouse.move(points[0].x,points[0].y);await page.mouse.down();
+  await page.mouse.move(points[1].x,points[1].y,{steps:5});await page.mouse.up();
+  await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
+  await page.locator('#saveButton').click();
+  await expect(page.locator('#inputStatus')).toContainText(/保存する形式|Choose a format/i);
+  const jsonPromise=page.waitForEvent('download',{timeout:20000});
+  page.on('console',msg=>{if(msg.text().includes('Reveal Sheet save failed'))console.log('Large-photo save console:',msg.text());});
+  await page.locator('#downloadJsonButton').click();
+  try{await expect(page.locator('#inputStatus')).toContainText(/保存を開始|Started saving/,{timeout:15000});}
+  catch(error){
+    const values=await page.evaluate(()=>({
+      status:document.querySelector('#inputStatus')?.textContent,
+      jsonSize:document.querySelector('#saveJsonBytes')?.textContent,
+      htmlSize:document.querySelector('#saveHtmlBytes')?.textContent,
+      jsonDisabled:document.querySelector('#downloadJsonButton')?.disabled,
+      htmlDisabled:document.querySelector('#downloadHtmlButton')?.disabled,
+      questionCount:document.querySelector('#saveQuestionCount')?.textContent,
+      pageCount:document.querySelector('#savePageCount')?.textContent
+    }));
+    console.error('Large-photo save diagnosis',JSON.stringify(values));
+    throw error;
+  }
+  const jsonDownload=await jsonPromise;
+  expect(jsonDownload.suggestedFilename()).toMatch(/\.reveal\.json$/);
+  const htmlPromise=page.waitForEvent('download');
+  await page.locator('#downloadHtmlButton').click();
+  const htmlDownload=await htmlPromise;
+  expect(htmlDownload.suggestedFilename()).toMatch(/\.reveal\.html$/);
+  await expect(page.locator('#inputStatus')).toContainText(/保存を開始|Started saving/);
+  await page.locator('#createButton').click();
+  await expect(image).toBeVisible({timeout:15000});
+});
+
+test('T02: preview recovers from a transient image.decode rejection without reimporting',async({page})=>{
+  await openApp(page);
+  await page.evaluate(()=>{
+    const original=HTMLImageElement.prototype.decode;
+    let rejected=false;
+    HTMLImageElement.prototype.decode=function(...args){
+      if(this.id==='previewImage'&&!rejected){
+        rejected=true;
+        return Promise.reject(new Error('Simulated transient mobile image decode failure'));
+      }
+      return original.apply(this,args);
+    };
+  });
+  await page.locator('#imageInput').setInputFiles(imagePath('static.jpg'));
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
+  await expect(page.locator('#previewImage')).toBeVisible({timeout:15000});
+  await expect(page.locator('#maskSvg')).toBeVisible();
+  await expect(page.locator('#previewWait')).toBeHidden();
+});

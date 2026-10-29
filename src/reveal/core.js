@@ -344,7 +344,7 @@ function createRevealCore() {
   }
   function validPositiveInt(value){return Number.isSafeInteger(value)&&value>=1;}
   function decodedBase64Length(value){
-    if(typeof value!=='string'||value.length===0||value.length%4!==0||!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value))return -1;
+    if(typeof value!=='string'||value.length===0||value.length%4!==0||!/^[A-Za-z0-9+/]+={0,2}$/.test(value))return -1;
     let padding=0;if(value.endsWith('=='))padding=2;else if(value.endsWith('='))padding=1;
     return value.length/4*3-padding;
   }

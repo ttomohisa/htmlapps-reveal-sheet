@@ -11,45 +11,361 @@
 <meta name="reveal-player-runtime-sha256" content="__REVEAL_PLAYER_RUNTIME_SHA256__">
 <style>
 /* REVEAL:PLAYER_SHARED_CSS */
-:root{--lesson-max:1180px}.lesson-body{margin:0;background:var(--bg,#f5f5f2);color:var(--text,#20211f);font:15px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.lesson-header{position:sticky;top:0;z-index:30;border-bottom:1px solid var(--line,#d9dfd9);background:#f9faf7f5}.lesson-header-inner{width:min(var(--lesson-max),calc(100% - 32px));min-height:64px;margin:auto;display:flex;align-items:center;gap:10px}.lesson-icon{width:38px;height:38px;border-radius:10px}.lesson-header-copy{min-width:0;flex:1}.lesson-header-copy h1{margin:0;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lesson-header-actions{display:flex;gap:6px}.lesson-icon-button{min-width:48px;min-height:48px;border:0;border-radius:10px;background:transparent}.lesson-icon-button:hover{background:var(--surface-hover,#e9e9e5)}.lesson-main{width:min(var(--lesson-max),calc(100% - 32px));margin:24px auto 54px}.lesson-waiting,.lesson-error{padding:28px;border:1px solid var(--line,#d9dfd9);border-radius:16px;background:#fff}.lesson-layout{display:grid;grid-template-columns:190px minmax(0,1fr);gap:18px}.lesson-pages,.lesson-panel{border:1px solid var(--line,#d9dfd9);border-radius:14px;background:#fff}.lesson-pages{padding:10px;align-self:start}.lesson-page-button,.lesson-question{width:100%;min-height:48px;margin:3px 0;padding:8px 10px;border:1px solid var(--line,#d9dfd9);border-radius:9px;background:#fff;text-align:left}.lesson-page-button[aria-pressed="true"],.lesson-question[aria-current="true"]{border-color:#16624f;background:#edf4f0}.lesson-panel{padding:16px;min-width:0}.lesson-preview{position:relative;overflow:hidden;height:min(58vh,620px);min-height:300px;border:1px solid var(--line,#d9dfd9);border-radius:12px;background:#eef0ed;display:grid;place-items:center}.lesson-preview img{display:block;max-width:100%;max-height:100%;object-fit:contain}.lesson-preview .mask-layer{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}.lesson-preview .mask-rect{fill:var(--cover-color,#20211f);stroke:#fff;stroke-width:1;pointer-events:auto}.lesson-preview .mask-rect.auxiliary{fill:var(--cover-color,#16624f)}.lesson-study{margin-top:14px}.lesson-mode-switch,.lesson-actions,.lesson-save-actions{display:flex;flex-wrap:wrap;gap:8px}.lesson-mode-switch button[aria-pressed="true"]{border-color:#16624f;background:#edf4f0;color:#16624f}.lesson-summary{margin:10px 0;color:var(--muted,#626b64)}.lesson-question-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.lesson-question-list .lesson-question{width:auto;min-width:48px;text-align:center}.lesson-options{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0;padding:10px;border:1px solid var(--line,#d9dfd9);border-radius:10px}.lesson-answer{margin:10px 0;padding:12px;border:1px solid #b8cfc4;border-radius:10px;background:#edf4f0}.lesson-results,.lesson-save,.lesson-persistence{margin-top:16px;padding-top:14px;border-top:1px solid var(--line,#d9dfd9)}.lesson-result-grid{display:grid;grid-template-columns:auto auto;gap:5px 14px;width:max-content;max-width:100%}.lesson-save label{display:grid;gap:6px;max-width:520px}.lesson-save input{min-height:48px;padding:9px 10px;border:1px solid var(--line,#d9dfd9);border-radius:9px}.lesson-setting{display:flex;gap:10px;align-items:flex-start}.lesson-setting input{margin-top:7px}.lesson-setting small{display:block;color:var(--muted,#626b64)}.lesson-status{color:var(--muted,#626b64);font-size:12px}.lesson-dialog{width:min(520px,calc(100vw - 24px));padding:0;border:1px solid var(--line,#d9dfd9);border-radius:16px;background:#fff}.lesson-dialog::backdrop{background:#1118}.lesson-dialog-body{padding:18px}.lesson-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.lesson-dialog button{min-height:48px}.lesson-dialog input{width:100%;min-height:48px}.lesson-footer{margin-top:22px;color:var(--muted,#626b64);font-size:12px;text-align:center}
+:root{--lesson-max:1180px}.lesson-body{margin:0;background:var(--bg,#f5f5f2);color:var(--text,#20211f);font:15px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.lesson-header{position:sticky;top:0;z-index:30;border-bottom:1px solid var(--line,#d9dfd9);background:#f9faf7f5}.lesson-header-inner{width:min(var(--lesson-max),calc(100% - 32px));min-height:64px;margin:auto;display:flex;align-items:center;gap:10px}.lesson-icon{width:38px;height:38px;border-radius:10px}.lesson-header-copy{min-width:0;flex:1}.lesson-header-copy h1{margin:0;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lesson-header-actions{display:flex;gap:6px}.lesson-icon-button{min-width:48px;min-height:48px;border:0;border-radius:10px;background:transparent}.lesson-icon-button:hover{background:var(--surface-hover,#e9e9e5)}.lesson-main{width:min(var(--lesson-max),calc(100% - 32px));margin:24px auto 54px}.lesson-waiting,.lesson-error{padding:28px;border:1px solid var(--line,#d9dfd9);border-radius:16px;background:#fff}.lesson-layout{display:grid;grid-template-columns:190px minmax(0,1fr);gap:18px}.lesson-pages,.lesson-panel{border:1px solid var(--line,#d9dfd9);border-radius:14px;background:#fff}.lesson-pages{padding:10px;align-self:start}.lesson-page-button,.lesson-question{width:100%;min-height:48px;margin:3px 0;padding:8px 10px;border:1px solid var(--line,#d9dfd9);border-radius:9px;background:#fff;text-align:left}.lesson-page-button[aria-pressed="true"],.lesson-question[aria-current="true"]{border-color:#16624f;background:#edf4f0}.lesson-panel{padding:16px;min-width:0}.lesson-preview{position:relative;overflow:hidden;height:min(58vh,620px);min-height:300px;border:1px solid var(--line,#d9dfd9);border-radius:12px;background:#eef0ed;display:grid;place-items:center}.lesson-preview img{display:block;max-width:100%;max-height:100%;object-fit:contain}.lesson-preview .mask-layer{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}.lesson-preview .mask-rect{fill:var(--cover-color,#20211f);stroke:#fff;stroke-width:1;pointer-events:auto}.lesson-preview .mask-rect.auxiliary{fill:var(--cover-color,#16624f)}.lesson-study{margin-top:14px}.lesson-mode-switch,.lesson-actions,.lesson-save-actions{display:flex;flex-wrap:wrap;gap:8px}.lesson-mode-switch button[aria-pressed="true"]{border-color:#16624f;background:#edf4f0;color:#16624f}.lesson-summary{margin:10px 0;color:var(--muted,#626b64)}.lesson-question-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.lesson-question-list .lesson-question{width:auto;min-width:48px;text-align:center}.lesson-options{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0;padding:10px;border:1px solid var(--line,#d9dfd9);border-radius:10px}.lesson-answer{margin:10px 0;padding:12px;border:1px solid #b8cfc4;border-radius:10px;background:#edf4f0}.lesson-results,.lesson-save,.lesson-persistence{margin-top:16px;padding-top:14px;border-top:1px solid var(--line,#d9dfd9)}.lesson-result-grid{display:grid;grid-template-columns:auto auto;gap:5px 14px;width:max-content;max-width:100%}.lesson-save label{display:grid;gap:6px;max-width:520px}.lesson-save input[type="text"]{min-height:48px;padding:9px 10px;border:1px solid var(--line,#d9dfd9);border-radius:9px}.lesson-setting{display:flex;gap:10px;align-items:flex-start}.lesson-setting input{margin-top:7px}.lesson-setting small{display:block;color:var(--muted,#626b64)}.lesson-status{color:var(--muted,#626b64);font-size:12px}.lesson-dialog{width:min(520px,calc(100vw - 24px));padding:0;border:1px solid var(--line,#d9dfd9);border-radius:16px;background:#fff}.lesson-dialog::backdrop{background:#1118}.lesson-dialog-body{padding:18px}.lesson-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.lesson-dialog button{min-height:48px}.lesson-dialog input[type="text"]{width:100%;min-height:48px}.lesson-footer{margin-top:22px;color:var(--muted,#626b64);font-size:12px;text-align:center}
 @media(max-width:720px){.lesson-header-inner,.lesson-main{width:calc(100% - 24px)}.lesson-layout{grid-template-columns:1fr}.lesson-pages{display:flex;gap:6px;overflow-x:auto}.lesson-page-button{min-width:140px;width:140px;flex:0 0 auto}.lesson-preview{height:min(48dvh,520px);min-height:220px}.lesson-panel{padding:12px}.lesson-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.lesson-actions .primary{grid-column:1/-1}.lesson-dialog-actions{display:grid;grid-template-columns:1fr}.lesson-main{margin-bottom:calc(28px + env(safe-area-inset-bottom))}}
 @media(max-height:500px) and (max-width:720px){.lesson-main{margin-top:12px}.lesson-preview{height:min(48dvh,230px);min-height:170px}.lesson-pages{padding:6px}.lesson-panel{padding:10px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 @media(forced-colors:active){.lesson-page-button[aria-pressed="true"],.lesson-question[aria-current="true"],.lesson-mode-switch button[aria-pressed="true"]{outline:2px solid Highlight}.mask-rect:focus{stroke:Highlight}}
 html,.lesson-body{max-width:100%;overflow-x:hidden}
+/* Match the SVG viewport even when the source image is smaller than the stage. */
+.lesson-preview img{width:100%;height:100%;min-width:0;min-height:0}
+
+/* Exported lesson v1.1.0: image-first, keyboard-accessible study workspace. */
+.lesson-body{--lesson-max:1140px;--lesson-green:#16624f;--lesson-ink:#23302b;--lesson-muted:#65736b;--lesson-stroke:#dbe3dd;line-height:1.5}
+.lesson-body [hidden]{display:none!important}
+.lesson-body .button{min-height:44px;border-radius:11px;padding:8px 13px;transition:background-color .12s,border-color .12s}
+.lesson-body .button.primary{background:var(--lesson-green);border-color:var(--lesson-green);color:white}
+.lesson-body .button:disabled{opacity:.45;cursor:not-allowed}
+.lesson-body button:focus-visible,.lesson-body input:focus-visible{outline:3px solid #588ec3;outline-offset:2px}
+.lesson-header{background:rgba(250,251,248,.97);backdrop-filter:blur(12px)}
+.lesson-header-inner{min-height:64px}
+.lesson-header-copy h1{font-size:16px;line-height:1.3;color:var(--lesson-ink)}
+.lesson-header-copy p{margin:2px 0 0;font-size:11px;color:var(--lesson-muted)}
+.lesson-icon-button{display:grid;place-items:center;min-width:44px;min-height:44px;padding:6px;color:var(--lesson-ink);cursor:pointer}
+.lesson-icon-button svg{width:21px;height:21px}
+.lesson-language{font-size:12px;font-weight:750;color:var(--lesson-green)}
+.lesson-main{margin-top:20px}
+.lesson-layout{grid-template-columns:220px minmax(0,1fr);gap:16px}
+.lesson-pages{padding:12px;position:sticky;top:86px;max-height:calc(100dvh - 105px);overflow:auto}
+.lesson-pages:before{content:"PAGES";display:block;color:var(--lesson-muted);font-size:10px;letter-spacing:.12em;font-weight:800;padding:2px 8px 10px}
+.lesson-page-button{margin:2px 0;min-height:46px;border-color:transparent;overflow-wrap:anywhere}
+.lesson-page-button:hover{background:#f2f5f1}
+.lesson-page-button[aria-pressed="true"]{background:#e5f1ea;border-color:#c4dccd;color:var(--lesson-green);font-weight:750}
+.lesson-panel{padding:14px;box-shadow:0 3px 14px #182c2010}
+.lesson-page-switch{display:none}
+.lesson-preview{height:clamp(300px,54vh,660px);background:#edf1ec;border-color:#e2e8e1}
+.lesson-study{margin:10px 0 0;min-width:0}
+.lesson-mode-switch{display:grid;grid-template-columns:1fr 1fr;padding:4px;gap:4px;border-radius:12px;background:#edf2ed}
+.lesson-mode-switch .button{border:0;background:transparent;min-height:42px;font-size:13px;font-weight:700}
+.lesson-mode-switch button[aria-pressed="true"]{background:white;color:var(--lesson-green);box-shadow:0 1px 5px #00000016;border-color:transparent}
+.lesson-summary{font-size:13px;margin:12px 0 8px}
+.lesson-free-actions .button{flex:1 1 auto;min-width:0}
+.lesson-guided-head{display:flex;align-items:center;gap:10px;margin:12px 0}
+.lesson-guided-head>strong{min-width:48px;color:var(--lesson-green);font-variant-numeric:tabular-nums}
+.lesson-progress-track{height:5px;min-width:0;flex:1;background:#e2ebe3;border-radius:99px;overflow:hidden}
+.lesson-progress-track>span{display:block;width:0;height:100%;background:var(--lesson-green);border-radius:inherit;transition:width .16s ease}
+.lesson-prompt{margin:6px 0 10px;padding:4px 0;line-height:1.6;overflow-wrap:anywhere;white-space:pre-wrap}
+.lesson-answer{border-radius:11px;margin:8px 0}
+.lesson-answer p{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0}
+.lesson-guided-primary{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lesson-guided-primary #lessonRevealCurrent{grid-column:1/-1}
+.lesson-guided-primary .button{min-height:52px;font-weight:700}
+.lesson-guided-secondary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:8px 0}
+.lesson-guided-secondary .button{padding:5px 7px;font-size:12px}
+.lesson-question-list{margin-top:10px;max-width:100%;overflow:auto}
+.lesson-question{font-size:12px}
+.lesson-results{margin-top:10px}
+.lesson-results h2{font-size:16px;margin:0 0 10px}
+.lesson-result-grid{width:100%;grid-template-columns:1fr auto}
+.lesson-mobile-extras{display:none}
+.lesson-persistence,.lesson-save{margin-top:13px;padding-top:13px}
+.lesson-save label{max-width:none}
+.lesson-save-actions{margin-top:8px}
+.lesson-sheet{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:hidden}
+.lesson-sheet[open]{display:flex;flex-direction:column}
+.lesson-sheet-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:0 0 auto;min-height:58px;padding:6px 14px;border-bottom:1px solid var(--lesson-stroke)}
+.lesson-sheet-header h2{margin:0;font-size:17px}
+.lesson-sheet-body{min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px 14px calc(20px + env(safe-area-inset-bottom))}
+.lesson-sheet .lesson-pages{position:static;display:flex;flex-direction:column;max-height:none;overflow:visible;padding:0;border:0}
+.lesson-sheet .lesson-pages:before{display:none}
+.lesson-sheet .lesson-page-button{border:1px solid var(--lesson-stroke);min-height:52px}
+.lesson-sheet .lesson-question-list{display:flex;flex-direction:column;overflow:visible;gap:5px;margin:0}
+.lesson-sheet .lesson-question{width:100%;min-width:0;min-height:48px;text-align:left;white-space:normal;overflow-wrap:anywhere}
+.lesson-sheet .lesson-options{display:flex}
+.lesson-sheet .lesson-persistence,.lesson-sheet .lesson-save{display:block;margin:12px 0 0}
+.lesson-sheet .lesson-persistence:first-child,.lesson-sheet .lesson-save:first-child{margin-top:0;border-top:0;padding-top:0}
+@media(max-width:720px){
+  .lesson-body.lesson-active{display:flex;flex-direction:column;height:100dvh;min-height:0;overflow:hidden}
+  .lesson-active .lesson-header{flex:0 0 auto;padding-top:env(safe-area-inset-top)}
+  .lesson-active .lesson-header-inner{width:100%;min-height:55px;padding:4px max(10px,env(safe-area-inset-right)) 4px max(10px,env(safe-area-inset-left));gap:9px}
+  .lesson-active .lesson-icon{width:34px;height:34px}
+  .lesson-active .lesson-header-copy h1{font-size:14px}
+  .lesson-active .lesson-header-copy p{font-size:10px}
+  .lesson-active .lesson-header-actions{gap:1px}
+  .lesson-active .lesson-main{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;width:100%;margin:0;padding:0}
+  .lesson-active #lessonReady{display:flex;flex:1 1 auto;flex-direction:column;min-height:0}
+  .lesson-active .lesson-layout{display:flex;flex:1 1 auto;flex-direction:column;gap:0;min-height:0;padding:0}
+  .lesson-active .lesson-layout>.lesson-pages{display:none}
+  .lesson-active .lesson-panel{display:flex;flex:1 1 auto;flex-direction:column;min-height:0;padding:6px max(8px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));border:0;border-radius:0;box-shadow:none}
+  .lesson-active .lesson-page-switch{display:grid;grid-template-columns:48px minmax(0,1fr) 48px;gap:4px;align-items:center;flex:0 0 48px;margin-bottom:6px}
+  .lesson-active .lesson-page-arrow{width:48px;height:48px;border:0;border-radius:12px;background:transparent;color:var(--lesson-ink);display:grid;place-items:center}
+  .lesson-active .lesson-page-arrow:disabled{opacity:.3}
+  .lesson-active .lesson-page-arrow svg{width:20px;height:20px}
+  .lesson-active .lesson-page-current{display:grid;grid-template-columns:minmax(0,1fr) 18px;grid-template-rows:auto auto;align-items:center;column-gap:6px;min-width:0;height:48px;padding:5px 12px;border:1px solid var(--lesson-stroke);border-radius:12px;background:#f6f8f5;text-align:left}
+  .lesson-active #lessonPageName{grid-column:1;font-size:12px;font-weight:760;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lesson-active #lessonPagePosition{grid-column:1;font-size:10px;color:var(--lesson-muted)}
+  .lesson-active .lesson-page-current svg{grid-column:2;grid-row:1/3;width:16px;height:16px}
+  .lesson-active .lesson-preview{flex:1 1 auto;height:auto;min-height:0;max-height:none;margin:0;border-radius:13px;background:#edf1ec}
+  .lesson-active .lesson-preview img{width:100%;height:100%;max-width:none;max-height:none}
+  .lesson-active .lesson-study{display:flex;flex:0 0 auto;flex-direction:column;min-height:0;max-height:min(44dvh,330px);margin-top:7px;overflow:auto;overscroll-behavior:contain}
+  .lesson-active .lesson-mode-switch{flex:0 0 auto;min-height:44px}
+  .lesson-active .lesson-mode-switch .button{min-height:38px;font-size:12px}
+  .lesson-active .study-page-description{max-height:2.9em;margin:5px 0;padding:4px 6px;overflow:auto;font-size:11px}
+  .lesson-active .lesson-summary{margin:8px 0 6px;font-size:12px}
+  .lesson-active .lesson-free-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .lesson-active .lesson-free-actions .button{font-size:11px;padding:6px 5px;min-height:44px;white-space:normal}
+  .lesson-active .lesson-study #lessonQuestionList,.lesson-active .lesson-study #lessonGuidedList{display:none}
+  .lesson-active .lesson-study #lessonOtherOptions{display:none}
+  .lesson-active .lesson-study #lessonPersistence,.lesson-active .lesson-study #lessonSave{display:none}
+  .lesson-active .lesson-guided-head{margin:8px 0 5px}
+  .lesson-active .lesson-prompt{margin:4px 0 6px;font-size:13px;max-height:5.2em;overflow:auto}
+  .lesson-active .lesson-answer{margin:6px 0;max-height:95px;overflow:auto;padding:7px 10px;font-size:12px}
+  .lesson-active .lesson-guided-primary .button{min-height:48px}
+  .lesson-active .lesson-guided-secondary{gap:4px;margin:6px 0}
+  .lesson-active .lesson-guided-secondary .button{font-size:11px;min-height:42px;padding:4px 2px}
+  .lesson-active .lesson-mobile-extras{display:flex}
+  .lesson-active .lesson-mobile-extras .button{min-height:38px;width:100%;padding:5px 10px;font-size:12px;border-style:dashed}
+  .lesson-active .lesson-results{margin-top:10px;padding-top:8px}
+  .lesson-active .lesson-result-grid{font-size:12px}
+  .lesson-active .lesson-review-actions{display:grid;grid-template-columns:1fr 1fr}
+  .lesson-active .lesson-review-actions .button{font-size:11px;padding:5px}
+  .lesson-active .lesson-footer{display:none}
+  .lesson-sheet{width:100%;max-width:none;max-height:calc(100dvh - max(10px,env(safe-area-inset-top)));margin:auto 0 0;border-width:1px 0 0;border-radius:22px 22px 0 0}
+  .lesson-sheet-body{padding-bottom:calc(22px + env(safe-area-inset-bottom))}
+  .lesson-dialog:not(.lesson-sheet){max-height:calc(100dvh - 20px);overflow:auto}
+  .lesson-dialog-body{padding:16px}
+}
+@media(max-width:720px) and (max-height:500px){
+  .lesson-active .lesson-header-inner{min-height:44px}
+  .lesson-active .lesson-header-copy p{display:none}
+  .lesson-active .lesson-page-switch{flex-basis:42px;margin-bottom:3px}
+  .lesson-active .lesson-page-arrow,.lesson-active .lesson-page-current{height:42px;min-height:42px}
+  .lesson-active .lesson-study{max-height:51dvh}
+  .lesson-active .lesson-guided-secondary .button{min-height:40px}
+}
+@media(prefers-reduced-motion:reduce){.lesson-progress-track>span{transition:none}}
+@media(forced-colors:active){.lesson-progress-track{border:1px solid CanvasText}.lesson-progress-track>span{background:Highlight}.lesson-mode-switch button[aria-pressed="true"],.lesson-page-button[aria-pressed="true"]{outline:2px solid Highlight}}
+
+
+/* Zoom is independent of the learning session and never changes saved material. */
+.lesson-preview{touch-action:none;user-select:none;-webkit-user-select:none}
+.lesson-preview img{-webkit-user-drag:none;pointer-events:none}
+.lesson-zoom-controls{position:absolute;right:8px;top:8px;z-index:8;display:grid;grid-template-columns:40px 56px 40px;gap:0;border:1px solid #cfd8d0;border-radius:10px;overflow:hidden;background:#ffffffec;box-shadow:0 2px 8px #19271b16}
+.lesson-zoom-controls button{display:grid;place-items:center;width:100%;height:40px;min-width:0;padding:0;border:0;border-left:1px solid #e3e9e4;background:transparent;color:var(--lesson-ink);font:700 13px/1 system-ui;cursor:pointer}
+.lesson-zoom-controls button:first-child{border-left:0;font-size:21px}
+.lesson-zoom-controls button:last-child{font-size:21px}
+.lesson-zoom-controls button:disabled{color:#9aa29c;cursor:not-allowed}
+.lesson-zoom-controls button:hover:not(:disabled){background:#edf4f0}
+@media(max-width:720px){.lesson-zoom-controls{grid-template-columns:44px 58px 44px;top:7px;right:7px}.lesson-zoom-controls button{height:44px}}
+
+/* The editor shared CSS includes a global mobile body-padding reserved for its
+   own fixed navigation. Exported lessons have no such navigation. */
+.lesson-body{padding:0}
+.lesson-body.lesson-active{padding:0}
+/* Keep the document itself within the viewport. Long questions and settings scroll
+   in their own regions, without pushing the image or controls below the screen. */
+@media(max-width:720px){
+  .lesson-active .lesson-main,.lesson-active #lessonReady,
+  .lesson-active .lesson-layout,.lesson-active .lesson-panel{flex:1 1 0;overflow:hidden}
+  .lesson-active .lesson-preview{min-height:80px}
+  .lesson-active .lesson-study{flex:0 1 auto;max-height:min(42dvh,320px)}
+}
+@media(min-width:540px) and (max-width:720px) and (max-height:500px){
+  .lesson-active .lesson-panel{
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(245px,43%);
+    grid-template-rows:42px minmax(0,1fr);gap:5px 8px;min-height:0;
+  }
+  .lesson-active .lesson-page-switch{
+    grid-column:1/-1;grid-row:1;margin:0;height:42px;min-height:42px;
+  }
+  .lesson-active .lesson-preview{
+    grid-column:1;grid-row:2;height:100%;min-height:0;min-width:0;align-self:stretch;
+  }
+  .lesson-active .lesson-study{
+    grid-column:2;grid-row:2;align-self:stretch;
+    max-height:none;min-height:0;height:100%;margin:0;overflow-y:auto;
+  }
+  .lesson-active .lesson-guided-secondary .button{font-size:10px}
+}
+
+/* Exported lesson buttons use the same palette, shape and state as the editor's
+   .button and .button.primary controls; do not layer a separate green-tinted variant. */
+.lesson-body .button{
+  appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;justify-content:center;
+  min-width:0;min-height:48px;margin:0;padding:10px 16px;
+  border:1px solid var(--line,#dadbd6);border-radius:11px;
+  background:#fff;color:var(--text,#20211f);box-shadow:none;
+  font:600 14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;
+  text-align:center;white-space:normal;overflow-wrap:anywhere;
+  -webkit-tap-highlight-color:transparent;cursor:pointer;
+}
+.lesson-body .button:hover:not(:disabled){background:var(--surface-hover,#e9e9e5);border-color:var(--line,#dadbd6)}
+.lesson-body .button:active:not(:disabled){background:#e1e5df}
+.lesson-body .button.primary{background:#16624f;color:white;border-color:#16624f}
+.lesson-body .button.primary:hover:not(:disabled){background:#0e503f;border-color:#0e503f}
+.lesson-body .button:disabled{opacity:.5;box-shadow:none;cursor:not-allowed}
+.lesson-body .lesson-mode-switch .button{
+  min-height:42px;padding:6px 10px;border:1px solid transparent;background:transparent;
+  color:var(--lesson-muted);font-size:13px;font-weight:650;
+}
+.lesson-body .lesson-mode-switch .button[aria-pressed="true"]{
+  border-color:transparent;background:#fff;color:#16624f;
+  box-shadow:0 1px 4px #14291b1f;font-weight:750;
+}
+.lesson-body .lesson-mode-switch .button:hover:not(:disabled):not([aria-pressed="true"]){background:#e2eae3;border-color:transparent}
+.lesson-body .lesson-icon-button{
+  appearance:none;-webkit-appearance:none;display:grid;place-items:center;
+  padding:6px;border:0;background:transparent;color:var(--muted,#666963);box-shadow:none;
+}
+.lesson-body .lesson-icon-button:hover:not(:disabled){background:transparent;color:var(--text,#20211f)}
+.lesson-body .lesson-settings-button svg{width:20px;height:20px}
+.lesson-body .lesson-sheet-body{font-size:14px;line-height:1.6}
+.lesson-body .lesson-sheet-body>section+section{margin-top:16px;padding-top:16px;border-top:1px solid #dadbd6}
+.lesson-body .lesson-options{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+  min-width:0;margin:0;padding:0;border:0
+}
+.lesson-body .lesson-options legend{
+  display:block;grid-column:1/-1;width:100%;padding:0 0 10px;margin:0;
+  font-size:13px;font-weight:700;color:var(--text,#20211f);
+}
+.lesson-body .lesson-options label{
+  display:flex;align-items:center;gap:8px;min-width:0;min-height:48px;
+  padding:8px 10px;border:1px solid var(--line,#dadbd6);border-radius:11px;
+  background:white;color:var(--text,#20211f);font-size:12px;font-weight:600;line-height:1.5;cursor:pointer;
+}
+.lesson-body .lesson-options label:has(input:checked){
+  border-color:#16624f;background:#edf4f0;color:#16624f;
+}
+.lesson-body .lesson-options input[type="radio"]{
+  appearance:auto;-webkit-appearance:auto;flex:0 0 18px;box-sizing:border-box;
+  width:18px;height:18px;min-width:18px;min-height:18px;
+  padding:0;margin:0;border:0;box-shadow:none;accent-color:#16624f;cursor:pointer;
+}
+.lesson-body .lesson-setting{
+  display:flex;flex-direction:row;align-items:flex-start;gap:10px;
+  min-width:0;min-height:0;margin:0;padding:0;cursor:pointer;
+}
+.lesson-body .lesson-setting>input[type="checkbox"]{
+  appearance:auto;-webkit-appearance:auto;flex:0 0 20px;box-sizing:border-box;
+  width:20px;height:20px;min-width:20px;min-height:20px;
+  padding:0;margin:2px 0 0;border:0;box-shadow:none;accent-color:#16624f;cursor:pointer;
+}
+.lesson-body .lesson-setting>span{display:block;flex:1 1 auto;min-width:0}
+.lesson-body .lesson-setting strong{display:block;font-size:13px;font-weight:700;line-height:1.5;color:var(--text,#20211f)}
+.lesson-body .lesson-setting small{display:block;margin-top:4px;font-size:12px;line-height:1.6;color:var(--muted,#666963);overflow-wrap:anywhere}
+.lesson-body .lesson-persistence .lesson-status{margin:8px 0 0 30px;font-size:12px;color:var(--muted,#666963)}
+.lesson-body .lesson-save label{display:grid;gap:7px;margin:0;font-size:13px;font-weight:600}
+.lesson-body .lesson-save input[type="text"]{
+  display:block;box-sizing:border-box;width:100%;height:46px;min-height:46px;min-width:0;
+  margin:0;padding:10px 12px;border:1px solid var(--line,#dadbd6);border-radius:8px;
+  background:white;color:var(--text,#20211f);font-size:16px;line-height:1.4;box-shadow:none;appearance:none;
+}
+.lesson-body .lesson-save-actions{display:block;margin:12px 0 0}
+.lesson-body #lessonSaveEditableButton{display:flex;width:100%;min-height:48px;font-weight:600}
+.lesson-body .lesson-dialog-actions .button{min-width:90px}
+.lesson-body .lesson-sheet-header h2{font-size:17px;font-weight:700}
+@media(max-width:359px){
+  .lesson-body .lesson-options{grid-template-columns:1fr}
+  .lesson-body .lesson-options label{min-height:44px}
+}
+@media(forced-colors:active){
+  .lesson-body .lesson-options label:has(input:checked){outline:2px solid Highlight;outline-offset:-2px}
+  .lesson-body .button.primary{border:1px solid ButtonText}
+}
 </style>
 </head>
 <body class="lesson-body">
-<header class="lesson-header"><div class="lesson-header-inner"><img class="lesson-icon" src="__APP_ICON_DATA_URI__" alt=""><div class="lesson-header-copy"><h1 id="lessonTitle">Reveal Sheet lesson</h1></div><div class="lesson-header-actions"><button id="lessonLanguage" class="lesson-icon-button" type="button">日本語</button><button id="lessonHelpButton" class="lesson-icon-button" type="button" aria-label="Help">?</button></div></div></header>
+<header class="lesson-header">
+  <div class="lesson-header-inner">
+    <img class="lesson-icon" src="__APP_ICON_DATA_URI__" alt="" aria-hidden="true">
+    <div class="lesson-header-copy">
+      <h1 id="lessonTitle">Reveal Sheet lesson</h1>
+      <p id="lessonSubtitle">Study sheet</p>
+    </div>
+    <div class="lesson-header-actions">
+      <button id="lessonLanguage" class="lesson-icon-button lesson-language" type="button" aria-label="Switch language">日本語</button>
+      <button id="lessonSettingsButton" class="lesson-icon-button lesson-settings-button" type="button" aria-haspopup="dialog" aria-controls="lessonSheet" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.6 2.8h4.8l.6 2.3c.5.2 1 .5 1.5.9l2.3-.7 2.4 4.2-1.8 1.6v1.8l1.8 1.6-2.4 4.2-2.3-.7c-.5.4-1 .7-1.5.9l-.6 2.3H9.6L9 18.9c-.5-.2-1-.5-1.5-.9l-2.3.7-2.4-4.2 1.8-1.6v-1.8L2.8 9.5l2.4-4.2 2.3.7c.5-.4 1-.7 1.5-.9z"/><circle cx="12" cy="12" r="3.1"/></svg>
+      </button>
+      <button id="lessonHelpButton" class="lesson-icon-button" type="button" aria-label="Help">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.7 9a2.5 2.5 0 1 1 4.2 1.8c-1 .9-1.9 1.2-1.9 2.5M12 17h.01"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
 <main class="lesson-main">
-<section id="lessonWaiting" class="lesson-waiting" role="status">Preparing lesson…</section>
-<section id="lessonError" class="lesson-error" hidden>Could not display this lesson image.</section>
-<section id="lessonReady" hidden>
-<div class="lesson-layout">
-<aside id="lessonPages" class="lesson-pages" aria-label="Pages"></aside>
-<section class="lesson-panel">
-<div class="lesson-preview"><img id="previewImage" alt="" hidden><svg id="maskSvg" class="mask-layer" hidden aria-label="Covers"></svg></div>
-<p id="lessonPageDescription" class="study-page-description" hidden></p>
-<div class="lesson-study">
-<div class="lesson-mode-switch"><button class="button" id="lessonFreeMode" type="button" aria-pressed="true"></button><button class="button" id="lessonGuidedMode" type="button" aria-pressed="false"></button></div>
-<div id="lessonFreePanel"><p class="lesson-summary"><span id="lessonCheckedLabel"></span> <strong id="lessonConfirmedCount">0</strong> / <strong id="lessonQuestionCount">0</strong></p><div class="lesson-actions"><button class="button" id="lessonHideAll" type="button"></button><button class="button" id="lessonRevealPage" type="button"></button></div><div id="lessonQuestionList" class="lesson-question-list" aria-label="Questions"></div><div id="lessonFreeAnswerBox" class="lesson-answer" role="region" aria-live="polite" aria-atomic="true" hidden><strong id="lessonFreeAnswerLabel"></strong><p id="lessonFreeAnswer"></p></div></div>
-<div id="lessonGuidedPanel" hidden>
-<fieldset class="lesson-options"><legend id="lessonOtherLegend"></legend><label><input id="lessonOtherHidden" type="radio" name="lessonOther" value="hidden" checked><span id="lessonOtherHiddenText"></span></label><label><input id="lessonOtherVisible" type="radio" name="lessonOther" value="visible"><span id="lessonOtherVisibleText"></span></label></fieldset>
-<p><strong id="lessonGuidedProgress" role="status" aria-live="polite">0 / 0</strong></p><p id="lessonPrompt" hidden></p><div id="lessonAnswerBox" class="lesson-answer" role="region" aria-live="polite" aria-atomic="true" hidden><p id="lessonAnswer"></p></div>
-<div class="lesson-actions"><button class="button primary" id="lessonRevealCurrent" type="button"></button><button class="button" id="lessonRecalled" type="button"></button><button class="button" id="lessonAgain" type="button"></button><button class="button" id="lessonSkip" type="button"></button><button class="button" id="lessonPrevious" type="button"></button><button class="button" id="lessonFinish" type="button"></button></div>
-<div id="lessonGuidedList" class="lesson-question-list" aria-label="Questions"></div>
-<section id="lessonResults" class="lesson-results" hidden><h2 id="lessonResultsTitle"></h2><div class="lesson-result-grid"><span id="lessonTotalLabel"></span><strong id="lessonResultTotal">0</strong><span id="lessonRecalledLabel"></span><strong id="lessonResultRecalled">0</strong><span id="lessonAgainLabel"></span><strong id="lessonResultAgain">0</strong><span id="lessonSkippedLabel"></span><strong id="lessonResultSkipped">0</strong><span id="lessonUnansweredLabel"></span><strong id="lessonResultUnanswered">0</strong></div><div class="lesson-actions"><button class="button" id="lessonReviewAgain" type="button"></button><button class="button" id="lessonReviewUnchecked" type="button"></button></div></section>
-</div>
-<section class="lesson-persistence"><label class="lesson-setting"><input id="lessonStudyOptIn" type="checkbox"><span><strong id="lessonStudyOptInText"></strong><small id="lessonStudyOptInNote"></small></span></label><p id="lessonStudyStatus" class="lesson-status" role="status" aria-live="polite"></p></section>
-<section class="lesson-save"><label><span id="lessonFilenameLabel"></span><input id="lessonFilename" type="text" value="reveal-sheet" autocomplete="off" spellcheck="false"></label><div class="lesson-save-actions"><button class="button" id="lessonSaveEditableButton" type="button"></button></div></section>
-</div>
-</section>
-</div>
-<footer class="lesson-footer">Reveal Sheet · Browser Kitty · Fully local processing</footer>
-</section>
+  <section id="lessonWaiting" class="lesson-waiting" role="status">Preparing lesson…</section>
+  <section id="lessonError" class="lesson-error" role="alert" hidden>Could not display this lesson image.</section>
+  <section id="lessonReady" hidden>
+    <div class="lesson-layout">
+      <aside id="lessonPages" class="lesson-pages" aria-label="Pages"></aside>
+      <section class="lesson-panel">
+        <nav class="lesson-page-switch" id="lessonPageSwitch" aria-label="Page navigation">
+          <button class="lesson-page-arrow" id="lessonPrevPage" type="button" aria-label="Previous page">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <button class="lesson-page-current" id="lessonPageToggle" type="button" aria-controls="lessonSheet" aria-haspopup="dialog" aria-expanded="false">
+            <span id="lessonPageName"></span><small id="lessonPagePosition"></small>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+          </button>
+          <button class="lesson-page-arrow" id="lessonNextPage" type="button" aria-label="Next page">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </nav>
+        <div class="lesson-preview" id="lessonStage"><img id="previewImage" alt="" hidden draggable="false"><svg id="maskSvg" class="mask-layer" hidden aria-label="Covers"></svg>
+          <div id="lessonZoomControls" class="lesson-zoom-controls" role="group" aria-label="Image zoom">
+            <button id="lessonZoomOut" type="button" aria-label="Zoom out">−</button>
+            <button id="lessonZoomFit" type="button" aria-label="Fit image">100%</button>
+            <button id="lessonZoomIn" type="button" aria-label="Zoom in">＋</button>
+          </div>
+        </div>
+        <div class="lesson-study">
+          <div class="lesson-mode-switch" role="group" aria-label="Study mode"><button class="button" id="lessonFreeMode" type="button" aria-pressed="true"></button><button class="button" id="lessonGuidedMode" type="button" aria-pressed="false"></button></div>
+          <p id="lessonPageDescription" class="study-page-description" hidden></p>
+          <div id="lessonFreePanel">
+            <p class="lesson-summary"><span id="lessonCheckedLabel"></span> <strong id="lessonConfirmedCount">0</strong> / <strong id="lessonQuestionCount">0</strong></p>
+            <div class="lesson-actions lesson-free-actions"><button class="button" id="lessonHideAll" type="button"></button><button class="button" id="lessonRevealPage" type="button"></button></div>
+            <div id="lessonQuestionList" class="lesson-question-list" aria-label="Questions"></div>
+            <div id="lessonFreeAnswerBox" class="lesson-answer" role="region" aria-live="polite" aria-atomic="true" hidden><strong id="lessonFreeAnswerLabel"></strong><p id="lessonFreeAnswer"></p></div>
+          </div>
+          <div id="lessonGuidedPanel" hidden>
+            <fieldset id="lessonOtherOptions" class="lesson-options"><legend id="lessonOtherLegend"></legend><label><input id="lessonOtherHidden" type="radio" name="lessonOther" value="hidden" checked><span id="lessonOtherHiddenText"></span></label><label><input id="lessonOtherVisible" type="radio" name="lessonOther" value="visible"><span id="lessonOtherVisibleText"></span></label></fieldset>
+            <div class="lesson-guided-head"><strong id="lessonGuidedProgress" role="status" aria-live="polite">0 / 0</strong><div id="lessonProgressTrack" class="lesson-progress-track" role="progressbar" aria-valuemin="0" aria-valuenow="0" aria-valuemax="1"><span id="lessonProgressFill"></span></div></div>
+            <p id="lessonPrompt" class="lesson-prompt" hidden></p>
+            <div id="lessonAnswerBox" class="lesson-answer" role="region" aria-live="polite" aria-atomic="true" hidden><p id="lessonAnswer"></p></div>
+            <div class="lesson-actions lesson-guided-primary">
+              <button class="button primary" id="lessonRevealCurrent" type="button"></button>
+              <button class="button primary" id="lessonRecalled" type="button"></button>
+              <button class="button" id="lessonAgain" type="button"></button>
+            </div>
+            <div class="lesson-actions lesson-guided-secondary">
+              <button class="button" id="lessonPrevious" type="button"></button>
+              <button class="button" id="lessonSkip" type="button"></button>
+              <button class="button" id="lessonFinish" type="button"></button>
+            </div>
+            <div id="lessonGuidedList" class="lesson-question-list" aria-label="Questions"></div>
+            <section id="lessonResults" class="lesson-results" hidden>
+              <h2 id="lessonResultsTitle"></h2>
+              <div class="lesson-result-grid"><span id="lessonTotalLabel"></span><strong id="lessonResultTotal">0</strong><span id="lessonRecalledLabel"></span><strong id="lessonResultRecalled">0</strong><span id="lessonAgainLabel"></span><strong id="lessonResultAgain">0</strong><span id="lessonSkippedLabel"></span><strong id="lessonResultSkipped">0</strong><span id="lessonUnansweredLabel"></span><strong id="lessonResultUnanswered">0</strong></div>
+              <div class="lesson-actions lesson-review-actions"><button class="button" id="lessonReviewAgain" type="button"></button><button class="button" id="lessonReviewUnchecked" type="button"></button></div>
+            </section>
+          </div>
+          <div class="lesson-mobile-extras"><button class="button" id="lessonQuestionsButton" type="button" aria-controls="lessonSheet" aria-haspopup="dialog"></button></div>
+          <section id="lessonPersistence" class="lesson-persistence"><label class="lesson-setting"><input id="lessonStudyOptIn" type="checkbox"><span><strong id="lessonStudyOptInText"></strong><small id="lessonStudyOptInNote"></small></span></label><p id="lessonStudyStatus" class="lesson-status" role="status" aria-live="polite"></p></section>
+          <section id="lessonSave" class="lesson-save"><label><span id="lessonFilenameLabel"></span><input id="lessonFilename" type="text" value="reveal-sheet" autocomplete="off" spellcheck="false"></label><div class="lesson-save-actions"><button class="button primary lesson-download-button" id="lessonSaveEditableButton" type="button"></button></div></section>
+        </div>
+      </section>
+    </div>
+    <footer class="lesson-footer">Reveal Sheet · Browser Kitty · Fully local processing</footer>
+  </section>
 </main>
+<dialog id="lessonSheet" class="lesson-dialog lesson-sheet" aria-labelledby="lessonSheetTitle">
+  <div class="lesson-sheet-header"><h2 id="lessonSheetTitle"></h2><button id="lessonSheetClose" class="lesson-icon-button" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg></button></div>
+  <div id="lessonSheetBody" class="lesson-sheet-body"></div>
+</dialog>
 <dialog id="lessonHelpDialog" class="lesson-dialog" aria-labelledby="lessonHelpTitle"><div class="lesson-dialog-body"><h2 id="lessonHelpTitle"></h2><p id="lessonHelpBody"></p><div class="lesson-dialog-actions"><button class="button" id="lessonHelpClose" type="button"></button></div></div></dialog>
-<dialog id="lessonConfirmDialog" class="lesson-dialog"><div class="lesson-dialog-body"><h2 id="lessonConfirmTitle"></h2><p id="lessonConfirmMessage"></p><div class="lesson-dialog-actions"><button class="button" id="lessonConfirmCancel" type="button"></button><button class="button primary" id="lessonConfirmOk" type="button"></button></div></div></dialog>
+<dialog id="lessonConfirmDialog" class="lesson-dialog" aria-labelledby="lessonConfirmTitle" aria-describedby="lessonConfirmMessage"><div class="lesson-dialog-body"><h2 id="lessonConfirmTitle"></h2><p id="lessonConfirmMessage"></p><div class="lesson-dialog-actions"><button class="button" id="lessonConfirmCancel" type="button"></button><button class="button primary" id="lessonConfirmOk" type="button"></button></div></div></dialog>
 <script id="reveal-sheet-data" type="application/json">__REVEAL_LESSON_JSON__</script>
 <script>/* REVEAL:PLAYER_RUNTIME */</script>
 <noscript><p>This Reveal Sheet lesson requires JavaScript.</p></noscript>

@@ -1,5 +1,51 @@
 # Changelog
 
+## 1.1.0 - 2026-10-28
+
+- Fixed save-error diagnostics visibility: the expandable error details now appear immediately below the Save heading instead of after the export buttons; the same short diagnostic code is included in the warning toast, which previously showed only the generic error. Added a discreet note so users can recognize that the newly loaded page supports diagnostics. Mobile viewport regression covers an explicit preparation failure and verifies that details remain in view.
+
+
+- Added a privacy-preserving, copyable save-error diagnostic code (RS-SAVE-3) reporting the output format, preparation/download phase, error classification and running version, without exposing file contents or filenames. Retained safe exception classes across export/download error wrapping so recurring Android failures can be investigated rather than incorrectly declared fixed.
+
+
+- Fixed the identified root cause of multi-megabyte image export failures: the grouped/repeated Base64-validation regex could raise a JavaScript `RangeError: Maximum call stack size exceeded` on large strings. Both document validation and image Base64 decoding now use a linear, stack-safe form, preserving the existing format and padding restrictions.
+
+
+- Fixed a high-memory save path affecting large image-based sheets: entering Save no longer eagerly materializes *both* editable JSON and lesson HTML. Each format is prepared on demand, and a failure to produce one format does not prevent saving the other.
+- Constructed both editable JSON and exported HTML as segmented Blob parts, reusing validated Base64 asset strings without materializing full JSON or HTML strings. Output bytes remain compatible with the existing formats; Blob.size replaces the full-size UTF-8 byte array allocation.
+- Delayed download Blob URL revocation to allow mobile browsers time to start large downloads; the original document remains unchanged if preparation fails.
+- Save-screen file sizes now display “calculated when saving” until that file has actually been prepared, rather than claiming both files have been measured.
+
+- Corrected exported lesson UI to match the authoring app's actual white/green button styles instead of a separate pale-green design; the editable-data save button now uses the same primary-green style as the editor.
+- Enabled the Settings & Save gear on desktop (previously blocked by a mobile-only guard), preserving Escape/focus restoration and original settings placement on close.
+- Hardened display of high-resolution imported photos: check already-complete image loads, retry a transient Blob URL decode failure with a new URL and load event, then provide a localized **Retry image display** action without discarding the stored image.
+- Added offline browser regressions for desktop settings and a synthetic 2160×3840 tall JPEG with a simulated image-decode failure. The user's uploaded photo itself is not included in the public repository.
+
+
+- Refined the exported lesson Settings & Save sheet after real Android Chrome screenshot feedback: fixed native checkbox/radio dimensions, unified card selections and save controls, replaced the malformed gear with a clean SVG, and normalized button typography, borders, corners and pressed states without affecting the main editor.
+
+
+- Rebuilt exported `.reveal.html` study UI: a compact mobile page switcher, image-first viewport, segmented free/guided study, contextual reveal/assessment actions, and bottom sheets for page/question lists, study settings, and editable download.
+- Added exported-lesson 100%/zoom controls and gesture-based pan/pinch for close study of image details, with per-page viewport state and a visible progress indicator.
+- On short landscape phones, show the image alongside study controls instead of shrinking the image below the controls; keep long prompts and settings in local scroll regions without scrolling the whole app.
+- Retained Japanese/English switching, free/guided session semantics, accessibility gating of unrevealed answers, opt-in study persistence, the runtime CSP hash and entirely self-contained output.
+
+
+- Corrected image panning to track pointer movement within pan bounds at every zoom level, including letterboxed portrait/landscape images; removed transform easing during direct manipulation.
+- Kept pinch-to-one-finger panning continuous and restored the starting view on cancellation; study drags on covers no longer trigger an answer tap.
+- Replaced the long loaded-phone editing page with a viewport-sized image workspace, bottom editing dock, nearby Undo/Redo, stable selected-cover actions, and modal bottom sheets for pages, cover settings, precise adjustment, and additional tools.
+- On very short landscape screens, the four editing tools and three selected-cover actions share one row, separate from zoom controls.
+- Kept in-memory study progress across Create / Save / Study navigation, even when local persistence is off; ordinary edits reconcile only affected questions while a new/imported sheet starts fresh.
+- Displayed failed operations as localized warning toasts and, when a settings dialog is open, in a visible dialog alert.
+- Replaced the modal fine-adjust sheet with a two-row inline toolbar that temporarily replaces the edit dock, leaving the image bright and visible (compact single-row controls in short landscape). Escape or Close restores editing.
+- Explained that a 100% image cannot pan until zoomed, with a persistent Japanese/English hint that disappears above 100%.
+- Added a phone camera input for photos, using the same existing JPEG/static PNG/static WebP validation and on-device normalization flow.
+- Added mobile Place covers / Move image controls, two-finger pinch zoom, and precise cover move/resize buttons with 1 / 5 / 10 px steps, plus nearby duplicate and delete.
+- Collapsed the mobile page-card carousel behind an accessible page-title switcher with Previous and Next buttons.
+- Preserved desktop draw/Shift-pan editing, mobile guided study, Undo/Redo, grouping, JSON/lesson HTML compatibility, and local-only processing.
+- Removed the outdated development-stage disclosure from Japanese and English UI and its unused styles (stacked on PR #15).
+- Extended browser regression tests for camera-file import, mobile page switching, edits and pinch zoom; physical smartphone verification remains pending.
+
 ## 1.0.2 - 2026-10-27
 
 - Keep the header version visible on narrow smartphones without overlapping the app name or language/Help controls.

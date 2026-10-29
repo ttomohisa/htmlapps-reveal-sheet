@@ -24,13 +24,14 @@ test('T10: study progress opt-in is separate and resume starts with the current 
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(2);
 });
 
-test('T10: changed document identity does not apply an older study record',async({page})=>{
+test('T10: same-tab metadata edits preserve live study progress without reopening older records',async({page})=>{
   await openApp(page);await makeTwo(page);await enable(page,'#studyOptIn');await enterGuided(page);
   await page.locator('#revealCurrentButton').click();await page.locator('#recalledButton').click();await expect(page.locator('#studySaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
   await page.locator('#createButton').click();await page.locator('#pageList .page-item[aria-current="page"] .page-card-title').fill('Changed content');await page.locator('#pageList .page-item[aria-current="page"] .page-card-title').press('Enter');
   await page.locator('#studyButton').click();
-  await expect(page.locator('#appConfirmDialog')).toBeHidden();await expect(page.locator('#freeStudyPanel')).toBeVisible();
-  await page.locator('#guidedModeButton').click();await expect(page.locator('#guidedQuestionList button').first()).toHaveAttribute('data-rating','unanswered');
+  await expect(page.locator('#appConfirmDialog')).toBeHidden();
+  await expect(page.locator('#guidedPanel')).toBeVisible();
+  await expect(page.locator('#guidedQuestionList button').first()).toHaveAttribute('data-rating','recalled');
 });
 
 test('T10: clearing only study records keeps the draft setting/data and unrelated browser data',async({page})=>{
