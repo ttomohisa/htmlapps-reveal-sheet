@@ -26,7 +26,8 @@ function createPlayer({core,projectIO,persistence,env,envelope}) {
     const dialog=$('lessonSheet');if(dialog.open)dialog.close();restoreSheet();
   }
   function openSheet(kind,opener){
-    if(!mobileLayout.matches)return;
+    // Desktop also needs a working Settings & Save entry point.
+    if(!mobileLayout.matches&&kind!=='settings')return;
     const selectors={
       pages:['#lessonPages'],
       questions:[mode==='guided'?'#lessonGuidedList':'#lessonQuestionList'],
