@@ -537,3 +537,8 @@ button:disabled,input:disabled { cursor:not-allowed; }
 .camera-actions{display:flex;gap:8px;flex-wrap:wrap}
 .camera-actions .button{flex:1 1 160px;min-height:48px}
 @media(max-width:520px){.camera-dialog{max-height:calc(100dvh - 12px)}.camera-body{padding:10px}.camera-actions{display:grid;grid-template-columns:1fr 1fr}}
+
+.study-mode #freeStudyPanel>.question-list .question-item[aria-pressed="true"]{border-color:#aac6b6;background:#edf4f0;color:var(--accent)}
+.study-mode #freeStudyPanel>.question-list .question-item[aria-pressed="true"]:hover{background:#e1eee6}
+.has-pages.create-mode .secondary-tools #newButton{margin-left:10px;border-color:var(--line-strong);background:var(--surface-muted)}
+@media(max-width:767px){.has-pages.create-mode .secondary-tools #newButton{margin-left:0}}
