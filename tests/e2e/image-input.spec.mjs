@@ -105,7 +105,7 @@ test('T02: tall 2160x3840 photo remains visible after a transient preview decode
   const image=page.locator('#previewImage');
   expect(await image.evaluate(node=>[node.naturalWidth,node.naturalHeight])).toEqual([2160,3840]);
   await expect(page.locator('#imageBytes')).not.toHaveText('');
-  await page.locator('#studyButton').click();
+  await page.locator('#saveButton').click();
   await page.locator('#createButton').click();
   await expect(image).toBeVisible({timeout:15000});
 });
