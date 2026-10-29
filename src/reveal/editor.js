@@ -309,12 +309,16 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   }
   function status(key, params={}) {
     lastStatus=key;progress=Object.keys(params).length?params:null;
-    const message=t(key,params);$('inputStatus').textContent=message;
+    const message=t(key,params);
+    const detail=key.startsWith('error_')&&mode==='save'&&!$('saveDiagnostics').hidden
+      ?$('saveDiagnosticText').textContent:'';
+    const visibleMessage=detail?message+'\n'+detail:message;
+    $('inputStatus').textContent=visibleMessage;
     const warning=key.startsWith('error_')||key==='partialStatus';
     const sheetAlert=$('editorSheetAlert');
     if(warning){
-      env.AppToast?.show({message,tone:'warning',duration:6000});
-      if($('editorSheet').open){sheetAlert.textContent=message;sheetAlert.hidden=false;}
+      env.AppToast?.show({message:visibleMessage,tone:'warning',duration:detail?12000:6000});
+      if($('editorSheet').open){sheetAlert.textContent=visibleMessage;sheetAlert.hidden=false;}
     }else if(!sheetAlert.hidden){sheetAlert.hidden=true;sheetAlert.textContent='';}
   }
   function makePageIcon(kind){
@@ -409,7 +413,9 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     env.document.body.classList.toggle('has-pages',doc.pages.length>0);env.document.body.classList.toggle('is-busy',busy);env.document.body.classList.toggle('create-mode',mode==='create');env.document.body.classList.toggle('study-mode',mode==='study');env.document.body.classList.toggle('save-mode',mode==='save');
     $('sheetTitle').textContent=doc.title;
     $('sheetCount').textContent=t('pageCount',{count:doc.pages.length});
-    $('inputStatus').textContent=t(lastStatus,progress||{});
+    const savedDiagnostic=lastStatus.startsWith('error_')&&mode==='save'&&!$('saveDiagnostics').hidden
+      ?$('saveDiagnosticText').textContent:'';
+    $('inputStatus').textContent=t(lastStatus,progress||{})+(savedDiagnostic?'\n'+savedDiagnostic:'');
     $('newButton').disabled=!doc.pages.length&&!busy;
     $('addButton').disabled=busy||doc.pages.length>=core.limits.maxPages;
     $('imageInput').disabled=busy;
@@ -909,6 +915,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('saveDiagnosticText').textContent=['RS-SAVE-3',appVersion,format,stepCode,code,safeType].join(' / ');
     const details=$('saveDiagnostics');
     details.hidden=false;details.open=true;
+    details.scrollIntoView({block:'nearest',behavior:'auto'});
   }
   async function copySaveDiagnostics(){
     const value=$('saveDiagnosticText').textContent;if(!value)return;
