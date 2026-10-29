@@ -132,7 +132,7 @@ function createPlayer({core,projectIO,persistence,env,envelope}) {
   function visibleSvg(hidden){if(hidden)$('maskSvg').setAttribute('hidden','');else $('maskSvg').removeAttribute('hidden');}
   async function showPage(nextId){
     const next=doc.pages.find(item=>item.id===nextId);if(!next)return;resetImageGesture();pageId=next.id;const a=doc.assets.find(item=>item.id===next.imageId),token=++imageGeneration,img=$('previewImage');
-    img.hidden=true;visibleSvg(true);img.src='data:image/png;base64,'+a.dataBase64;
+    img.hidden=true;visibleSvg(true);img.src='data:'+a.mime+';base64,'+a.dataBase64;
     try{await img.decode();}catch{if(token===imageGeneration)$('lessonError').hidden=false;return;}
     if(token!==imageGeneration)return;img.hidden=false;studyView.mount({document:doc,pageId:next.id,session,mode:'study',selectedMaskId:null,selectedMaskIds:[]});visibleSvg(false);renderPages();refreshNavigation();render();refreshZoom();
   }
