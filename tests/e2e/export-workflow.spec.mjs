@@ -103,7 +103,7 @@ test('T14: HTML generation failure cannot prevent saving editable JSON',async({p
   const json=page.waitForEvent('download');
   await page.locator('#downloadJsonButton').click();
   const saved=await json;
-  expect(saved.suggestedFilename()).toMatch(/\\.reveal\\.json$/);
+  expect(saved.suggestedFilename()).toMatch(/\.reveal\.json$/);
   await page.locator('#downloadHtmlButton').click();
   await expect(page.locator('#inputStatus')).toContainText(/準備できません|Could not prepare/i);
   await expect(page.locator('#pageList .page-item')).toHaveCount(1);
@@ -111,5 +111,5 @@ test('T14: HTML generation failure cannot prevent saving editable JSON',async({p
   const html=page.waitForEvent('download');
   await page.locator('#downloadHtmlButton').click();
   const savedHtml=await html;
-  expect(savedHtml.suggestedFilename()).toMatch(/\\.reveal\\.html$/);
+  expect(savedHtml.suggestedFilename()).toMatch(/\.reveal\.html$/);
 });
