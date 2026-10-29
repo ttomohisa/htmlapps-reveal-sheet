@@ -127,7 +127,7 @@ function createImageIO({ core, env }) {
     return env.btoa(binary);
   }
   function decodeBase64(value) {
-    if(typeof value!=='string' || value.length===0 || value.length%4!==0 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value))throw error('INVALID_SHEET');
+    if(typeof value!=='string' || value.length===0 || value.length%4!==0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value))throw error('INVALID_SHEET');
     const binary=env.atob(value),bytes=new Uint8Array(binary.length);
     for(let n=0;n<binary.length;n++)bytes[n]=binary.charCodeAt(n);
     // Reject noncanonical trailing pad bits too.
