@@ -435,7 +435,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     const page=doc.pages.find(p=>p.id===selectedId),asset=page&&doc.assets.find(a=>a.id===page.imageId);
     if(asset){$('imageDimensions').textContent=`${asset.width} × ${asset.height} px`;$('imageBytes').textContent=formatBytes(asset.byteLength);}
     const totalAssetBytes=doc.assets.reduce((sum,a)=>sum+a.byteLength,0);
-    $('totalBytes').textContent=formatBytes(totalAssetBytes);$('savePageCount').textContent=String(doc.pages.length);$('saveQuestionCount').textContent=String(doc.questions.length);$('saveAuxCount').textContent=String(doc.masks.filter(mask=>mask.kind==='auxiliary').length);$('saveImageBytes').textContent=formatBytes(totalAssetBytes);$('saveJsonBytes').textContent=preparedJsonExport?formatBytes(preparedJsonExport.size):'—';$('saveHtmlBytes').textContent=preparedLessonExport?formatBytes(preparedLessonExport.size):'—';$('downloadJsonButton').disabled=busy||exportBusy||doc.pages.length===0;$('downloadHtmlButton').disabled=busy||exportBusy||doc.questions.length===0||!playerTemplate;$('previewLessonButton').disabled=busy||exportBusy||doc.questions.length===0||!playerTemplate;
+    $('totalBytes').textContent=formatBytes(totalAssetBytes);$('savePageCount').textContent=String(doc.pages.length);$('saveQuestionCount').textContent=String(doc.questions.length);$('saveAuxCount').textContent=String(doc.masks.filter(mask=>mask.kind==='auxiliary').length);$('saveImageBytes').textContent=formatBytes(totalAssetBytes);$('saveJsonBytes').textContent=preparedJsonExport?formatBytes(preparedJsonExport.size):t('saveSizeOnDemand');$('saveHtmlBytes').textContent=preparedLessonExport?formatBytes(preparedLessonExport.size):t('saveSizeOnDemand');$('downloadJsonButton').disabled=busy||exportBusy||doc.pages.length===0;$('downloadHtmlButton').disabled=busy||exportBusy||doc.questions.length===0||!playerTemplate;$('previewLessonButton').disabled=busy||exportBusy||doc.questions.length===0||!playerTemplate;
     if(!$('outputFilename').value)$('outputFilename').value=filenameBase;
     refreshStudy();updateToolButtons();renderOverlay();refreshViewControls();
   }
@@ -868,28 +868,9 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     mode='study';mobilePagesOpen=false;const pageChanged=syncGuidedPage();refreshCopy();if(pageChanged)showPreview(true);
   }
   function beginCreate(){cancelTransientInteraction();closeEditorSheet({restoreFocus:false});scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='create';mobilePagesOpen=false;fineAdjustOpen=false;previousStudySummary=null;refreshCopy();$(mobileLayout.matches&&doc.pages.length?'drawModeButton':'addButton').focus({preventScroll:true});}
-  async function prepareSaveExports(){
-    if(!doc.pages.length)return null;
-    const token=exportGeneration,snapshot=doc;exportBusy=true;preparedJsonExport=null;preparedLessonExport=null;status('exportPreparing');refreshCopy();
-    try{
-      const json=await projectIO.prepareExport(snapshot,{kind:'json',filename:$('outputFilename').value,appVersion,preview:true},token);
-      if(token!==exportGeneration||snapshot!==doc)return null;
-      let html=null;
-      if(doc.questions.length&&playerTemplate){
-        html=await projectIO.prepareExport(snapshot,{kind:'html',filename:$('outputFilename').value,playerTemplate,appVersion,preview:true},token);
-        if(token!==exportGeneration||snapshot!==doc)return null;
-      }
-      preparedJsonExport=json;preparedLessonExport=html;status('exportReady');return {json,html};
-    }catch(error){
-      if(token!==exportGeneration)return null;
-      status('error_'+(error?.code||'EXPORT_FAILED'));return null;
-    }finally{
-      if(token===exportGeneration){exportBusy=false;refreshCopy();}
-    }
-  }
   function beginSave(){
     if(!doc.pages.length||busy||exportBusy)return;cancelTransientInteraction();closeEditorSheet({restoreFocus:false});scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='save';mobilePagesOpen=false;fineAdjustOpen=false;selectedMaskId=null;preparedJsonExport=null;preparedLessonExport=null;
-    refreshCopy();$('outputFilename').focus({preventScroll:true});prepareSaveExports();
+    status('exportChoose');refreshCopy();$('outputFilename').focus({preventScroll:true});
   }
   function applyImported(envelope,{fromLocal=false}={}){
     cancelTransientInteraction();closeEditorSheet({restoreFocus:false});
@@ -929,6 +910,9 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       status('saveStarted',{name:prepared.filename});refreshCopy();
     }catch(error){
       if(token!==exportGeneration)return;
+      // Keep the original document intact and report only diagnostic metadata.
+      // Never log the user's images, titles, filenames or file contents.
+      env.console?.warn?.('Reveal Sheet save failed',{kind,code:error?.code||'EXPORT_FAILED',errorType:error?.name||'Error'});
       status('error_'+(error?.code||'EXPORT_FAILED'));refreshCopy();
     }finally{
       if(token===exportGeneration){exportBusy=false;refreshCopy();}
