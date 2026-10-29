@@ -870,7 +870,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function beginCreate(){cancelTransientInteraction();closeEditorSheet({restoreFocus:false});scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='create';mobilePagesOpen=false;fineAdjustOpen=false;previousStudySummary=null;refreshCopy();$(mobileLayout.matches&&doc.pages.length?'drawModeButton':'addButton').focus({preventScroll:true});}
   function beginSave(){
     if(!doc.pages.length||busy||exportBusy)return;cancelTransientInteraction();closeEditorSheet({restoreFocus:false});scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='save';mobilePagesOpen=false;fineAdjustOpen=false;selectedMaskId=null;preparedJsonExport=null;preparedLessonExport=null;
-    status('exportChoose');refreshCopy();$('outputFilename').focus({preventScroll:true});
+    clearSaveDiagnostics();status('exportChoose');refreshCopy();$('outputFilename').focus({preventScroll:true});
   }
   function applyImported(envelope,{fromLocal=false}={}){
     cancelTransientInteraction();closeEditorSheet({restoreFocus:false});
@@ -894,6 +894,39 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       status('error_'+code);refreshCopy();
     }
   }
+  function clearSaveDiagnostics(){
+    const details=$('saveDiagnostics');
+    details.hidden=true;details.open=false;$('saveDiagnosticText').textContent='';
+  }
+  function showSaveDiagnostics(kind,step,error){
+    // This local-only diagnostic excludes file names, titles and user content.
+    const types=['Error','RangeError','TypeError','ReferenceError','SyntaxError','QuotaExceededError','NotAllowedError','SecurityError','InvalidStateError','AbortError','OutOfMemoryError'];
+    const cause=error?.causeType||error?.name||'Error';
+    const safeType=types.includes(cause)?cause:'OtherError';
+    const code=['EXPORT_FAILED','INVALID_SHEET','LIMIT_EXCEEDED','UNSUPPORTED_SCHEMA'].includes(error?.code)?error.code:'EXPORT_FAILED';
+    const stepCode=step==='download'?'DOWNLOAD':'PREPARE';
+    const format=kind==='html'?'HTML':'JSON';
+    $('saveDiagnosticText').textContent=['RS-SAVE-3',appVersion,format,stepCode,code,safeType].join(' / ');
+    const details=$('saveDiagnostics');
+    details.hidden=false;details.open=true;
+  }
+  async function copySaveDiagnostics(){
+    const value=$('saveDiagnosticText').textContent;if(!value)return;
+    try{
+      if(env.navigator?.clipboard?.writeText){
+        await env.navigator.clipboard.writeText(value);
+      }else{
+        const input=env.document.createElement('textarea');
+        input.value=value;input.setAttribute('readonly','');input.style.position='fixed';input.style.top='-9999px';
+        env.document.body.append(input);input.select();
+        const ok=env.document.execCommand('copy');input.remove();
+        if(!ok)throw new Error('Copy unavailable');
+      }
+      env.AppToast?.show({message:t('saveDiagnosticCopied'),tone:'info',duration:3000});
+    }catch{
+      env.AppToast?.show({message:t('saveDiagnosticCopyFailed'),tone:'warning',duration:4500});
+    }
+  }
   async function downloadPrepared(kind){
     if(busy||exportBusy||!doc.pages.length||(kind==='html'&&(!doc.questions.length||!playerTemplate)))return;
     const token=exportGeneration,snapshot=doc;let saveStep='prepare';exportBusy=true;status('exportPreparing');refreshCopy();
@@ -907,17 +940,18 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       saveStep='download';projectIO.requestDownload(prepared);
       if(kind==='html')preparedLessonExport=prepared;else preparedJsonExport=prepared;
       filenameBase=prepared.filename.replace(kind==='html'?/\.reveal\.html$/i:/\.reveal\.json$/i,'');$('outputFilename').value=filenameBase;
-      status('saveStarted',{name:prepared.filename});refreshCopy();
+      clearSaveDiagnostics();status('saveStarted',{name:prepared.filename});refreshCopy();
     }catch(error){
       if(token!==exportGeneration)return;
       // Keep the original document intact and report only diagnostic metadata.
       // Never log the user's images, titles, filenames or file contents.
       env.console?.warn?.('Reveal Sheet save failed',{kind,step:saveStep,code:error?.code||'EXPORT_FAILED',errorType:error?.name||'Error'});
-      status('error_'+(error?.code||'EXPORT_FAILED'));refreshCopy();
+      showSaveDiagnostics(kind,saveStep,error);status('error_'+(error?.code||'EXPORT_FAILED'));refreshCopy();
     }finally{
       if(token===exportGeneration){exportBusy=false;refreshCopy();}
     }
   }
+  $('copySaveDiagnosticButton').addEventListener('click',copySaveDiagnostics);
   function downloadJson(){return downloadPrepared('json');}
   function downloadHtml(){return downloadPrepared('html');}
   function keydown(event){
