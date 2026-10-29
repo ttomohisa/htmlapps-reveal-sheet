@@ -152,7 +152,9 @@ for(const viewport of [{width:390,height:844},{width:320,height:640}]){
     expect(bounds.height).toBeGreaterThanOrEqual(44);
     expect(bounds.height).toBeLessThanOrEqual(56);
     await expect(button).toHaveCSS('border-bottom-style','solid');
-    await expect(button).toHaveCSS('background-color','rgb(234, 244, 238)');
+    await expect(button).toHaveClass(/primary/);
+    await expect(button).toHaveCSS('background-color','rgb(22, 98, 79)');
+    await expect(button).toHaveCSS('color','rgb(255, 255, 255)');
     expect(await sheet.evaluate(node=>node.scrollWidth<=node.clientWidth+1)).toBe(true);
     const gear=lesson.locator('#lessonSettingsButton svg');
     await expect(gear.locator('path')).toHaveCount(1);
@@ -162,6 +164,28 @@ for(const viewport of [{width:390,height:844},{width:320,height:640}]){
     await lesson.close();
   });
 }
+
+test('exported lesson: desktop gear opens Settings & Save and restores it after close',async({page,context},testInfo)=>{
+  const filepath=await exportLesson(page,testInfo);
+  const lesson=await openLesson(context,filepath,{width:1280,height:800});
+  const gear=lesson.locator('#lessonSettingsButton');
+  await expect(gear).toBeVisible();
+  await gear.click();
+  const dialog=lesson.locator('#lessonSheet');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('#lessonStudyOptIn')).toBeVisible();
+  await expect(dialog.locator('#lessonSaveEditableButton')).toBeVisible();
+  await lesson.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(gear).toBeFocused();
+  await expect(lesson.locator('.lesson-study #lessonPersistence')).toBeVisible();
+  await expect(lesson.locator('.lesson-study #lessonSave')).toBeVisible();
+  await gear.click();
+  await expect(dialog).toBeVisible();
+  await dialog.locator('#lessonSheetClose').click();
+  await expect(dialog).toBeHidden();
+  await lesson.close();
+});
 for(const viewport of [{width:320,height:480},{width:700,height:390}]){
   test(`exported lesson: controls fit ${viewport.width}×${viewport.height} without viewport overflow`,async({page,context},testInfo)=>{
     const filepath=await exportLesson(page,testInfo);
