@@ -152,7 +152,7 @@ function createImageIO({ core, env }) {
       // Canvas encoders may ignore WebP or fall back to PNG. Only use WebP
       // when the returned signature matches and the result is >=10% smaller
       // than the orientation-corrected PNG. A failed WebP encode is not fatal.
-      let blob=png,mime='image/png';
+      let blob=png,mime='image/png',webpBytes=null;
       if(compress){
         let candidate=null;
         try{
@@ -166,13 +166,13 @@ function createImageIO({ core, env }) {
             // PNG import fail.
             const header=inspectHeader(candidateBytes);
             if(header.mime==='image/webp'&&header.width===width&&header.height===height){
-              blob=candidate;mime='image/webp';
+              blob=candidate;mime='image/webp';webpBytes=candidateBytes;
             }
           }
         }catch(e){if(e?.code==='CANCELLED')throw e; /* unsupported encoder: retain PNG */}
       }
       if(blob.size>limits.maxPngBytes)throw error('IMAGE_TOO_LARGE');
-      const bytes=new Uint8Array(await blob.arrayBuffer());abort(signal);
+      const bytes=webpBytes||new Uint8Array(await blob.arrayBuffer());abort(signal);
       const output=inspectHeader(bytes);
       if(output.mime!==mime||output.width!==width||output.height!==height)throw error('DECODE_FAILED');
       const id=ctx.newId('image');
