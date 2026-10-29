@@ -4,6 +4,14 @@
 
 This record contains the v1.1.0 mobile-editor verification below and the historical release/CI evidence that follows it. It does not mark all 48 formal acceptance items complete. The automated matrix includes runtime-network/CSP/hostile-input auditing, repeated standard-size round trips and the configured 30-page / 1,000-cover boundary in addition to editing, study, persistence, lesson, mobile/touch and bilingual accessibility work. Physical phones, real screen readers, Safari, Firefox, background/screen-lock behavior and OS save-cancel/file-handoff behavior remain untested.
 
+## Large-image export preparation — 2026-10-29
+
+A user encountered the Japanese `EXPORT_FAILED` message (“保存用ファイルを準備できませんでした”) after earlier high-resolution image work. The browser/device and whether the user selected editable JSON or lesson HTML were not determined from this message. The existing Save view *eagerly* generated both entire files on entry. For a 2160×3840 JPEG normalized to approximately 15.6 MiB of PNG, each serialized file embeds roughly 21 MiB of Base64 text; constructing both outputs, replacing an entire template string, and UTF-8-encoding the full resulting HTML can substantially raise peak browser memory. This is a plausible contributor, **not a proven diagnosis** of the specific device failure.
+
+Changes: prepare only the chosen export when the user actually clicks it; keep the other format usable if one fails; assemble HTML from Blob parts instead of a second full HTML string and full TextEncoder output; revoke download Blob URLs after a short delay instead of immediately; display file sizes only once prepared and label pending sizes accurately. The original sheet data, schema version, CSP, embedded source images, confirmation and local-only processing remain intact.
+
+Regressions cover failure isolation for the HTML vs JSON Blob constructors, retry after a synthetic exception, template JSON escaping and part-based Blob assembly, and exporting both formats from a synthetic tall 2160×3840 image without publishing the user's photo. On-device Android/iPhone saving and memory behavior are not physically verified; passing desktop Chromium is not definitive proof for mobile.
+
 ## Exported lesson desktop Settings and large-photo display follow-up — 2026-10-29
 
 A user screenshot showed that the exported lesson's buttons still did not match the authoring app, and that the settings gear did nothing on desktop. The prior Settings & Save polish used a separate pale-green secondary button. The lesson now uses the same white border/background/text and primary-green `#16624F` button tokens as the authoring app; `Save editable sheet` is the primary action, matching the main app's editable JSON save. Study-mode tabs retain their explicit segmented pressed state.
