@@ -17,7 +17,7 @@ function createRevealCore() {
     const total = doc.assets.reduce((sum, item) => sum + item.byteLength, 0);
     if (doc.pages.length >= limits.maxPages || total + asset.byteLength > limits.maxAssetBytes)
       throw error('LIMIT_EXCEEDED');
-    if (doc.assets.some(item => item.id === asset.id) || asset.mime !== 'image/png' ||
+    if (doc.assets.some(item => item.id === asset.id) || !['image/png','image/webp'].includes(asset.mime) ||
         !Number.isSafeInteger(asset.byteLength) || asset.byteLength < 1 || asset.byteLength > limits.maxPngBytes)
       throw error('INVALID_SHEET');
     const normalized = {id:asset.id, mime:asset.mime, width:asset.width, height:asset.height,
@@ -359,7 +359,7 @@ function createRevealCore() {
     const errors=[];const fail=(path,code='INVALID_SHEET')=>{errors.push({code,path});return {ok:false,errors};};
     if(!exactKeys(value,['format','schemaVersion','appVersion','kind','document']))return fail('$.envelope');
     if(value.format!=='reveal-sheet')return fail('$.format');
-    if(value.schemaVersion!==1)return fail('$.schemaVersion','UNSUPPORTED_SCHEMA');
+    if(value.schemaVersion!==1&&value.schemaVersion!==2)return fail('$.schemaVersion','UNSUPPORTED_SCHEMA');
     if(typeof value.appVersion!=='string'||!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(value.appVersion))return fail('$.appVersion');
     if(value.kind!=='editable'&&value.kind!=='lesson')return fail('$.kind');
     const doc=value.document;
@@ -383,12 +383,17 @@ function createRevealCore() {
     for(let index=0;index<doc.assets.length;index++){
       const asset=doc.assets[index],path='$.document.assets['+index+']';
       if(!exactKeys(asset,['id','mime','width','height','byteLength','dataBase64']))return fail(path);
-      if(!validId(asset.id)||assets.has(asset.id)||asset.mime!=='image/png')return fail(path);
+      if(!validId(asset.id)||assets.has(asset.id)||!['image/png','image/webp'].includes(asset.mime)||(value.schemaVersion===1&&asset.mime!=='image/png'))return fail(path);
       if(!Number.isSafeInteger(asset.width)||!Number.isSafeInteger(asset.height)||asset.width<1||asset.height<1)return fail(path);
       if(asset.width>limits.maxSide||asset.height>limits.maxSide||asset.width*asset.height>limits.maxPixels)return fail(path,'LIMIT_EXCEEDED');
       if(!Number.isSafeInteger(asset.byteLength)||asset.byteLength<1)return fail(path);
       if(asset.byteLength>limits.maxPngBytes)return fail(path,'LIMIT_EXCEEDED');
-      if(decodedBase64Length(asset.dataBase64)!==asset.byteLength||!asset.dataBase64.startsWith('iVBORw0KGgo'))return fail(path+'.dataBase64');
+      if(decodedBase64Length(asset.dataBase64)!==asset.byteLength)return fail(path+'.dataBase64');
+      // Validate each format's fixed signature without decoding multi-megabyte
+      // payloads in the document validator. The image decoder verifies headers
+      // and actual pixels again when importing external documents.
+      if(asset.mime==='image/png'&&!asset.dataBase64.startsWith('iVBORw0KGgo'))return fail(path+'.dataBase64');
+      if(asset.mime==='image/webp'&&!asset.dataBase64.startsWith('UklGR'))return fail(path+'.dataBase64');
       totalAssetBytes+=asset.byteLength;if(totalAssetBytes>limits.maxAssetBytes)return fail('$.document.assets','LIMIT_EXCEEDED');
       assets.set(asset.id,asset);
     }
