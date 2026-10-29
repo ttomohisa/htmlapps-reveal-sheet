@@ -1,3 +1,10 @@
+## 1.2.0 - 2026-10-29
+
+- New image imports use **Compress images** (default ON). On-device, orientation-corrected images are encoded into PNG and WebP (quality 0.86), selecting WebP only if it is at least 10% smaller. Disable compression to use PNG. Dimensions, mask coordinates, alpha, and input format validation are retained.
+- Show the actual normalized WebP or PNG MIME and file size in the image info rather than always claiming PNG. The input preference applies to new images only, not already imported pages.
+- Introduce **schemaVersion 2** for JSON/lesson HTML containing WebP, while PNG-only exports remain schemaVersion 1. All schema-v1 PNG documents remain readable. Added `schemas/reveal-sheet-v2.schema.json`, WebP import verification, data-MIME rendering in standalone lesson HTML, and IndexedDB draft restoration for both formats.
+- Preserve the fully offline, no-upload, single HTML build; updated Japanese and English copy and format-compatibility tests. Lossy WebP can alter fine text and line detail; physical mobile testing remains outstanding.
+
 # Changelog
 
 ## 1.1.0 - 2026-10-28
