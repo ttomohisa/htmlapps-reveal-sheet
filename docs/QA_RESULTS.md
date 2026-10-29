@@ -4,6 +4,14 @@
 
 This record contains the v1.1.0 mobile-editor verification below and the historical release/CI evidence that follows it. It does not mark all 48 formal acceptance items complete. The automated matrix includes runtime-network/CSP/hostile-input auditing, repeated standard-size round trips and the configured 30-page / 1,000-cover boundary in addition to editing, study, persistence, lesson, mobile/touch and bilingual accessibility work. Physical phones, real screen readers, Safari, Firefox, background/screen-lock behavior and OS save-cancel/file-handoff behavior remain untested.
 
+## Save-error details hidden below the fold — 2026-10-29
+
+A further report showed the generic save message without visible diagnostics. Current code inspection found the diagnostic `details` element **after** the Save output buttons, where it could be below the phone viewport; additionally, `shared.css` visually hides the normal input-status row for populated documents (`.has-pages:not(.is-busy) .input-status-row p`). The generic error survived in the toast, while the diagnostic code was not included in the toast and could go unnoticed. An already-open tab running older JavaScript is another possible explanation; neither observation proves which occurred on the user's device.
+
+The diagnostic panel has been moved directly under the Save heading and opens automatically after an error. The error toast also includes the short `RS-SAVE-3` code; a visible quiet hint on the new Save screen distinguishes diagnostic-capable builds without exposing implementation details. A phone-width browser regression injects a `RangeError` into JSON Blob preparation and asserts the inline details are open, inside the viewport, and duplicated in the warning toast; both the Save panel and other original content remain unchanged.
+
+**Not established:** the underlying cause of the repeated Android save failure. The change makes that cause observable; no claim of a device-side fix is made. Do not reload unsaved work just to obtain a diagnostic code.
+
 ## Repeat Android save error: explicit local diagnostics — 2026-10-29
 
 Following a second report of the same generic save-error message after the previous CI-green Base64 fix, **the cause of the recurring device error remains unverified**. Existing code collapsed failures from both `prepareExport` and `requestDownload` into `EXPORT_FAILED`, masking whether the issue was preparing a Blob, creating the download URL, triggering the download, or another failure. The same error text can also appear in an already-open browser tab still running previous app JavaScript.
