@@ -190,7 +190,10 @@ function createProjectIO({core,imageIO,env}) {
         :prepareJson(doc,options.appVersion||'0.7.0');
     }catch(error){
       if(['INVALID_SHEET','LIMIT_EXCEEDED','UNSUPPORTED_SCHEMA'].includes(error?.code))throw error;
-      fail('EXPORT_FAILED');
+      // Do not leak the error message or the user's document into diagnostics.
+      const failure=core.error('EXPORT_FAILED');
+      failure.causeType=String(error?.name||'Error').slice(0,48);
+      throw failure;
     }
     await Promise.resolve();
     if(!validExportGeneration(generation))fail('EXPORT_FAILED');
@@ -213,10 +216,12 @@ function createProjectIO({core,imageIO,env}) {
       // Large downloads may start asynchronously in mobile browsers.
       env.setTimeout(()=>env.URL.revokeObjectURL(url),60000);
       return Object.freeze({started:true,filename:prepared.filename,size:prepared.size,kind:prepared.kind,generation:prepared.generation});
-    }catch{
+    }catch(error){
       try{anchor?.remove();}catch{}
       if(url){try{env.URL.revokeObjectURL(url);}catch{}}
-      fail('EXPORT_FAILED');
+      const failure=core.error('EXPORT_FAILED');
+      failure.causeType=String(error?.name||'Error').slice(0,48);
+      throw failure;
     }
   }
   function stripKnownExtension(value){
