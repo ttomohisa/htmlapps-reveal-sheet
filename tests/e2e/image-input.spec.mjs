@@ -74,11 +74,17 @@ test('T02: tall 2160x3840 photo remains visible after a transient preview decode
     const c=document.createElement('canvas');c.width=2160;c.height=3840;
     const ctx=c.getContext('2d'),pixels=ctx.createImageData(c.width,c.height);
     let state=0x68a2d421;
-    for(let n=0;n<pixels.data.length;n+=4){
-      state=(Math.imul(state,1664525)+1013904223)>>>0;
-      pixels.data[n]=(state>>>24)&0xf0;
-      pixels.data[n+1]=(state>>>16)&0xf0;
-      pixels.data[n+2]=(state>>>8)&0xf0;
+    // 8x8 synthetic blocks normalize to about 15 MiB of PNG data,
+    // comparable to the reported phone JPEG (not an extreme 28 MiB texture).
+    const blocks=new Uint32Array(270*480);
+    for(let i=0;i<blocks.length;i++){
+      state=(Math.imul(state,1664525)+1013904223)>>>0;blocks[i]=state;
+    }
+    for(let y=0;y<3840;y++)for(let x=0;x<2160;x++){
+      const n=(y*2160+x)*4,v=blocks[(y>>3)*270+(x>>3)];
+      pixels.data[n]=v>>>24;
+      pixels.data[n+1]=v>>>16;
+      pixels.data[n+2]=v>>>8;
       pixels.data[n+3]=255;
     }
     ctx.putImageData(pixels,0,0);
