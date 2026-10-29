@@ -106,8 +106,19 @@ test('T02: tall 2160x3840 photo remains visible after a transient preview decode
     buffer:Buffer.from(dataUrl.split(',')[1],'base64')
   });
   await expect(page.locator('#pageList .page-item')).toHaveCount(1,{timeout:60000});
-  await expect(page.locator('#previewImage')).toBeVisible({timeout:60000});
+  try{await expect(page.locator('#previewImage')).toBeVisible({timeout:60000});}
+  catch(error){
+    const debug=await page.evaluate(()=>{
+      const image=document.getElementById('previewImage'),wait=document.getElementById('previewWait');
+      return {complete:image.complete,naturalWidth:image.naturalWidth,naturalHeight:image.naturalHeight,
+        srcLength:image.getAttribute('src')?.length||0,waitHidden:wait.hidden,waitText:wait.textContent,
+        busy:document.body.className,status:document.getElementById('inputStatus')?.textContent};
+    });
+    console.error('Tall-photo preview diagnostic',JSON.stringify(debug));
+    throw error;
+  }
   await expect(page.locator('#previewWait')).toBeHidden();
+  await expect(page.locator('#maskSvg')).toBeVisible();
   const image=page.locator('#previewImage');
   expect(await image.evaluate(node=>[node.naturalWidth,node.naturalHeight])).toEqual([2160,3840]);
   await expect(page.locator('#imageBytes')).not.toHaveText('');
