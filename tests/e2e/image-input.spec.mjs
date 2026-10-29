@@ -66,7 +66,7 @@ test('T02: language switch retains page and view; no persistent content is writt
 });
 
 
-test('T02: tall 2160x3840 photo remains visible after a transient preview decode failure',async({page})=>{
+test('T02: 2160x3840 phone photo remains visible through Save/Create navigation',async({page})=>{
   test.setTimeout(120000);
   await openApp(page);
   // Generate synthetic high-detail pixels: no user photo is added to the repo.
@@ -89,17 +89,6 @@ test('T02: tall 2160x3840 photo remains visible after a transient preview decode
     }
     ctx.putImageData(pixels,0,0);
     return c.toDataURL('image/jpeg',.84);
-  });
-  await page.evaluate(()=>{
-    const original=HTMLImageElement.prototype.decode;
-    let rejected=false;
-    HTMLImageElement.prototype.decode=function(...args){
-      if(this.id==='previewImage'&&!rejected){
-        rejected=true;
-        return Promise.reject(new Error('Simulated transient mobile image decode failure'));
-      }
-      return original.apply(this,args);
-    };
   });
   await page.locator('#imageInput').setInputFiles({
     name:'synthetic-tall-photo.jpg',mimeType:'image/jpeg',
@@ -125,4 +114,24 @@ test('T02: tall 2160x3840 photo remains visible after a transient preview decode
   await page.locator('#saveButton').click();
   await page.locator('#createButton').click();
   await expect(image).toBeVisible({timeout:15000});
+});
+
+test('T02: preview recovers from a transient image.decode rejection without reimporting',async({page})=>{
+  await openApp(page);
+  await page.evaluate(()=>{
+    const original=HTMLImageElement.prototype.decode;
+    let rejected=false;
+    HTMLImageElement.prototype.decode=function(...args){
+      if(this.id==='previewImage'&&!rejected){
+        rejected=true;
+        return Promise.reject(new Error('Simulated transient mobile image decode failure'));
+      }
+      return original.apply(this,args);
+    };
+  });
+  await page.locator('#imageInput').setInputFiles(imagePath('static.jpg'));
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
+  await expect(page.locator('#previewImage')).toBeVisible({timeout:15000});
+  await expect(page.locator('#maskSvg')).toBeVisible();
+  await expect(page.locator('#previewWait')).toBeHidden();
 });
