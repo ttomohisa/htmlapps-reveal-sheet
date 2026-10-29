@@ -160,9 +160,12 @@ function createImageIO({ core, env }) {
           abort(signal);
           if(candidate&&candidate.type==='image/webp'&&candidate.size>0&&candidate.size<=limits.maxPngBytes
              &&candidate.size<=png.size*.90){
-            const signature=new Uint8Array(await candidate.slice(0,12).arrayBuffer());
-            if(signature[0]===82&&signature[1]===73&&signature[2]===70&&signature[3]===70
-               &&signature[8]===87&&signature[9]===69&&signature[10]===66&&signature[11]===80){
+            const candidateBytes=new Uint8Array(await candidate.arrayBuffer());abort(signal);
+            // Validate an encoded candidate completely *before* choosing it.
+            // A buggy browser WebP encoder must not make an otherwise valid
+            // PNG import fail.
+            const header=inspectHeader(candidateBytes);
+            if(header.mime==='image/webp'&&header.width===width&&header.height===height){
               blob=candidate;mime='image/webp';
             }
           }
