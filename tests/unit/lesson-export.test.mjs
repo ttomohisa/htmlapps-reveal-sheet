@@ -53,3 +53,23 @@ test('T11 lesson export rejects sheets without questions and keeps lesson filena
   assert.equal(io.sanitizeFilename('lesson.reveal.html','html'),'lesson.reveal.html');
   assert.equal(io.sanitizeFilename(' a/b ','html'),'a_b.reveal.html');
 });
+
+
+test('T11 large lesson HTML streams document and template as Blob parts without a full-copy encoder',async()=>{
+  const doc=makeDoc(),partsSeen=[];
+  class InspectBlob extends Blob{
+    constructor(parts,options){super(parts,options);partsSeen.push(parts);}
+  }
+  class RejectEncoder{
+    encode(){throw new Error('Do not allocate an extra full-size encoded HTML buffer');}
+  }
+  const io=createProjectIO({core,imageIO:{verifyStoredAsset:async()=>{}},env:{Blob:InspectBlob,TextDecoder,TextEncoder:RejectEncoder}});
+  const output=io.prepareHtml(doc,playerTemplate,'1.1.0');
+  assert.equal(partsSeen.length,1);
+  assert.equal(partsSeen[0].length,3);
+  assert.ok(partsSeen[1]?.length===undefined);
+  const html=await output.text();
+  assert.equal(output.size,Buffer.byteLength(html,'utf8'));
+  assert.equal(html.includes('__REVEAL_LESSON_JSON__'),false);
+  assert.equal(JSON.parse(html.match(/<script id="reveal-sheet-data" type="application\\/json">([^<]*)<\\/script>/)[1]).kind,'lesson');
+});
