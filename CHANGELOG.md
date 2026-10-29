@@ -2,6 +2,9 @@
 
 ## 1.1.0 - 2026-10-28
 
+- Added a privacy-preserving, copyable save-error diagnostic code (RS-SAVE-3) reporting the output format, preparation/download phase, error classification and running version, without exposing file contents or filenames. Retained safe exception classes across export/download error wrapping so recurring Android failures can be investigated rather than incorrectly declared fixed.
+
+
 - Fixed the identified root cause of multi-megabyte image export failures: the grouped/repeated Base64-validation regex could raise a JavaScript `RangeError: Maximum call stack size exceeded` on large strings. Both document validation and image Base64 decoding now use a linear, stack-safe form, preserving the existing format and padding restrictions.
 
 
