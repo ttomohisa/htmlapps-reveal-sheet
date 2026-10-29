@@ -4,6 +4,16 @@
 
 This record contains the v1.1.0 mobile-editor verification below and the historical release/CI evidence that follows it. It does not mark all 48 formal acceptance items complete. The automated matrix includes runtime-network/CSP/hostile-input auditing, repeated standard-size round trips and the configured 30-page / 1,000-cover boundary in addition to editing, study, persistence, lesson, mobile/touch and bilingual accessibility work. Physical phones, real screen readers, Safari, Firefox, background/screen-lock behavior and OS save-cancel/file-handoff behavior remain untested.
 
+## Exported lesson desktop Settings and large-photo display follow-up — 2026-10-29
+
+A user screenshot showed that the exported lesson's buttons still did not match the authoring app, and that the settings gear did nothing on desktop. The prior Settings & Save polish used a separate pale-green secondary button. The lesson now uses the same white border/background/text and primary-green `#16624F` button tokens as the authoring app; `Save editable sheet` is the primary action, matching the main app's editable JSON save. Study-mode tabs retain their explicit segmented pressed state.
+
+The exported player runtime previously returned early from `openSheet` when the viewport exceeded 720px, which made the visible desktop gear inert. The desktop gear now opens the same Settings & Save dialog with the original controls temporarily moved inside; closing the dialog returns them to their desktop positions and restores focus. Browser coverage checks open, Escape, focus and close on a desktop viewport.
+
+A user-supplied JPEG ZIP was inspected **locally only** and not committed or transmitted to the public GitHub repository. The 2160×3840 JPEG was structurally valid and decoded in desktop Chromium; the browser also normalized it to a valid approximately 15.6 MiB PNG and displayed that PNG. This does **not** prove the Android display failure's exact root cause. The authoring editor previously reported `DECODE_FAILED` after one rejected `img.decode()` call. It now treats an already-loaded image as valid, retries an unsuccessful image display with a new Blob URL and real `load` event, and offers a localized retry button after both paths fail; stored assets and covers remain intact.
+
+The new regression generates **synthetic** 2160×3840 photo-like JPEG pixels locally and injects a transient `HTMLImageElement.decode()` failure; no user image is embedded in tests. Screenshot capture now additionally records the actual exported HTML's desktop Settings & Save dialog. Automated Chromium verification is not equivalent to Android Chrome physical-device verification, especially when opening downloaded HTML via `content://`.
+
 ## Exported lesson Settings & Save follow-up — 2026-10-29
 
 The Android Chrome screenshot revealed three presentation regressions in the exported study-only `.reveal.html`: the study-persistence checkbox rendered as a large empty square detached from its label; the two other-answer radio controls were extremely oversized; and the gear icon and secondary buttons looked inconsistent with the app. The root cause for the input sizes was the player CSS rule `.lesson-dialog input { width:100%; min-height:48px }`, which applied text-field dimensions to native checkbox and radio inputs.
