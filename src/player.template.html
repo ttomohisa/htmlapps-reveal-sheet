@@ -273,6 +273,12 @@ html,.lesson-body{max-width:100%;overflow-x:hidden}
   .lesson-body .lesson-options label:has(input:checked){outline:2px solid Highlight;outline-offset:-2px}
   .lesson-body .button.primary{border:1px solid ButtonText}
 }
+/* Neutral header consistent with the editor; safe tap target and right inset. */
+.lesson-header{background:var(--bg,#f5f5f2);border-bottom-color:var(--line,#dadbd6);backdrop-filter:none}
+.lesson-header-inner{box-sizing:border-box}
+.lesson-header-actions{align-items:center;gap:6px}
+.lesson-header-actions #lessonHelpButton{min-width:48px;min-height:48px}
+@media(max-width:720px){.lesson-active .lesson-header-inner{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(18px,env(safe-area-inset-right))}.lesson-active .lesson-header-actions{gap:3px;padding-right:2px}.lesson-active #lessonHelpButton{min-width:46px;min-height:46px}}
 </style>
 </head>
 <body class="lesson-body">
