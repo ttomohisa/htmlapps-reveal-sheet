@@ -62,6 +62,9 @@ test('T14: Blob preparation failure keeps the sheet and the user can retry',asyn
   await expect(page.locator('#saveJsonBytes')).toContainText(/保存時に計算|Calculated when saving/i);
   await page.locator('#downloadJsonButton').click();
   await expect(page.locator('#inputStatus')).toContainText(/準備できません|Could not prepare/i);
+  await expect(page.locator('#saveDiagnostics')).toBeVisible();
+  await expect(page.locator('#saveDiagnosticText')).toContainText(/RS-SAVE-3.*JSON \/ PREPARE \/ EXPORT_FAILED \/ Error/);
+  await expect(page.locator('#saveDiagnosticText')).not.toContainText(/static|\.png|reveal\.json/);
   await expect(page.locator('#pageList .page-item')).toHaveCount(1);
 
   await page.evaluate(()=>{window.Blob=window.__RevealOriginalBlob;delete window.__RevealOriginalBlob;});
@@ -71,6 +74,7 @@ test('T14: Blob preparation failure keeps the sheet and the user can retry',asyn
   const retry=await retryPromise;
   expect(retry.suggestedFilename()).toMatch(/\.reveal\.json$/);
   await expect(page.locator('#inputStatus')).toContainText(/保存を開始|Started saving/);
+  await expect(page.locator('#saveDiagnostics')).toBeHidden();
 });
 
 
@@ -112,4 +116,25 @@ test('T14: HTML generation failure cannot prevent saving editable JSON',async({p
   await page.locator('#downloadHtmlButton').click();
   const savedHtml=await html;
   expect(savedHtml.suggestedFilename()).toMatch(/\.reveal\.html$/);
+});
+
+
+test('T14: failed browser download handoff shows a different, safe diagnosis',async({page})=>{
+  await openApp(page);
+  await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
+  await expect(page.locator('#previewImage')).toBeVisible();
+  await page.locator('#saveButton').click();
+  await page.evaluate(()=>{
+    const original=URL.createObjectURL;window.__RevealOriginalCreateUrl=original;
+    URL.createObjectURL=()=>{throw new DOMException('Blocked temporarily','SecurityError');};
+  });
+  await page.locator('#downloadJsonButton').click();
+  await expect(page.locator('#saveDiagnostics')).toBeVisible();
+  await expect(page.locator('#saveDiagnosticText')).toContainText(/JSON \/ DOWNLOAD \/ EXPORT_FAILED \/ SecurityError/);
+  await page.evaluate(()=>{URL.createObjectURL=window.__RevealOriginalCreateUrl;delete window.__RevealOriginalCreateUrl;});
+  const downloaded=page.waitForEvent('download');
+  await page.locator('#downloadJsonButton').click();
+  const item=await downloaded;
+  expect(item.suggestedFilename()).toMatch(/\.reveal\.json$/);
+  await expect(page.locator('#saveDiagnostics')).toBeHidden();
 });
