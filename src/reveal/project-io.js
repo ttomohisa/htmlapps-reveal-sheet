@@ -34,11 +34,37 @@ function createProjectIO({core,imageIO,env}) {
     return JSON.stringify(value);
   }
   function prepareJson(doc,appVersion='0.2.0'){
-    return new env.Blob([serialize(doc,'editable',appVersion)],{type:'application/json;charset=utf-8'});
+    const blob=new env.Blob(serializeBlobParts(doc,'editable',appVersion),{type:'application/json;charset=utf-8'});
+    if(blob.size>core.limits.maxJsonBytes)fail('LIMIT_EXCEEDED');
+    return blob;
   }
   function escapeJsonForHtml(text){
     const escapes={'<':'\\u003C','>':'\\u003E','&':'\\u0026','\u2028':'\\u2028','\u2029':'\\u2029'};
     return String(text).replace(/[<>&\u2028\u2029]/g,ch=>escapes[ch]);
+  }
+  function serializeBlobParts(doc,kind,appVersion,htmlSafe=false){
+    const value=envelope(doc,kind,appVersion);
+    const checked=core.validateEnvelope(value);
+    if(!checked.ok)fail(checked.errors?.[0]?.code||'INVALID_SHEET');
+    if(kind==='editable')assertSupportedEditable(value);
+    const text=htmlSafe?escapeJsonForHtml:value=>value;
+    const skeleton=JSON.stringify({...value,document:{...value.document,assets:[]}});
+    const needle='"assets":[]',at=skeleton.indexOf(needle);
+    if(at<0||skeleton.indexOf(needle,at+needle.length)!==-1)fail('EXPORT_FAILED');
+    const parts=[text(skeleton.slice(0,at)),needle.slice(0,-1)];
+    for(let index=0;index<value.document.assets.length;index++){
+      const asset=value.document.assets[index];
+      // The PNG data is already validated Base64, which is safe inside a
+      // JSON string and HTML script data without allocating a second copy.
+      if(typeof asset.dataBase64!=='string'||!/^[A-Za-z0-9+/]+={0,2}$/.test(asset.dataBase64))fail('INVALID_SHEET');
+      const meta=JSON.stringify({...asset,dataBase64:null});
+      const marker='"dataBase64":null',position=meta.indexOf(marker);
+      if(position<0)fail('EXPORT_FAILED');
+      if(index)parts.push(',');
+      parts.push(text(meta.slice(0,position)),'"dataBase64":"',asset.dataBase64,'"',text(meta.slice(position+marker.length)));
+    }
+    parts.push(']',text(skeleton.slice(at+needle.length)));
+    return parts;
   }
   function prepareHtml(doc,playerTemplate,appVersion='0.6.0'){
     if(typeof playerTemplate!=='string'||!playerTemplate)fail('INVALID_SHEET');
@@ -48,8 +74,8 @@ function createProjectIO({core,imageIO,env}) {
     // another full-size HTML copy and then a full-size TextEncoder Uint8Array.
     // Blob.size gives the actual UTF-8 byte size without an extra allocation.
     const markerAt=playerTemplate.indexOf(marker);
-    const json=escapeJsonForHtml(serialize(doc,'lesson',appVersion));
-    const blob=new env.Blob([playerTemplate.slice(0,markerAt),json,playerTemplate.slice(markerAt+marker.length)],{type:'text/html;charset=utf-8'});
+    const parts=serializeBlobParts(doc,'lesson',appVersion,true);
+    const blob=new env.Blob([playerTemplate.slice(0,markerAt),...parts,playerTemplate.slice(markerAt+marker.length)],{type:'text/html;charset=utf-8'});
     if(blob.size>core.limits.maxHtmlBytes)fail('LIMIT_EXCEEDED');
     return blob;
   }
