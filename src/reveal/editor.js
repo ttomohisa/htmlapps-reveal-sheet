@@ -418,7 +418,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       ?$('saveDiagnosticText').textContent:'';
     $('inputStatus').textContent=t(lastStatus,progress||{})+(savedDiagnostic?'\n'+savedDiagnostic:'');
     $('inputStatus').classList.toggle('empty-status-only',lastStatus==='emptyStatus'&&!doc.pages.length);
-    $('newButton').disabled=!doc.pages.length||busy;
+    $('newButton').disabled=!doc.pages.length&&!busy;
     $('newButton').hidden=!doc.pages.length;
     $('undoButton').hidden=!doc.pages.length&&undo.length===0;
     $('redoButton').hidden=!doc.pages.length&&redo.length===0;
