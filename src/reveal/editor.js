@@ -1073,6 +1073,8 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   $('maskQuickDelete').addEventListener('click',deleteSelected);
   $('retryButton').addEventListener('click',()=>$('imageInput').click());
   $('imageInput').addEventListener('change',event=>{const files=Array.from(event.target.files||[]);event.target.value='';addImages(files);});
+  $('imageFallbackButton').addEventListener('click',()=>$('imageFallback').click());
+  $('imageFallback').addEventListener('change',event=>{const files=Array.from(event.target.files||[]);event.target.value='';addImages(files);});
   $('cancelButton').addEventListener('click',()=>{controller?.abort();status('cancelling');refreshCopy();});
   $('newButton').addEventListener('click',startNew);
   $('undoButton').addEventListener('click',()=>history('undo'));
