@@ -100,3 +100,13 @@ test('T09: old tab cannot recreate a draft cleared from another tab',async({page
   await page.reload();await page.locator('#addButton').waitFor({state:'visible'});
   await expect(page.locator('#appConfirmDialog')).toBeHidden();
 });
+
+
+test('T09: enabling draft persistence with no pages does not create a recoverable draft',async({page})=>{
+  await openApp(page);await enableDraft(page);
+  await page.waitForTimeout(150);
+  expect(await savedGeneration(page)).toBe(0);
+  await page.reload();await page.locator('#addButton').waitFor({state:'visible'});
+  await expect(page.locator('#appConfirmDialog')).toBeHidden();
+  await expect(page.locator('#draftOptIn')).toBeChecked();
+});
