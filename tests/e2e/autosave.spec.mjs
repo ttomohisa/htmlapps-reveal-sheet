@@ -91,6 +91,11 @@ test('T09: old tab cannot recreate a draft cleared from another tab',async({page
   await second.locator('#pageList .page-item[aria-current="page"] .page-card-title').fill('Old tab');
   await second.locator('#pageList .page-item[aria-current="page"] .page-card-title').press('Enter');
   await expect(second.locator('#draftConflict')).toBeVisible({timeout:5000});
+  await second.locator('#resolveConflictReloadButton').click();
+  await expect(second.locator('#appConfirmDialog')).toBeVisible();
+  await second.locator('#appConfirmOk').click();
+  await expect(second.locator('#pageList .page-item')).toHaveCount(0);
+  await expect(second.locator('#draftConflict')).toBeHidden();
   await page.reload();await page.locator('#addButton').waitFor({state:'visible'});
   await expect(page.locator('#appConfirmDialog')).toBeHidden();
 });
