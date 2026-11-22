@@ -3,7 +3,7 @@
 [![App tests](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/workflows/test-app.yml/badge.svg)](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/workflows/test-app.yml)
 [![Standalone build](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/workflows/build-standalone.yml/badge.svg)](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/workflows/build-standalone.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Single HTML](https://img.shields.io/badge/distribution-single%20HTML-16624F)](reveal-sheet.html)
+[![Single HTML](https://img.shields.io/badge/distribution-single%20HTML-16624F)](https://github.com/ttomohisa/htmlapps-reveal-sheet/releases/latest)
 
 [English README](README.md)
 
@@ -45,7 +45,7 @@
 
 ### 単一HTMLを使う
 
-1. [`reveal-sheet.html`](reveal-sheet.html) をダウンロードします。
+1. [最新のGitHub Release](https://github.com/ttomohisa/htmlapps-reveal-sheet/releases/latest) を開き、通常の単一HTML（`.html`、`.self-extract.html` ではない方）をダウンロードします。
 2. 現行のChromeまたはEdgeで開きます。
 3. **画像を追加**からJPEG・静止PNG・静止WebPを選びます。
 4. 画像上の答えをドラッグして覆いを作ります。
@@ -203,12 +203,12 @@ src/reveal/                   Reveal Sheet本体コード
 scripts/assemble-reveal.ps1   単一HTML組み立て
 scripts/verify-reveal.ps1     単一HTML検証
 dist/index.html               生成される可読版
-reveal-sheet.html             リポジトリの単一HTML版
+dist/index.self-extract.html  生成される自己展開型単一HTML版
 ```
 
 ## リリース状況
 
-**v1.0.1** ではページ内の問題順変更を追加し、覆いの複製でグループ・補助の役割・問題文・答えを引き継ぐよう修正しました。保存形式は引き続きschemaVersion 1です。Android / iPhone実機、実スクリーンリーダー、実際の200%ズーム、OSのファイル受け渡しは、実機で確認するまで未検証として残します。リリース判定の境界はQA資料を参照してください。
+**v1.2.1** では、空にした教材の復元候補が残る問題と、書き出した教材HTMLの学習記録・保存操作を修正しました。PNGのみの教材は形式1、WebPを含む教材は形式2のままです。配布用HTMLは最新のGitHub Releaseから取得できます。Android / iPhone実機、実スクリーンリーダー、実際の200%ズーム、OSのファイル受け渡しは、実機で確認するまで未検証です。リリース判定の境界はQA資料を参照してください。
 
 ## Contributing
 
