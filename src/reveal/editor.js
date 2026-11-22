@@ -75,14 +75,14 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   }
   function cancelDraftTimer(){if(draftSaveTimer){env.clearTimeout(draftSaveTimer);draftSaveTimer=0;}}
   function scheduleDraftSave(){
-    cancelDraftTimer();if(!localAvailable||!persistence.settings.draftOptIn||draftConflict||!doc.pages.length)return;
+    cancelDraftTimer();if(!localAvailable||!persistence.settings.draftOptIn||draftConflict)return;
     setDraftStatus('draftSaveWaiting');const scheduledGeneration=generation;
     draftSaveTimer=env.setTimeout(()=>{draftSaveTimer=0;const snapshot=doc;draftSaveChain=draftSaveChain.then(async()=>{
-      if(!localAvailable||!persistence.settings.draftOptIn||draftConflict||!snapshot.pages.length)return;if(scheduledGeneration!==generation&&snapshot.id!==doc.id){scheduleDraftSave();return;}
-      setDraftStatus('draftSaving');try{const receipt=await persistence.saveSnapshot(snapshot,localDraftGeneration);if(receipt){localDraftGeneration=receipt.generation;localDraftExists=true;refreshLocalStudy();lastDraftSavedAt=receipt.savedAt;setDraftStatus('draftSaved',{time:new Date(receipt.savedAt).toLocaleTimeString(getLanguage()==='ja'?'ja-JP':'en-US',{hour:'2-digit',minute:'2-digit'})});}}
+      if(!localAvailable||!persistence.settings.draftOptIn||draftConflict)return;if(scheduledGeneration!==generation&&snapshot.id!==doc.id){scheduleDraftSave();return;}
+      setDraftStatus('draftSaving');try{const receipt=await persistence.saveSnapshot(snapshot,localDraftGeneration);if(receipt){localDraftGeneration=receipt.generation;localDraftExists=snapshot.pages.length>0;refreshLocalStudy();lastDraftSavedAt=receipt.savedAt;setDraftStatus(localDraftExists?'draftSaved':'draftEnabled',{time:new Date(receipt.savedAt).toLocaleTimeString(getLanguage()==='ja'?'ja-JP':'en-US',{hour:'2-digit',minute:'2-digit'})});}}
       catch(error){if(error?.code==='SAVE_CONFLICT'){draftConflict=true;setDraftStatus('draftConflictStatus');refreshLocalDraft();}else setDraftStatus('draftSaveFailed');}
       if(!draftConflict&&persistence.settings.draftOptIn&&(doc.id!==snapshot.id||doc.revision!==snapshot.revision))scheduleDraftSave();
-    });},1000);
+    });},doc.pages.length?1000:0);
   }
   async function changeDraftOptIn(event){
     const wanted=event.currentTarget.checked;if(wanted){event.currentTarget.checked=false;const yes=await env.AppConfirm.ask({title:t('draftOptInTitle'),message:t('draftOptInMessage'),confirmLabel:t('draftOptInAction'),cancelLabel:t('cancel')});if(!yes){refreshLocalDraft();return;}
@@ -97,8 +97,10 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     const capability=await persistence.probe();localAvailable=capability.available;refreshLocalDraft();if(!localAvailable){setDraftStatus('draftUnavailable');setStudyStatus('studyPersistenceUnavailable');return;}
     try{const localState=await persistence.getLocalState();localDraftExists=Boolean(localState.draftExists);localStudyExists=Boolean(localState.studyExists);}catch{localDraftExists=false;localStudyExists=false;}refreshLocalDraft();setStudyStatus(persistence.settings.studyOptIn?'studyEnabled':'studyDisabled');
     let saved=null;try{saved=await persistence.loadSnapshot();}catch{setDraftStatus('draftSaveFailed');return;}if(!saved){setDraftStatus(persistence.settings.draftOptIn?'draftEnabled':'draftDisabled');return;}
-    localDraftGeneration=saved.generation;lastDraftSavedAt=saved.savedAt;const yes=await env.AppConfirm.ask({title:t('resumeLocalTitle'),message:t('resumeLocalMessage'),confirmLabel:t('resumeLocalAction'),cancelLabel:t('startFreshAction')});
-    if(yes){applyImported({document:saved.document},{fromLocal:true});setDraftStatus('draftRestored');}else setDraftStatus(persistence.settings.draftOptIn?'draftEnabled':'draftDisabled');refreshLocalDraft();
+    localDraftGeneration=saved.generation;lastDraftSavedAt=saved.savedAt;
+    if(!saved.document){localDraftExists=false;setDraftStatus(persistence.settings.draftOptIn?'draftEnabled':'draftDisabled');refreshLocalDraft();return;}
+    const yes=await env.AppConfirm.ask({title:t('resumeLocalTitle'),message:t('resumeLocalMessage'),confirmLabel:t('resumeLocalAction'),cancelLabel:t('startFreshAction')});
+    if(yes){applyImported({document:saved.document},{fromLocal:true});setDraftStatus('draftRestored');}else {setDraftStatus(persistence.settings.draftOptIn?'draftEnabled':'draftDisabled');if(persistence.settings.draftOptIn)scheduleDraftSave();}refreshLocalDraft();
   }
   function currentPage(){return doc.pages.find(p=>p.id===selectedId)||null;}
   function currentAsset(){const page=currentPage();return page&&doc.assets.find(a=>a.id===page.imageId)||null;}
@@ -606,7 +608,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     if(!yes)return;
     cancelTransientInteraction();closeEditorSheet({restoreFocus:false});
     generation++;controller?.abort();invalidatePreparedExport();doc=core.newDocument(ctx,t('untitled'));selectedId=null;selectedMaskId=null;selectedMaskIds.clear();
-    undo=[];redo=[];failures=[];studySession=null;mode='create';editTool='draw';maskAdjustMode='move';mobilePagesOpen=false;fineAdjustOpen=false;activeTouches.clear();filenameBase='reveal-sheet';$('outputFilename').value=filenameBase;imageIO.releaseAll();status('emptyStatus');refreshCopy();showPreview();
+    undo=[];redo=[];failures=[];studySession=null;mode='create';editTool='draw';maskAdjustMode='move';mobilePagesOpen=false;fineAdjustOpen=false;activeTouches.clear();filenameBase='reveal-sheet';$('outputFilename').value=filenameBase;imageIO.releaseAll();status('emptyStatus');refreshCopy();showPreview();scheduleDraftSave();
   }
   function filesFromTransfer(data) {
     if(!data)return [];
