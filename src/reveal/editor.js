@@ -75,7 +75,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   }
   function cancelDraftTimer(){if(draftSaveTimer){env.clearTimeout(draftSaveTimer);draftSaveTimer=0;}}
   function scheduleDraftSave(){
-    cancelDraftTimer();if(!localAvailable||!persistence.settings.draftOptIn||draftConflict)return;
+    cancelDraftTimer();if(!localAvailable||!persistence.settings.draftOptIn||draftConflict||(!doc.pages.length&&!localDraftExists&&localDraftGeneration===0))return;
     setDraftStatus('draftSaveWaiting');const scheduledGeneration=generation;
     draftSaveTimer=env.setTimeout(()=>{draftSaveTimer=0;const snapshot=doc;draftSaveChain=draftSaveChain.then(async()=>{
       if(!localAvailable||!persistence.settings.draftOptIn||draftConflict)return;if(scheduledGeneration!==generation&&snapshot.id!==doc.id){scheduleDraftSave();return;}
