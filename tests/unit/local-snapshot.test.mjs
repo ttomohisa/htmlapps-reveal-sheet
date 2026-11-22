@@ -24,6 +24,7 @@ class MemoryBackend{
     this.draft={...structuredClone(draft),generation,savedAt};this.assets=new Map(assets.map(item=>[item.id,{...item}]));return {generation,savedAt};
   }
   async readDraft(){return this.draft?{draft:structuredClone(this.draft),assets:[...this.assets.values()].map(item=>({...item}))}:null;}
+  async readLocalState(){return {draftExists:Boolean(this.draft?.document?.pages?.length),studyExists:this.sessions.size>0};}
   async clearDraft(){this.writeCount++;this.draft=null;this.assets.clear();}
   async atomicSaveSession(){throw new Error('not implemented for T09');}
   async readSession(){return null;}
