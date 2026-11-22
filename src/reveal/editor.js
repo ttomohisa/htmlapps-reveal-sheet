@@ -91,7 +91,10 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   }
   async function reloadConflictDraft(){
     const yes=await env.AppConfirm.ask({title:t('reloadLocalTitle'),message:t('reloadLocalMessage'),confirmLabel:t('reloadLocalAction'),cancelLabel:t('cancel'),tone:'danger'});if(!yes)return;
-    try{const saved=await persistence.loadSnapshot();if(!saved)return;localDraftGeneration=saved.generation;localDraftExists=true;draftConflict=false;applyImported({document:saved.document},{fromLocal:true});lastDraftSavedAt=saved.savedAt;setDraftStatus('draftRestored');refreshLocalDraft();}catch{setDraftStatus('draftSaveFailed');}
+    try{const saved=await persistence.loadSnapshot();if(!saved)return;localDraftGeneration=saved.generation;localDraftExists=Boolean(saved.document);draftConflict=false;
+      if(saved.document)applyImported({document:saved.document},{fromLocal:true});
+      else resetWorkspace();
+      lastDraftSavedAt=saved.savedAt;setDraftStatus(saved.document?'draftRestored':'draftEnabled');refreshLocalDraft();}catch{setDraftStatus('draftSaveFailed');}
   }
   async function initPersistence(){
     const capability=await persistence.probe();localAvailable=capability.available;refreshLocalDraft();if(!localAvailable){setDraftStatus('draftUnavailable');setStudyStatus('studyPersistenceUnavailable');return;}
@@ -606,6 +609,9 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     if(!doc.pages.length&&!busy)return;
     const yes=await env.AppConfirm.ask({title:t('newTitle'),message:t('newMessage',{count:doc.pages.length}),confirmLabel:t('newAction'),cancelLabel:t('cancel'),tone:'danger'});
     if(!yes)return;
+    resetWorkspace();
+  }
+  function resetWorkspace(){
     cancelTransientInteraction();closeEditorSheet({restoreFocus:false});
     generation++;controller?.abort();invalidatePreparedExport();doc=core.newDocument(ctx,t('untitled'));selectedId=null;selectedMaskId=null;selectedMaskIds.clear();
     undo=[];redo=[];failures=[];studySession=null;mode='create';editTool='draw';maskAdjustMode='move';mobilePagesOpen=false;fineAdjustOpen=false;activeTouches.clear();filenameBase='reveal-sheet';$('outputFilename').value=filenameBase;imageIO.releaseAll();status('emptyStatus');refreshCopy();showPreview();scheduleDraftSave();
