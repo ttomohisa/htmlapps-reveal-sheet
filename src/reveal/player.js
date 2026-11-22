@@ -219,8 +219,18 @@ function createPlayer({core,projectIO,persistence,env,envelope}) {
     if(persistence.settings.studyOptIn&&studyIdentity){let saved=null;try{saved=await persistence.loadSession(studyIdentity);}catch{}if(saved){studyGeneration=saved.generation;const yes=await confirmAsk({title:t('resumeTitle'),message:t('resumeMessage'),ok:t('continue'),cancel:t('fresh')});if(yes){session=saved.session;mode=session.mode;syncGuidedPage();render();}else scheduleStudySave();}}
   }
   async function toggleStudy(event){
-    if(event.currentTarget.checked){event.currentTarget.checked=false;const yes=await confirmAsk({title:t('enableStudyTitle'),message:t('enableStudyMessage'),ok:t('enable')});if(!yes)return;try{await persistence.setStudyOptIn(true);event.currentTarget.checked=true;studyGeneration=0;studyIdentity=await identity();scheduleStudySave();}catch{$('lessonStudyStatus').textContent=t('studyUnavailable');}}
-    else{try{await persistence.setStudyOptIn(false);studyGeneration=0;$('lessonStudyStatus').textContent=t('studyOff');}catch{$('lessonStudyStatus').textContent=t('studyUnavailable');}}
+    // currentTarget is only available during dispatch; capture the checkbox before awaiting.
+    const input=event.currentTarget;
+    if(input.checked){
+      input.checked=false;
+      const yes=await confirmAsk({title:t('enableStudyTitle'),message:t('enableStudyMessage'),ok:t('enable')});
+      if(!yes)return;
+      try{await persistence.setStudyOptIn(true);input.checked=true;studyGeneration=0;studyIdentity=await identity();scheduleStudySave();}
+      catch{input.checked=false;$('lessonStudyStatus').textContent=t('studyUnavailable');}
+    }else{
+      try{await persistence.setStudyOptIn(false);studyGeneration=0;$('lessonStudyStatus').textContent=t('studyOff');}
+      catch{input.checked=true;$('lessonStudyStatus').textContent=t('studyUnavailable');}
+    }
   }
   function keydown(event){if(/INPUT|TEXTAREA|BUTTON/.test(event.target?.tagName)||$('lessonConfirmDialog').open||$('lessonSheet').open||$('lessonHelpDialog').open)return;if(mode==='guided'){if(event.repeat&&[' ','1','2','s','S','ArrowLeft'].includes(event.key)){event.preventDefault();return;}if(event.key===' '){event.preventDefault();reveal();}else if(event.key==='1'&&session.stage==='revealed')rate('recalled');else if(event.key==='2'&&session.stage==='revealed')rate('again');else if(event.key.toLowerCase()==='s')skip();else if(event.key==='ArrowLeft')previous();}}
   async function start(){
