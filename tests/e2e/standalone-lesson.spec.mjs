@@ -113,7 +113,8 @@ test('T11: exported lesson bulk reveal persists confirmed answers across reload'
   const lesson=await context.newPage();await lesson.goto(pathToFileURL(lessonPath).href);
   await expect(lesson.locator('#lessonReady')).toBeVisible();
   await expect(lesson.locator('#lessonStudyOptIn')).toBeEnabled();
-  await lesson.locator('#lessonStudyOptIn').check();
+  // The opt-in handler deliberately unchecks until the confirmation is accepted.
+  await lesson.locator('#lessonStudyOptIn').click();
   await expect(lesson.locator('#lessonConfirmDialog')).toBeVisible();
   await lesson.locator('#lessonConfirmOk').click();
   await expect(lesson.locator('#lessonStudyOptIn')).toBeChecked();
