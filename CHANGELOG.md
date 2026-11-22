@@ -2,6 +2,7 @@
 
 - Fixed restored-draft prompts after starting a new sheet or deleting the last page: an empty draft now supersedes the previously saved document while preserving concurrency generation checks.
 - Fixed missing local study progress writes after revealing all answers on a page in standalone lesson HTML, and aligned other state-changing lesson controls.
+- Fixed exported lesson opt-in failing to enable after confirmation because the input was accessed through a stale event object.
 - Reused the safe delayed download URL cleanup for lesson editable-JSON exports and surfaced localized save failures.
 - Settled lesson confirmation requests canceled via Escape so save/opt-in flows cannot remain pending.
 - Updated both READMEs to link to actual GitHub Release files instead of the missing repository-root HTML.
