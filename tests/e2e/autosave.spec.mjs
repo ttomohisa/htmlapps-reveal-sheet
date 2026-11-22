@@ -86,8 +86,9 @@ test('T09: old tab cannot recreate a draft cleared from another tab',async({page
   await expect(page.locator('#draftSaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
   const second=await context.newPage();await openApp(second);
   await expect(second.locator('#appConfirmDialog')).toBeVisible();await second.locator('#appConfirmOk').click();
+  const before=await savedGeneration(page);
   await page.locator('#newButton').click();await page.locator('#appConfirmOk').click();
-  await expect.poll(()=>savedGeneration(page),{timeout:5000}).toBe(2);
+  await expect.poll(()=>savedGeneration(page),{timeout:5000}).toBe(before+1);
   await second.locator('#pageList .page-item[aria-current="page"] .page-card-title').fill('Old tab');
   await second.locator('#pageList .page-item[aria-current="page"] .page-card-title').press('Enter');
   await expect(second.locator('#draftConflict')).toBeVisible({timeout:5000});
