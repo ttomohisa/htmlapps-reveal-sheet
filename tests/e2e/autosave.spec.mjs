@@ -43,3 +43,54 @@ test('T09: a stale second tab stops autosave on generation conflict without losi
   await expect(second.locator('#resolveConflictSaveButton')).toBeVisible();await expect(second.locator('#resolveConflictReloadButton')).toBeVisible();
   await second.locator('#resolveConflictSaveButton').click();await expect(second.locator('#savePanel')).toBeVisible();
 });
+
+
+test('T09: starting a new sheet replaces the saved draft with an empty generation',async({page})=>{
+  await openApp(page);await enableDraft(page);await addOne(page);
+  await expect(page.locator('#draftSaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
+  const before=await savedGeneration(page);
+  await page.locator('#newButton').click();await expect(page.locator('#appConfirmDialog')).toBeVisible();
+  await page.locator('#appConfirmOk').click();
+  await expect(page.locator('#pageList .page-item')).toHaveCount(0);
+  await expect.poll(()=>savedGeneration(page),{timeout:5000}).toBe(before+1);
+  await page.reload();await page.locator('#addButton').waitFor({state:'visible'});
+  await expect(page.locator('#appConfirmDialog')).toBeHidden();
+  await expect(page.locator('#draftOptIn')).toBeChecked();
+  await expect(page.locator('#pageList .page-item')).toHaveCount(0);
+  await addOne(page);
+  await expect(page.locator('#draftSaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
+  await page.reload();await page.locator('#addButton').waitFor({state:'visible'});
+  await expect(page.locator('#appConfirmDialog')).toBeVisible();
+  await page.locator('#appConfirmOk').click();
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
+});
+
+test('T09: deleting the final page clears the recoverable draft, and Undo can save it again',async({page})=>{
+  await openApp(page);await enableDraft(page);await addOne(page);
+  await expect(page.locator('#draftSaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
+  const before=await savedGeneration(page);
+  await page.locator('#pageList .page-delete-button').click();await page.locator('#appConfirmOk').click();
+  await expect(page.locator('#pageList .page-item')).toHaveCount(0);
+  await expect.poll(()=>savedGeneration(page),{timeout:5000}).toBe(before+1);
+  await page.locator('#undoButton').click();
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
+  await expect.poll(()=>savedGeneration(page),{timeout:5000}).toBe(before+2);
+  await page.reload();await page.locator('#addButton').waitFor({state:'visible'});
+  await expect(page.locator('#appConfirmDialog')).toBeVisible();
+  await page.locator('#appConfirmOk').click();
+  await expect(page.locator('#pageList .page-item')).toHaveCount(1);
+});
+
+test('T09: old tab cannot recreate a draft cleared from another tab',async({page,context})=>{
+  await openApp(page);await enableDraft(page);await addOne(page);
+  await expect(page.locator('#draftSaveStatus')).toContainText(/Saved|保存しました/i,{timeout:5000});
+  const second=await context.newPage();await openApp(second);
+  await expect(second.locator('#appConfirmDialog')).toBeVisible();await second.locator('#appConfirmOk').click();
+  await page.locator('#newButton').click();await page.locator('#appConfirmOk').click();
+  await expect.poll(()=>savedGeneration(page),{timeout:5000}).toBe(2);
+  await second.locator('#pageList .page-item[aria-current="page"] .page-card-title').fill('Old tab');
+  await second.locator('#pageList .page-item[aria-current="page"] .page-card-title').press('Enter');
+  await expect(second.locator('#draftConflict')).toBeVisible({timeout:5000});
+  await page.reload();await page.locator('#addButton').waitFor({state:'visible'});
+  await expect(page.locator('#appConfirmDialog')).toBeHidden();
+});
