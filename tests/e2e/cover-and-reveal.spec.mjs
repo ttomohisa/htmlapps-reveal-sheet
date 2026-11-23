@@ -131,6 +131,8 @@ test('T03: free study uses compact numbered answer controls with distinct bulk a
   await page.locator('#revealPageButton').click();
   await expect(page.locator('#questionList .free-question[aria-pressed="true"]')).toHaveCount(3);
   await page.locator('#guidedModeButton').click();
+  await expect(page.locator('#appConfirmDialog')).toBeVisible();
+  await page.locator('#appConfirmOk').click();
   await expect(page.locator('#guidedPanel')).toBeVisible();
   await page.locator('#freeModeButton').click();
   await expect(page.locator('#freeStudyPanel')).toBeVisible();
