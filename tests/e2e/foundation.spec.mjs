@@ -31,7 +31,7 @@ test('T01: compact intro replaces the hero heading and hides the privacy badge o
  await expect(page.locator('#introDescription')).toContainText('Create a study sheet from diagrams or notes');
  await expect(page.locator('.local-badge')).toBeVisible();
  await page.locator('#languageButton').click();
- await expect(page.locator('#introDescription')).toHaveText('図やノートの画像に覆いを置き、答えをめくって覚える暗記シートを作れます。まず画像を追加してください。');
+ await expect(page.locator('#introDescription')).toHaveText('図やノートの画像に覆いを置き、答えをめくって覚える暗記シートを作れます。');
  await expect(page.locator('.local-badge')).toContainText('完全ローカル処理');
  const desktop=await page.evaluate(()=>{
    const header=document.querySelector('.header-inner').getBoundingClientRect(),main=document.querySelector('.main').getBoundingClientRect(),mark=document.querySelector('.brand-mark').getBoundingClientRect(),intro=document.querySelector('.page-intro').getBoundingClientRect(),badge=document.querySelector('.local-badge').getBoundingClientRect(),description=document.querySelector('#introDescription').getBoundingClientRect();
