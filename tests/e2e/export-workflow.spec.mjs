@@ -60,14 +60,14 @@ test('T14: Blob preparation failure keeps the sheet and the user can retry',asyn
   await page.locator('#saveButton').click();
   await expect(page.locator('#inputStatus')).toContainText(/保存する形式|Choose a format/i);
   await expect(page.locator('#saveJsonBytes')).toContainText(/保存時に計算|Calculated when saving/i);
-  await expect(page.locator('.save-diagnostic-ready')).toBeVisible();
+  await expect(page.locator('#saveDiagnostics')).toBeHidden();
   await page.locator('#downloadJsonButton').click();
   await expect(page.locator('#inputStatus')).toContainText(/準備できません|Could not prepare/i);
   await expect(page.locator('#saveDiagnostics')).toBeVisible();
   await expect(page.locator('#saveDiagnosticText')).toContainText(/RS-SAVE-3.*JSON \/ PREPARE \/ EXPORT_FAILED \/ Error/);
   await expect(page.locator('#inputStatus')).toContainText(/RS-SAVE-3/);
   await expect(page.locator('#appToastMessage')).toContainText(/RS-SAVE-3/);
-  await expect(page.locator('.save-diagnostic-ready')).toBeHidden();
+  await expect(page.locator('#saveDiagnostics')).toBeVisible();
   await expect(page.locator('#saveDiagnosticText')).not.toContainText(/static|\.png|reveal\.json/);
   await expect(page.locator('#pageList .page-item')).toHaveCount(1);
 
@@ -151,7 +151,7 @@ test('T14: mobile Save error detail is visible above controls without searching 
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
   await expect(page.locator('#previewImage')).toBeVisible();
   await page.locator('#saveButton').click();
-  await expect(page.locator('.save-diagnostic-ready')).toBeVisible();
+  await expect(page.locator('#saveDiagnostics')).toBeHidden();
   await page.evaluate(()=>{
     const Original=window.Blob;
     window.__RevealOriginalBlob=Original;
@@ -175,4 +175,62 @@ test('T14: mobile Save error detail is visible above controls without searching 
   expect(await details.evaluate(node=>node.parentElement.querySelector('#savePanelTitle').compareDocumentPosition(node)&Node.DOCUMENT_POSITION_FOLLOWING)).toBeTruthy();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await page.evaluate(()=>{window.Blob=window.__RevealOriginalBlob;delete window.__RevealOriginalBlob;});
+});
+
+
+test('T14: save screen makes the two file choices clear on desktop and narrow phones',async({page})=>{
+  await page.setViewportSize({width:1120,height:820});
+  await openApp(page);
+  await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
+  await expect(page.locator('#previewImage')).toBeVisible();
+  await page.locator('#saveButton').click();
+
+  await expect(page.locator('#savePanelTitle')).toContainText('Save your sheet');
+  await expect(page.locator('#saveDiagnostics')).toBeHidden();
+  await expect(page.locator('.save-diagnostic-ready')).toHaveCount(0);
+  await expect(page.locator('.save-choice')).toHaveCount(2);
+  await expect(page.locator('#downloadJsonButton')).toBeEnabled();
+  await expect(page.locator('#downloadHtmlButton')).toBeDisabled();
+  await expect(page.locator('#saveFileDetails')).not.toHaveAttribute('open','');
+  await expect(page.locator('#saveJsonBytes')).toBeHidden();
+  await expect(page.locator('#outputFilename')).not.toBeFocused();
+  await expect(page.locator('#savePanelTitle')).toBeFocused();
+  await page.locator('#saveFileDetails summary').click();
+  await expect(page.locator('#saveJsonBytes')).toBeVisible();
+  await page.locator('#saveFileDetails summary').click();
+
+  const desktop=await page.locator('.save-choice').evaluateAll(elements=>elements.map(el=>el.getBoundingClientRect()));
+  expect(Math.abs(desktop[0].top-desktop[1].top)).toBeLessThanOrEqual(1);
+  expect(desktop[1].left).toBeGreaterThan(desktop[0].right);
+  for(const width of [390,320]){
+    await page.setViewportSize({width,height:760});
+    await expect(page.locator('.save-choice')).toHaveCount(2);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+    const boxes=await page.locator('.save-choice').evaluateAll(elements=>elements.map(el=>el.getBoundingClientRect()));
+    expect(boxes[1].top).toBeGreaterThan(boxes[0].top);
+    expect(boxes[0].width).toBeLessThanOrEqual(width);
+  }
+  await page.locator('#languageButton').click();
+  await expect(page.locator('#savePanelTitle')).toHaveText('教材を保存');
+  await expect(page.locator('#saveEditableTitle')).toHaveText('あとから編集する');
+  await expect(page.locator('#saveLessonTitle')).toHaveText('めくって学習する');
+});
+
+test('T14: image size and local saving are explained without an automatic-saving warning',async({page})=>{
+  await page.setViewportSize({width:1120,height:820});
+  await openApp(page);
+  await expect(page.locator('.data-notice')).toBeHidden();
+  await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
+  await expect(page.locator('#previewImage')).toBeVisible();
+  await expect(page.locator('.data-notice')).toContainText('Total image size');
+  await expect(page.locator('.data-notice')).not.toContainText('starts OFF');
+  await expect(page.locator('#localDraftDetails')).not.toHaveAttribute('open','');
+  const styling=await page.locator('.data-notice').evaluate(el=>({
+    border:getComputedStyle(el).borderTopWidth,
+    panelBorder:getComputedStyle(document.querySelector('#localDraftPanel')).borderTopWidth
+  }));
+  expect(styling.border).toBe('0px');
+  expect(styling.panelBorder).toBe('0px');
+  await page.locator('#languageButton').click();
+  await expect(page.locator('.data-notice')).toContainText('画像の合計');
 });
