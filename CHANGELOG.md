@@ -1,5 +1,8 @@
 ## 1.2.1 - 2026-11-23
 
+- Aligned footer text with the header and main columns, removed the extra Japanese/English intro sentence and hid the intro once images load.
+- Grouped primary import/camera and saved-sheet actions apart from image options, with less button-like styling for settings.
+- Collapsed on-device saving controls by default, expanding automatically on a stale-tab conflict, and adapted browser tests.
 - Rewrote the redundant hero heading and lead as one concise bilingual explanation; kept the application name as the accessible page heading.
 - Hid the local-processing badge on phones and reduced decorative card borders, nested panels and shadows in the editor and exported lessons.
 - Added desktop/mobile bilingual presentation assertions for the introduction, badge visibility and page-card styling.
