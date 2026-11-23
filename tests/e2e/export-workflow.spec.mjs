@@ -202,6 +202,11 @@ test('T14: save screen makes the two file choices clear on desktop and narrow ph
   const desktop=await page.locator('.save-choice').evaluateAll(elements=>elements.map(el=>{const r=el.getBoundingClientRect();return {top:r.top,left:r.left,right:r.right,width:r.width};}));
   expect(Math.abs(desktop[0].top-desktop[1].top)).toBeLessThanOrEqual(1);
   expect(desktop[1].left).toBeGreaterThan(desktop[0].right);
+  const desktopButtons=await page.locator('#downloadJsonButton, #downloadHtmlButton').evaluateAll(nodes=>nodes.map(el=>{const r=el.getBoundingClientRect();return {top:r.top,height:r.height};}));
+  expect(Math.abs(desktopButtons[0].top-desktopButtons[1].top)).toBeLessThanOrEqual(1);
+  expect(Math.abs(desktopButtons[0].height-desktopButtons[1].height)).toBeLessThanOrEqual(1);
+  await expect(page.locator('.save-preview-row #previewLessonButton')).toHaveCount(1);
+  await expect(page.locator('.save-choice #previewLessonButton')).toHaveCount(0);
   for(const width of [390,320]){
     await page.setViewportSize({width,height:760});
     await expect(page.locator('.save-choice')).toHaveCount(2);
