@@ -1,5 +1,8 @@
 ## 1.2.1 - 2026-11-23
 
+- Matched save button heights and vertical alignment by moving the HTML preview below the equal-height export options.
+- Reworked free-study mode into a segmented switch, compact progress/action row, and numbered answer toggles with bilingual accessible names and clear pressed states.
+- Extended desktop/mobile regression tests for save button alignment, free-study toggles, bulk actions, language switching and phone widths.
 - Reworked the save view into distinct editable and study HTML choices, with a clean mobile stack and optional technical file details.
 - Removed the save diagnostics placeholder from the normal UI, while retaining error diagnostics on failure.
 - Replaced the confusing autosave disclaimer with a simple image total and removed unnecessary separators around local saving.
