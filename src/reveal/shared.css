@@ -63,7 +63,7 @@ button:disabled,input:disabled { cursor:not-allowed; }
 .preview-wait { position:absolute;inset:0;background:#f2f3ef;display:grid;place-items:center;text-align:center;padding:24px; }
 .image-meta-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:6px;min-height:24px}.image-meta { display:flex;flex:0 0 auto;flex-wrap:wrap;justify-content:flex-end;gap:8px 14px;margin:0;color:var(--muted);font-size:11px;line-height:1.4; }
 .image-meta strong { color:var(--text);font-weight:550; }
-.data-notice { margin:22px 0 0;font-size:13px;line-height:1.8;color:var(--muted);border-top:1px solid var(--line);padding-top:18px; }
+.data-notice { margin:16px 0 0;font-size:12px;line-height:1.6;color:var(--muted);border:0;padding:0; }
 .failure-section { margin-top:20px;padding:16px;border:1px solid #dcbba2;background:#fffaf4;border-radius:12px; }
 .failure-section h3 { margin:0 0 12px;font-size:16px; }
 .failure-list { padding-left:20px;max-height:220px;overflow:auto; }
@@ -192,16 +192,15 @@ button:disabled,input:disabled { cursor:not-allowed; }
 }
 
 /* T04: explicit manual save panel. */
-.save-panel { margin:12px 0 16px;padding:12px 0;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent; }
-.save-panel h3 { margin:0 0 10px;font-size:16px; }
-.save-summary { display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:10px;color:var(--muted);font-size:13px; }
-.save-summary strong { color:var(--text); }
-.save-note { margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.7; }
-.save-panel .export-field { margin-bottom:12px; }
-@media(max-width:767px) {
- .save-summary { display:grid;grid-template-columns:1fr;gap:6px; }
- .save-panel .button.primary { width:100%; }
-}
+.save-panel { margin:10px 0 16px;padding:4px 0 10px;border:0;border-radius:0;background:transparent; }
+.save-panel h3 { margin:0 0 12px;font-size:19px;line-height:1.45; }
+.save-overview { display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;margin:0 0 18px;color:var(--muted);font-size:12px;line-height:1.5; }
+.save-overview>span { display:inline-flex;align-items:baseline;gap:5px; }
+.save-overview strong { color:var(--text);font-size:13px;font-weight:650;font-variant-numeric:tabular-nums; }
+.save-panel .export-field { max-width:420px;margin:0 0 16px;gap:6px; }
+.save-panel .filename-input { width:100%;min-height:46px;padding:10px 12px;border-radius:9px;font-size:15px; }
+.save-note { margin:12px 0 0;color:var(--muted);font-size:12px;line-height:1.7; }
+@media(max-width:767px) { .save-panel .export-field { max-width:none; } }
 
 /* T05: page management lives directly in the page cards. */
 .question-text-panel textarea{width:100%;min-height:72px;resize:vertical;border:1px solid var(--line);border-radius:9px;background:#fff;padding:8px 10px;color:var(--text);line-height:1.5}
@@ -229,15 +228,35 @@ button:disabled,input:disabled { cursor:not-allowed; }
 
 
 /* T09: opt-in local draft persistence. */
-.local-persistence-panel{margin:18px 0 0;padding:14px 0 0;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent}.local-persistence-panel h3{margin:0 0 10px;font-size:15px}.local-setting{display:flex;align-items:flex-start;gap:10px;min-height:48px}.local-setting input{margin-top:5px}.local-setting span{display:flex;flex-direction:column;gap:3px}.local-setting small,.local-save-status,.local-conflict p{color:var(--muted);font-size:12px;line-height:1.65}.local-save-status{margin:8px 0 0}.local-conflict{margin-top:10px;padding:10px;border:1px solid #d0a14b;border-radius:10px;background:#fff9e9}.local-conflict p{margin:0 0 8px}.local-actions{display:flex;flex-wrap:wrap;gap:8px}.local-actions .button{min-height:48px;font-size:12px}
+.local-persistence-panel{margin:10px 0 0;padding:0;border:0;border-radius:0;background:transparent}.local-persistence-panel h3{margin:0 0 10px;font-size:15px}.local-setting{display:flex;align-items:flex-start;gap:10px;min-height:48px}.local-setting input{margin-top:5px}.local-setting span{display:flex;flex-direction:column;gap:3px}.local-setting small,.local-save-status,.local-conflict p{color:var(--muted);font-size:12px;line-height:1.65}.local-save-status{margin:8px 0 0}.local-conflict{margin-top:10px;padding:10px;border:1px solid #d0a14b;border-radius:10px;background:#fff9e9}.local-conflict p{margin:0 0 8px}.local-actions{display:flex;flex-wrap:wrap;gap:8px}.local-actions .button{min-height:48px;font-size:12px}
 @media(max-width:767px){.local-actions{display:grid;grid-template-columns:1fr}.local-actions .button{width:100%}}
 
 .local-divider{height:1px;margin:14px 0;background:var(--line)}.local-clear-block>strong{font-size:13px}.local-clear-block>p{margin:4px 0 10px;color:var(--muted);font-size:12px;line-height:1.65}
 
 
 /* T11: portable lesson save controls. */
-.save-output-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.save-output-actions>span{display:flex;align-items:center;gap:7px}.save-output-actions small{color:var(--muted);font-size:12px}
-@media(max-width:767px){.save-output-actions{display:grid;grid-template-columns:1fr}.save-output-actions>span{display:grid;grid-template-columns:minmax(0,1fr) auto}.save-output-actions .button{width:100%}}
+.save-output-actions { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0; }
+.save-choice { display:flex;flex-direction:column;align-items:stretch;gap:8px;min-width:0;padding:16px;border:1px solid var(--line);border-radius:11px;background:var(--surface); }
+.save-choice h4 { margin:0;font-size:15px;line-height:1.5;font-weight:700; }
+.save-choice p { flex:1 1 auto;margin:0 0 8px;color:var(--muted);font-size:12px;line-height:1.65; }
+.save-choice>.button:not(.save-preview-link) { width:100%;min-height:46px;margin:0; }
+.save-choice .save-format { align-self:flex-end;margin:0;color:var(--muted);font-size:11px;line-height:1.35; }
+.save-choice .save-preview-link { align-self:flex-start;min-height:40px;min-width:0;margin-top:2px;padding:7px 0;border:0;border-radius:0;background:transparent;color:var(--accent);font-size:12px;font-weight:600; }
+.save-choice .save-preview-link:hover:not(:disabled) { background:transparent;text-decoration:underline; }
+.save-choice .save-preview-link:disabled { opacity:.55; }
+.save-file-details { margin:18px 0 0;color:var(--muted);font-size:12px; }
+.save-file-details>summary { display:list-item;min-height:40px;padding:9px 0;cursor:pointer;color:var(--muted);font-weight:600; }
+.save-file-details>summary:hover { color:var(--accent); }
+.save-detail-grid { display:flex;flex-wrap:wrap;gap:8px 18px;margin:4px 0 0; }
+.save-detail-grid>span { display:inline-flex;flex-wrap:wrap;gap:5px; }
+.save-detail-grid strong { color:var(--text);font-weight:650; }
+@media(max-width:767px) {
+  .save-panel h3 { font-size:18px; }
+  .save-overview { margin-bottom:16px; }
+  .save-output-actions { grid-template-columns:minmax(0,1fr);gap:10px; }
+  .save-choice { padding:13px 14px; }
+  .save-choice p { margin-bottom:4px; }
+}
 
 
 /* T11: study-only lesson preview uses an isolated in-memory session. */
@@ -278,8 +297,8 @@ button:disabled,input:disabled { cursor:not-allowed; }
 .editor-sheet .cover-panel { margin:0;padding:0;border:0;border-radius:0; }
 .editor-sheet .cover-list-item { min-height:48px;padding:7px 10px;font-size:12px; }
 .editor-sheet .cover-list-actions .button { min-height:48px;font-size:12px; }
-.editor-sheet .local-persistence-panel { margin-top:16px;padding:14px 0 0;border-width:1px 0 0;border-radius:0;background:transparent; }
-.editor-sheet .data-notice { margin:14px 0 0;padding-top:14px;font-size:12px; }
+.editor-sheet .local-persistence-panel { margin-top:14px;padding:0;border:0;border-radius:0;background:transparent; }
+.editor-sheet .data-notice { margin:12px 0 0;padding:0;border:0;font-size:12px; }
 .editor-sheet .image-meta-row { margin-top:14px;gap:8px; }
 .editor-sheet .image-meta { justify-content:flex-start; }
 .editor-sheet .image-meta>span:last-child { display:inline; }
@@ -591,3 +610,6 @@ body.has-pages .page-intro{display:none}
   .editor-sheet #editControls .import-actions #openButton{grid-column:1/-1;justify-content:flex-start}
   .editor-sheet #editControls .import-settings{flex:1 1 100%}
 }
+
+/* Hide empty-sheet size metadata without adding an unexplained divider. */
+body:not(.has-pages) .data-notice{display:none}
