@@ -199,14 +199,14 @@ test('T14: save screen makes the two file choices clear on desktop and narrow ph
   await expect(page.locator('#saveJsonBytes')).toBeVisible();
   await page.locator('#saveFileDetails summary').click();
 
-  const desktop=await page.locator('.save-choice').evaluateAll(elements=>elements.map(el=>el.getBoundingClientRect()));
+  const desktop=await page.locator('.save-choice').evaluateAll(elements=>elements.map(el=>{const r=el.getBoundingClientRect();return {top:r.top,left:r.left,right:r.right,width:r.width};}));
   expect(Math.abs(desktop[0].top-desktop[1].top)).toBeLessThanOrEqual(1);
   expect(desktop[1].left).toBeGreaterThan(desktop[0].right);
   for(const width of [390,320]){
     await page.setViewportSize({width,height:760});
     await expect(page.locator('.save-choice')).toHaveCount(2);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-    const boxes=await page.locator('.save-choice').evaluateAll(elements=>elements.map(el=>el.getBoundingClientRect()));
+    const boxes=await page.locator('.save-choice').evaluateAll(elements=>elements.map(el=>{const r=el.getBoundingClientRect();return {top:r.top,left:r.left,right:r.right,width:r.width};}));
     expect(boxes[1].top).toBeGreaterThan(boxes[0].top);
     expect(boxes[0].width).toBeLessThanOrEqual(width);
   }
