@@ -2,6 +2,7 @@ import {test,expect} from '@playwright/test';
 import {openApp,imagePath} from '../helpers/app.mjs';
 
 async function enableDraft(page){
+  if(!(await page.locator('#localDraftDetails').evaluate(el=>el.open)))await page.locator('#localDraftTitle').click();
   await page.locator('#draftOptIn').click();
   await expect(page.locator('#appConfirmDialog')).toBeVisible();
   await page.locator('#appConfirmOk').click();
