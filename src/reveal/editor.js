@@ -892,7 +892,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function beginCreate(){cancelTransientInteraction();closeEditorSheet({restoreFocus:false});scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='create';mobilePagesOpen=false;fineAdjustOpen=false;previousStudySummary=null;refreshCopy();$(mobileLayout.matches&&doc.pages.length?'drawModeButton':'addButton').focus({preventScroll:true});}
   function beginSave(){
     if(!doc.pages.length||busy||exportBusy)return;cancelTransientInteraction();closeEditorSheet({restoreFocus:false});scheduleStudySave();studyEditActive=false;studyEditImpact=null;mode='save';mobilePagesOpen=false;fineAdjustOpen=false;selectedMaskId=null;preparedJsonExport=null;preparedLessonExport=null;
-    clearSaveDiagnostics();status('exportChoose');refreshCopy();$('outputFilename').focus({preventScroll:true});
+    clearSaveDiagnostics();status('exportChoose');refreshCopy();$('savePanelTitle').focus({preventScroll:true});
   }
   function applyImported(envelope,{fromLocal=false}={}){
     cancelTransientInteraction();closeEditorSheet({restoreFocus:false});
