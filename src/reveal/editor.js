@@ -301,7 +301,24 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('freeModeButton').setAttribute('aria-pressed',String(studyMode==='free'));$('guidedModeButton').setAttribute('aria-pressed',String(studyMode==='guided'));$('freeStudyPanel').hidden=studyMode!=='free';$('guidedPanel').hidden=studyMode!=='guided';
     if(studyMode==='free'){
       const summary=core.summaryFree(studySession);$('confirmedCount').textContent=String(summary.confirmed);$('studyQuestionCount').textContent=String(summary.total);$('questionList').replaceChildren();
-      const open=new Set(studySession.openQuestionIds);studySession.queue.forEach((qid,index)=>{const question=doc.questions.find(item=>item.id===qid);if(!question)return;const button=env.document.createElement('button');button.type='button';button.className='question-item';button.dataset.questionId=qid;const action=t(open.has(qid)?'hideQuestion':'revealQuestion',{number:index+1});button.textContent=question.prompt?action+' · '+question.prompt:action;button.setAttribute('aria-pressed',String(open.has(qid)));button.addEventListener('click',()=>handleViewAction({type:'TOGGLE_QUESTION',questionId:qid}));$('questionList').append(button);});
+      const open=new Set(studySession.openQuestionIds);
+      studySession.queue.forEach((qid,index)=>{
+        const question=doc.questions.find(item=>item.id===qid);if(!question)return;
+        const isOpen=open.has(qid),button=env.document.createElement('button');
+        button.type='button';button.className='question-item free-question';button.dataset.questionId=qid;
+        const action=t(isOpen?'hideQuestion':'revealQuestion',{number:index+1});
+        const label=env.document.createElement('span'),number=env.document.createElement('strong'),state=env.document.createElement('span');
+        label.className='free-question-label';number.className='free-question-number';
+        number.textContent=t('questionNumber',{number:index+1});label.append(number);
+        if(question.prompt){
+          const prompt=env.document.createElement('span');prompt.className='free-question-prompt';prompt.textContent=question.prompt;label.append(prompt);
+        }
+        state.className='free-question-action';state.textContent=t(isOpen?'hideAnswerShort':'revealAnswerShort');
+        button.append(label,state);button.setAttribute('aria-label',question.prompt?action+' · '+question.prompt:action);
+        button.setAttribute('aria-pressed',String(isOpen));
+        button.addEventListener('click',()=>handleViewAction({type:'TOGGLE_QUESTION',questionId:qid}));
+        $('questionList').append(button);
+      });
       const answers=studySession.queue.filter(qid=>open.has(qid)).map(qid=>doc.questions.find(question=>question.id===qid)?.answer||'').filter(Boolean);$('freeAnswerBox').hidden=answers.length===0;$('freeAnswerText').textContent=answers.join('\n');
       return;
     }
