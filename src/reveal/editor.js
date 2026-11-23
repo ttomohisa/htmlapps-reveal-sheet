@@ -71,6 +71,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   }
   function refreshLocalDraft(){
     const toggle=$('draftOptIn');if(!toggle)return;toggle.checked=Boolean(persistence.settings.draftOptIn);toggle.disabled=!localAvailable;
+    if(draftConflict)$('localDraftDetails').open=true;
     $('draftConflict').hidden=!draftConflict;$('resolveConflictSaveButton').hidden=!draftConflict;$('resolveConflictReloadButton').hidden=!draftConflict;refreshLocalStudy();
   }
   function cancelDraftTimer(){if(draftSaveTimer){env.clearTimeout(draftSaveTimer);draftSaveTimer=0;}}
