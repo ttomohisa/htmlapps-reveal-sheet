@@ -72,3 +72,61 @@ test('T01: workspace cards are understated without hiding active page state',asy
 test('T01: obsolete development capability sentence is absent from the app frame',async({page})=>{
  await openApp(page);await page.locator('#languageButton').click();await expect(page.locator('#developmentNote')).toHaveCount(0);expect(await page.locator('body').innerText()).not.toContain('編集・学習・教材HTMLに加え');
 });
+
+
+test('T01: the intro disappears after loading an image on desktop and phone',async({page})=>{
+  const {imagePath}=await import('../helpers/app.mjs');
+  await page.setViewportSize({width:1200,height:800});await openApp(page);
+  await page.locator('#languageButton').click();
+  await expect(page.locator('#introDescription')).toHaveText('図やノートの画像に覆いを置き、答えをめくって覚える暗記シートを作れます。');
+  await expect(page.locator('.local-badge')).toBeVisible();
+  await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
+  await expect(page.locator('#previewImage')).toBeVisible();
+  await expect(page.locator('.page-intro')).toBeHidden();
+  await page.setViewportSize({width:390,height:780});
+  await expect(page.locator('.page-intro')).toBeHidden();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('T01: footer is aligned to the header and main content edges',async({page})=>{
+  for(const width of [900,1360]){
+    await page.setViewportSize({width,height:800});await openApp(page);
+    const leftEdges=await page.evaluate(()=>{
+      const left=(selector)=>{
+        const node=document.querySelector(selector),rect=node.getBoundingClientRect(),style=getComputedStyle(node);
+        return rect.left+parseFloat(style.paddingLeft);
+      };
+      return {header:left('.header-inner'),main:left('.main'),footer:left('body > footer')};
+    });
+    expect(Math.abs(leftEdges.footer-leftEdges.header)).toBeLessThanOrEqual(1);
+    expect(Math.abs(leftEdges.footer-leftEdges.main)).toBeLessThanOrEqual(1);
+  }
+});
+
+test('T01: import actions are distinct from image options, and local storage is folded by default',async({page})=>{
+  await page.setViewportSize({width:1120,height:800});await openApp(page);
+  await expect(page.locator('#localDraftDetails')).not.toHaveAttribute('open','');
+  await expect(page.locator('#localDraftTitle')).toBeVisible();
+  await expect(page.locator('#draftOptIn')).toBeHidden();
+  await expect(page.locator('.import-actions #addButton')).toBeVisible();
+  await expect(page.locator('.import-actions #cameraButton')).toBeVisible();
+  await expect(page.locator('.import-actions #openButton')).toBeVisible();
+  await expect(page.locator('.import-settings .image-compression-control')).toBeVisible();
+  await expect(page.locator('.import-settings .cover-color-control')).toBeVisible();
+  const buttons=await page.evaluate(()=>({
+    primary:getComputedStyle(document.querySelector('#addButton')).backgroundColor,
+    open:getComputedStyle(document.querySelector('#openButton')).backgroundColor,
+    primaryRow:document.querySelector('#addButton').getBoundingClientRect().top,
+    settingsRow:document.querySelector('.import-settings').getBoundingClientRect().top
+  }));
+  expect(buttons.primary).not.toBe(buttons.open);
+  expect(buttons.settingsRow).toBeGreaterThan(buttons.primaryRow);
+  await page.locator('#localDraftTitle').click();
+  await expect(page.locator('#draftOptIn')).toBeVisible();
+  await page.locator('#localDraftTitle').click();
+  await expect(page.locator('#draftOptIn')).toBeHidden();
+  await page.setViewportSize({width:320,height:600});
+  await expect(page.locator('.import-actions #addButton')).toBeVisible();
+  await expect(page.locator('.import-actions #cameraButton')).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
