@@ -1,5 +1,9 @@
 ## 1.2.1 - 2026-11-23
 
+- Reworked the save view into distinct editable and study HTML choices, with a clean mobile stack and optional technical file details.
+- Removed the save diagnostics placeholder from the normal UI, while retaining error diagnostics on failure.
+- Replaced the confusing autosave disclaimer with a simple image total and removed unnecessary separators around local saving.
+- Added responsive/save error handling and bilingual copy regression checks.
 - Aligned footer text with the header and main columns, removed the extra Japanese/English intro sentence and hid the intro once images load.
 - Grouped primary import/camera and saved-sheet actions apart from image options, with less button-like styling for settings.
 - Collapsed on-device saving controls by default, expanding automatically on a stale-tab conflict, and adapted browser tests.
