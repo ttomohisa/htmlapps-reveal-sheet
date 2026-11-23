@@ -1,5 +1,8 @@
 ## 1.2.1 - 2026-11-23
 
+- Rewrote the redundant hero heading and lead as one concise bilingual explanation; kept the application name as the accessible page heading.
+- Hid the local-processing badge on phones and reduced decorative card borders, nested panels and shadows in the editor and exported lessons.
+- Added desktop/mobile bilingual presentation assertions for the introduction, badge visibility and page-card styling.
 - Fixed restored-draft prompts after starting a new sheet or deleting the last page: an empty draft now supersedes the previously saved document while preserving concurrency generation checks.
 - Fixed missing local study progress writes after revealing all answers on a page in standalone lesson HTML, and aligned other state-changing lesson controls.
 - Fixed exported lesson opt-in failing to enable after confirmation because the input was accessed through a stale event object.
