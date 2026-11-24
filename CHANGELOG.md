@@ -1,5 +1,7 @@
 ## 1.2.1 - 2026-11-23
 
+- Fixed incomplete release ZIP contents: bundled README screenshots and linked QA/contributing documents, with a ZIP-entry and relative-link check.
+- Reused the exact checksummed CI-prepared files at GitHub Release publication instead of rebuilding the archive; added dry-run verification of the publication inputs.
 - Matched save button heights and vertical alignment by moving the HTML preview below the equal-height export options.
 - Reworked free-study mode into a segmented switch, compact progress/action row, and numbered answer toggles with bilingual accessible names and clear pressed states.
 - Extended desktop/mobile regression tests for save button alignment, free-study toggles, bulk actions, language switching and phone widths.
