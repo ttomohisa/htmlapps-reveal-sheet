@@ -83,11 +83,11 @@ try {
   # separate brittle hardcoded link manifest.
   foreach ($readme in @('README.md', 'README.ja.md')) {
     $markdown = Get-Content -Raw -Encoding UTF8 $readme
-    $links = [regex]::Matches($markdown, '!?' + '\\[' + '[^\\]\\r\\n]+' + '\\]' + '\\(' + '([^)\\r\\n]+)' + '\\)')
+    $links = [regex]::Matches($markdown, '!?\[[^\r\n]+?\]\(([^)\r\n]+)\)')
     foreach ($match in $links) {
       $target = $match.Groups[1].Value.Split('#')[0].Split('?')[0]
       if (-not $target -or $target -match '^(https?://|mailto:)') { continue }
-      $target = $target.Replace('\\', '/')
+      $target = $target.Replace('\', '/')
       if ($entries -notcontains $target) { throw "README link missing from release ZIP: $readme -> $target" }
     }
   }
