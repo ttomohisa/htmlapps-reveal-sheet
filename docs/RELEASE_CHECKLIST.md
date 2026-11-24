@@ -33,7 +33,8 @@ GitHub Release is v1.2.0. The repository owner alone merges PR #22.
   cover/group/undo, study modes, saving/reimport, offline/CSP, and hostile inputs
 - [x] PR preview and source screenshot capture completed in the cited runs
 - [x] The pre-merge tests invoke `publish-release.ps1 -PrepareOnly` and check
-  that the versioned release package and hashes can be prepared
+  that the versioned release package, README-linked ZIP resources and hashes can be prepared.
+  The candidate also runs `-VerifyPreparedOnly` to recheck the same release assets without publishing
 - [ ] Repeat all applicable checks on the **final PR head** (including these document changes)
 - [ ] Verify the final release artifacts' names, SHA-256 checksums and contents
   after publication
