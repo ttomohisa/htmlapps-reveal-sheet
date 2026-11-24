@@ -6,7 +6,7 @@ The built single-HTML files are generated, not tracked at repository root.
 To use the app without building / ビルドせずに使う:
   https://github.com/ttomohisa/htmlapps-reveal-sheet/releases/latest
   Download the readable .html file under Assets (not Source code).
-  Note: until PR #22 is merged and released, latest still means v1.2.0.
+  Published assets may lag source changes until a new release is published.
 
 To build from source (Windows with PowerShell 7):
   pwsh -NoProfile -File ./scripts/check-repository.ps1
