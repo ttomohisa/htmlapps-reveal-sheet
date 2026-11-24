@@ -1,4 +1,5 @@
-param([switch]$PrepareOnly)
+param([switch]$PrepareOnly, [switch]$VerifyPreparedOnly)
+if ($PrepareOnly -and $VerifyPreparedOnly) { throw 'Choose preparation or prepared-file verification, not both.' }
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
@@ -126,6 +127,10 @@ for ($index = 0; $index -lt $assets.Count; $index++) {
   if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Prepared release file is missing: $asset" }
   $actualHash = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
   if ($actualHash -ne $expectedHash) { throw "Prepared release file changed after testing: $asset" }
+}
+if ($VerifyPreparedOnly) {
+  Write-Host '[OK] Prepared release assets match SHA256SUMS.txt; nothing was published.'
+  exit 0
 }
 if (-not $env:GH_TOKEN -or -not $env:GITHUB_REPOSITORY -or -not $env:GITHUB_SHA) {
   throw 'Authenticated GitHub Actions release context is required.'
