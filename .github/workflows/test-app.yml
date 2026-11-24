@@ -31,7 +31,9 @@ jobs:
           ./scripts/test-reveal-build.ps1
       - name: Verify current release packaging (no publication)
         shell: pwsh
-        run: ./scripts/publish-release.ps1 -PrepareOnly
+        run: |
+          ./scripts/publish-release.ps1 -PrepareOnly
+          ./scripts/publish-release.ps1 -VerifyPreparedOnly
 
       - name: Unit tests
         shell: pwsh
