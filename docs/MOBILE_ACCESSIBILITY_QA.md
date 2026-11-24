@@ -2,6 +2,32 @@
 
 This checklist began with the v0.8.0 / T15–T16 milestone and is updated with the v0.9.0 review-driven direct-edit UX. Automated evidence and physical/manual evidence are deliberately separated.
 
+## v1.2.1 candidate update — 2026-11-24
+
+This file preserves the original v0.8.0/v0.9.0 checks below. Additional
+v1.2.1 desktop/mobile Chromium regressions passed in
+[application CI run 45232671193](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/runs/45232671193)
+on commit `c4cbb8688fe98b0a07f1f42c056de4f63fd6a125`:
+
+- At 320 px and 390 px, the empty-state import buttons stay reachable,
+  the intro/local-processing badge disappear after an image is loaded,
+  and the on-device saving details can be opened when needed.
+- The desktop header, main text and footer alignment are checked.
+- Editable JSON and study HTML actions have matched heights in the
+  two-column desktop save layout; the save choices stack on phones.
+- Free-study answer toggles have visible numbered/pressed states;
+  the mode switch and bulk actions work in both languages.
+- Standalone lessons and their study-persistence opt-in and save/reopen
+  flows are exercised in both readable and self-extracting Chromium runs.
+- Source screenshot files were refreshed by the
+  [UI capture workflow](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/runs/45232671301).
+
+These tests **do not** verify Android Chrome, iPhone Safari, a real
+phone keyboard, hardware touch/rotation, OS download completion or
+actual screen-reader behavior. Those remain pending below. The last
+known device-specific Android export failure is not explained by
+the Chromium successes.
+
 ## Automated on Windows Chromium
 
 | Area | Automated evidence | Status |
