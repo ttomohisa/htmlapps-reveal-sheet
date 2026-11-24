@@ -205,7 +205,7 @@ dist/index.self-extract.html  Generated self-extracting standalone app
 
 ## Release status
 
-**v1.2.1** fixes empty-draft recovery and exported-lesson progress/save handling. PNG-only sheets continue to use schema v1, and WebP-containing sheets use schema v2. Download distributable HTML from the latest GitHub Release. Physical Android/iPhone, real screen-reader, real 200% zoom and OS file-handoff checks remain unverified until performed on real hardware; see the QA documents for the release boundary.
+**The current source targets v1.2.1.** It fixes empty-draft recovery and exported-lesson progress/save handling. PNG-only sheets continue to use schema v1, and WebP-containing sheets use schema v2. Download published builds from the latest GitHub Release; an open PR's changes are not included there until that version is released. Physical Android/iPhone, real screen-reader, real 200% zoom and OS file-handoff checks remain unverified until performed on real hardware. See [the release checklist](docs/RELEASE_CHECKLIST.md) for the exact verification boundary.
 
 ## Contributing
 
