@@ -119,27 +119,7 @@ $recordLines = @(Get-Content -LiteralPath $checksumPath -Encoding UTF8)
 if ($recordLines.Count -ne $assets.Count) { throw 'Release checksum manifest has an unexpected number of entries.' }
 for ($index = 0; $index -lt $assets.Count; $index++) {
   $asset = $assets[$index]
-  $pattern = '^([0-9a-f]{64})  ' + [regex]::Escape($asset) + ' -or -not $env:GITHUB_REPOSITORY -or -not $env:GITHUB_SHA) {
-  throw 'Authenticated GitHub Actions release context is required.'
-}
-if ($env:GITHUB_REF -ne 'refs/heads/main') { throw 'Refusing to publish from anything other than main.' }
-if ($env:GITHUB_REPOSITORY -ne 'ttomohisa/htmlapps-reveal-sheet') { throw 'Unexpected repository.' }
-# Recheck after tests and packaging; do not alter an existing tag or release.
-$published = @(gh api "repos/$env:GITHUB_REPOSITORY/releases?per_page=100" --jq '.[].tag_name')
-if ($LASTEXITCODE -ne 0) { throw 'Could not check GitHub releases.' }
-if ($published -contains $tag) { throw "$tag was published while building; not overwriting." }
-if (@(git tag --list $tag).Count -ne 0) { throw "$tag already exists; refusing to move it." }
-$files = @(
-  (Join-Path $out "$prefix.html"),
-  (Join-Path $out "$prefix.self-extract.html"),
-  (Join-Path $out "$prefix.zip"),
-  (Join-Path $out 'SHA256SUMS.txt')
-)
-gh release create $tag @files --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "Reveal Sheet v$version" --notes-file "docs/releases/v$version.md" --latest
-if ($LASTEXITCODE -ne 0) { throw 'GitHub Release creation failed.' }
-gh release view $tag --repo $env:GITHUB_REPOSITORY --json tagName,url,assets
-if ($LASTEXITCODE -ne 0) { throw 'Release was not verified.' }
-
+  $pattern = '^([0-9a-f]{64})  ' + [regex]::Escape($asset) + '$'
   if ($recordLines[$index] -notmatch $pattern) { throw "Release checksum record is invalid: $asset" }
   $expectedHash = $Matches[1]
   $file = Join-Path $out $asset
