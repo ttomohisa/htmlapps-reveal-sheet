@@ -13,7 +13,7 @@
 
 ## Workflow
 
-1. Update `APP_SPEC.md` before changing behavior.
+1. For behavior changes, update the corresponding tests, current user documentation and release notes. `APP_SPEC.md` records the original v1.0.0 scope and should not be silently rewritten as if it described each later release.
 2. Modify `src/index.template.html`, configuration, or build scripts.
 3. Do not edit generated `dist/index.html`.
 4. For dependency changes, use `scripts/sync-dependency-lock.ps1` / `scripts/update-dependency.ps1` and review upstream release notes. Scheduled dependency Issues are notifications, not approval to upgrade.

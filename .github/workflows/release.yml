@@ -1,4 +1,4 @@
-name: Publish Reveal Sheet v1.2.0
+name: Publish Reveal Sheet release
 
 # The release is created only after a checked main-branch commit passes all checks.
 on:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: reveal-sheet-v1.2.0-release
+  group: reveal-sheet-release
   cancel-in-progress: false
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Check v1.2.0 is eligible for publication
+      - name: Check current version is eligible for publication
         id: gate
         shell: pwsh
         env:
@@ -37,20 +37,19 @@ jobs:
           $config = Get-Content -Raw -Encoding UTF8 app.config.json | ConvertFrom-Json
           $package = Get-Content -Raw -Encoding UTF8 package.json | ConvertFrom-Json
           $lock = Get-Content -Raw -Encoding UTF8 package-lock.json | ConvertFrom-Json -AsHashtable
-          if ($config.version -ne '1.2.0' -or $package.version -ne '1.2.0' -or $lock.version -ne '1.2.0') {
-            Write-Host 'Repository version is not 1.2.0. Skipping one-time release.'
-            Add-Content -Path $env:GITHUB_OUTPUT -Value 'publish=false' -Encoding utf8
-            exit 0
+          if ($config.version -ne $package.version -or $config.version -ne $lock.version) {
+            throw 'Repository release versions are inconsistent.'
           }
+          $tag = "v$($config.version)"
           $published = @(gh api "repos/$env:GITHUB_REPOSITORY/releases?per_page=100" --jq '.[].tag_name')
           if ($LASTEXITCODE -ne 0) { throw 'Could not check published GitHub releases.' }
-          if ($published -contains 'v1.2.0') {
-            Write-Host 'v1.2.0 is already released; no duplicate will be created.'
+          if ($published -contains $tag) {
+            Write-Host "$tag is already released; no duplicate will be created."
             Add-Content -Path $env:GITHUB_OUTPUT -Value 'publish=false' -Encoding utf8
             exit 0
           }
-          if (@(git tag --list 'v1.2.0').Count -ne 0) {
-            throw 'v1.2.0 tag exists without a release. Refusing to move the tag.'
+          if (@(git tag --list $tag).Count -ne 0) {
+            throw "$tag exists without a release. Refusing to move the tag."
           }
           Add-Content -Path $env:GITHUB_OUTPUT -Value 'publish=true' -Encoding utf8
 
@@ -97,13 +96,13 @@ jobs:
       - name: Assemble release package and checksums
         if: steps.gate.outputs.publish == 'true'
         shell: pwsh
-        run: ./scripts/publish-release-v1.2.0.ps1 -PrepareOnly
+        run: ./scripts/publish-release.ps1 -PrepareOnly
 
       - name: Save release candidate artifacts
         if: steps.gate.outputs.publish == 'true'
         uses: actions/upload-artifact@v7
         with:
-          name: reveal-sheet-v1.2.0
+          name: reveal-sheet-release-${{ github.sha }}
           path: release-out/
           retention-days: 30
           if-no-files-found: error
@@ -113,4 +112,4 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: ./scripts/publish-release-v1.2.0.ps1
+        run: ./scripts/publish-release.ps1

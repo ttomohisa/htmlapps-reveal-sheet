@@ -97,3 +97,52 @@ test('T11: lesson with JavaScript disabled exposes neither the source image nor 
     await expect(lesson.locator('body')).not.toContainText('iVBORw0KGgo');
   }finally{await noJsContext.close();}
 });
+
+
+test('T11: exported lesson bulk reveal persists confirmed answers across reload',async({page,context},testInfo)=>{
+  await openApp(page);
+  await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
+  await expect(page.locator('#previewImage')).toBeVisible();
+  await addCover(page,[10,10],[32,28]);await addCover(page,[48,10],[70,28]);
+  await page.locator('#saveButton').click();
+  const pending=page.waitForEvent('download');
+  await page.locator('#downloadHtmlButton').click();
+  const lessonPath=testInfo.outputPath('persist-bulk-reveal.reveal.html');
+  await (await pending).saveAs(lessonPath);
+
+  const lesson=await context.newPage();await lesson.goto(pathToFileURL(lessonPath).href);
+  await expect(lesson.locator('#lessonReady')).toBeVisible();
+  await expect(lesson.locator('#lessonStudyOptIn')).toBeEnabled();
+  // The opt-in handler deliberately unchecks until the confirmation is accepted.
+  await lesson.locator('#lessonStudyOptIn').click();
+  await expect(lesson.locator('#lessonConfirmDialog')).toBeVisible();
+  await lesson.locator('#lessonConfirmOk').click();
+  await expect(lesson.locator('#lessonStudyOptIn')).toBeChecked();
+  await lesson.locator('#lessonRevealPage').click();
+  await expect(lesson.locator('#lessonConfirmedCount')).toHaveText('2');
+  await expect(lesson.locator('#lessonStudyStatus')).toContainText(/Saved|保存しました/i,{timeout:7000});
+  await lesson.reload();
+  await expect(lesson.locator('#lessonConfirmDialog')).toBeVisible();
+  await lesson.locator('#lessonConfirmOk').click();
+  await expect(lesson.locator('#lessonConfirmedCount')).toHaveText('2');
+});
+
+test('T11: exported lesson save cancels with Escape then retries with a usable download',async({page,context},testInfo)=>{
+  await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
+  await expect(page.locator('#previewImage')).toBeVisible();
+  await addCover(page,[10,10],[32,28]);await page.locator('#saveButton').click();
+  const pending=page.waitForEvent('download');await page.locator('#downloadHtmlButton').click();
+  const lessonPath=testInfo.outputPath('save-retry.reveal.html');await (await pending).saveAs(lessonPath);
+  const lesson=await context.newPage();await lesson.goto(pathToFileURL(lessonPath).href);
+  await expect(lesson.locator('#lessonReady')).toBeVisible();
+  await lesson.locator('#lessonSaveEditableButton').click();
+  await expect(lesson.locator('#lessonConfirmDialog')).toBeVisible();
+  await lesson.keyboard.press('Escape');
+  await expect(lesson.locator('#lessonConfirmDialog')).toBeHidden();
+  const next=lesson.waitForEvent('download');
+  await lesson.locator('#lessonSaveEditableButton').click();
+  await lesson.locator('#lessonConfirmOk').click();
+  const download=await next;
+  expect(download.suggestedFilename()).toMatch(/\.reveal\.json$/);
+  await expect(lesson.locator('#lessonSaveStatus')).toContainText(/Download started|ダウンロードを開始/i);
+});

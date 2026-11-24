@@ -70,7 +70,8 @@ async function prepareSheet(page,language){
 
 try {
  const ja=await browser.newPage({viewport:{width:1360,height:900},locale:'ja-JP'});
- await prepareSheet(ja,'ja');await ja.screenshot({path:output+'/screenshot.png'});await ja.close();
+ await prepareSheet(ja,'ja');await ja.screenshot({path:output+'/screenshot.png'});
+ await ja.locator('#saveButton').click();await ja.screenshot({path:output+'/screenshot-save-desktop.png'});await ja.close();
 
  const en=await browser.newPage({viewport:{width:1360,height:900},locale:'en-US'});
  await prepareSheet(en,'en');await en.screenshot({path:output+'/screenshot-en.png'});await en.close();
@@ -78,11 +79,12 @@ try {
  const mobile=await browser.newPage({viewport:{width:390,height:844},locale:'ja-JP'});
  await prepareSheet(mobile,'ja');
  await mobile.screenshot({path:output+'/screenshot-mobile-edit.png'});
- await mobile.locator('#studyButton').click();await mobile.locator('#guidedModeButton').click();
+ await mobile.locator('#studyButton').click();await mobile.screenshot({path:output+'/screenshot-free-study-mobile.png',fullPage:true});await mobile.locator('#guidedModeButton').click();
  if(await mobile.locator('#appConfirmDialog').isVisible())await mobile.locator('#appConfirmOk').click();
  await mobile.screenshot({path:output+'/screenshot-mobile.png',fullPage:true});
  // Capture the actual exported .reveal.html, not the editor's embedded preview.
  await mobile.locator('#saveButton').click();
+ await mobile.screenshot({path:output+'/screenshot-save-mobile.png'});
  const lessonDownload=mobile.waitForEvent('download');
  await mobile.locator('#downloadHtmlButton').click();
  const exported=await lessonDownload,lessonFile=resolve(output+'/qa-lesson.reveal.html');

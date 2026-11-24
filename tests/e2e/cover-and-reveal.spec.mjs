@@ -98,3 +98,56 @@ test('T03: study mode hides edit-only image dimensions and byte size',async({pag
   const a=await screenPointForImage(page,20,18),b=await screenPointForImage(page,55,38);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);await page.mouse.up();await expect(page.locator('#studyButton')).toBeEnabled();
   await page.locator('#studyButton').click();await expect(page.locator('#imageMeta')).toBeHidden();await expect(page.locator('.image-meta-row')).toBeHidden();
 });
+
+
+test('T03: free study uses compact numbered answer controls with distinct bulk actions',async({page})=>{
+  await page.setViewportSize({width:1050,height:810});
+  await openApp(page);
+  await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
+  await expect(page.locator('#previewImage')).toBeVisible();
+  for(const [a,b] of [
+    [[10,14],[24,29]],
+    [[34,14],[49,29]],
+    [[59,14],[75,29]]
+  ]){
+    const start=await screenPointForImage(page,...a),end=await screenPointForImage(page,...b);
+    await page.mouse.move(start.x,start.y);await page.mouse.down();await page.mouse.move(end.x,end.y,{steps:4});await page.mouse.up();
+  }
+  await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(3);
+  await page.locator('#studyButton').click();
+  await expect(page.locator('#freeStudyPanel')).toBeVisible();
+  await expect(page.locator('#freeStudyTitle')).toHaveCount(0);
+  await expect(page.locator('#confirmedCount')).toHaveText('0');
+  await expect(page.locator('#questionList .free-question')).toHaveCount(3);
+  const first=page.locator('#questionList .free-question').first();
+  await expect(first).toHaveAttribute('aria-pressed','false');
+  await expect(first).toContainText('Question 1');
+  await expect(first).toContainText('Show answer');
+  await first.click();
+  await expect(first).toHaveAttribute('aria-pressed','true');
+  await expect(first).toContainText('Hide answer');
+  await page.locator('#hideAllButton').click();
+  await expect(first).toHaveAttribute('aria-pressed','false');
+  await page.locator('#revealPageButton').click();
+  await expect(page.locator('#questionList .free-question[aria-pressed="true"]')).toHaveCount(3);
+  await page.locator('#guidedModeButton').click();
+  await expect(page.locator('#appConfirmDialog')).toBeVisible();
+  await page.locator('#appConfirmOk').click();
+  await expect(page.locator('#guidedPanel')).toBeVisible();
+  await page.locator('#freeModeButton').click();
+  await expect(page.locator('#freeStudyPanel')).toBeVisible();
+
+  await page.locator('#languageButton').click();
+  await expect(page.locator('#questionList .free-question').first()).toContainText('問題1');
+  await expect(page.locator('#hideAllButton')).toHaveText('すべて隠す');
+  await expect(page.locator('#revealPageButton')).toHaveText('このページの答えを表示');
+  for(const width of [390,320]){
+    await page.setViewportSize({width,height:780});
+    await expect(page.locator('#questionList .free-question')).toHaveCount(3);
+    const rects=await page.locator('#questionList .free-question').evaluateAll(nodes=>nodes.map(el=>{const r=el.getBoundingClientRect();return {top:r.top,left:r.left,width:r.width,height:r.height};}));
+    expect(Math.abs(rects[0].top-rects[1].top)).toBeLessThanOrEqual(2);
+    expect(rects[1].left).toBeGreaterThan(rects[0].left);
+    expect(rects[0].height).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  }
+});

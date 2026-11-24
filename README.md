@@ -3,7 +3,7 @@
 [![App tests](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/workflows/test-app.yml/badge.svg)](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/workflows/test-app.yml)
 [![Standalone build](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/workflows/build-standalone.yml/badge.svg)](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/workflows/build-standalone.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Single HTML](https://img.shields.io/badge/distribution-single%20HTML-16624F)](reveal-sheet.html)
+[![Single HTML](https://img.shields.io/badge/distribution-single%20HTML-16624F)](https://github.com/ttomohisa/htmlapps-reveal-sheet/releases/latest)
 
 [日本語版 README](README.ja.md)
 
@@ -44,7 +44,7 @@ Selected images and saved-sheet data are processed on your device. The app does 
 
 ### Use the standalone HTML
 
-1. Download [`reveal-sheet.html`](reveal-sheet.html).
+1. Open the [latest GitHub Release](https://github.com/ttomohisa/htmlapps-reveal-sheet/releases/latest) and download the readable single-HTML `.html` asset (not the `.self-extract.html` file).
 2. Open it in a current Chrome or Edge browser.
 3. Choose **Add images** and select JPEG, static PNG, or static WebP files.
 4. Drag over an answer in the image to create a cover.
@@ -200,12 +200,12 @@ src/reveal/                   Reveal Sheet application code
 scripts/assemble-reveal.ps1   Standalone assembler
 scripts/verify-reveal.ps1     Standalone verification
 dist/index.html               Generated readable standalone app
-reveal-sheet.html             Repository standalone app
+dist/index.self-extract.html  Generated self-extracting standalone app
 ```
 
 ## Release status
 
-**v1.0.1** adds within-page question ordering and fixes cover duplication so grouped covers, auxiliary roles, prompts, and answers are preserved. The saved format remains schemaVersion 1. Physical Android/iPhone, real screen-reader, real 200% zoom, and OS file-handoff checks remain explicitly unverified until they are performed on real hardware; see the QA documents for the release boundary.
+**The current source targets v1.2.1.** It fixes empty-draft recovery and exported-lesson progress/save handling. PNG-only sheets continue to use schema v1, and WebP-containing sheets use schema v2. Download published builds from the latest GitHub Release; an open PR's changes are not included there until that version is released. Physical Android/iPhone, real screen-reader, real 200% zoom and OS file-handoff checks remain unverified until performed on real hardware. See [the release checklist](docs/RELEASE_CHECKLIST.md) for the exact verification boundary.
 
 ## Contributing
 

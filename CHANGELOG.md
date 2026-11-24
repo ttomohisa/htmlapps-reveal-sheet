@@ -1,3 +1,30 @@
+## 1.2.1 - 2026-11-23
+
+- Fixed incomplete release ZIP contents: bundled README screenshots and linked QA/contributing documents, with a ZIP-entry and relative-link check.
+- Reused the exact checksummed CI-prepared files at GitHub Release publication instead of rebuilding the archive; added dry-run verification of the publication inputs.
+- Matched save button heights and vertical alignment by moving the HTML preview below the equal-height export options.
+- Reworked free-study mode into a segmented switch, compact progress/action row, and numbered answer toggles with bilingual accessible names and clear pressed states.
+- Extended desktop/mobile regression tests for save button alignment, free-study toggles, bulk actions, language switching and phone widths.
+- Reworked the save view into distinct editable and study HTML choices, with a clean mobile stack and optional technical file details.
+- Removed the save diagnostics placeholder from the normal UI, while retaining error diagnostics on failure.
+- Replaced the confusing autosave disclaimer with a simple image total and removed unnecessary separators around local saving.
+- Added responsive/save error handling and bilingual copy regression checks.
+- Added desktop and mobile save-view captures to the release QA screenshot pass.
+- Aligned footer text with the header and main columns, removed the extra Japanese/English intro sentence and hid the intro once images load.
+- Grouped primary import/camera and saved-sheet actions apart from image options, with less button-like styling for settings.
+- Collapsed on-device saving controls by default, expanding automatically on a stale-tab conflict, and adapted browser tests.
+- Rewrote the redundant hero heading and lead as one concise bilingual explanation; kept the application name as the accessible page heading.
+- Hid the local-processing badge on phones and reduced decorative card borders, nested panels and shadows in the editor and exported lessons.
+- Added desktop/mobile bilingual presentation assertions for the introduction, badge visibility and page-card styling.
+- Fixed restored-draft prompts after starting a new sheet or deleting the last page: an empty draft now supersedes the previously saved document while preserving concurrency generation checks.
+- Fixed missing local study progress writes after revealing all answers on a page in standalone lesson HTML, and aligned other state-changing lesson controls.
+- Fixed exported lesson opt-in failing to enable after confirmation because the input was accessed through a stale event object.
+- Reused the safe delayed download URL cleanup for lesson editable-JSON exports and surfaced localized save failures.
+- Settled lesson confirmation requests canceled via Escape so save/opt-in flows cannot remain pending.
+- Updated both READMEs to link to actual GitHub Release files instead of the missing repository-root HTML.
+- Generalized the release workflow and added a v1.2.1 release candidate packaging check in CI.
+- Added browser regression coverage for cleared/recreated local drafts, stale tabs, standalone bulk reveal persistence, and Escape/save retry.
+
 ## 1.2.0 - 2026-10-29
 
 - Polished the empty phone editor: removed inactive reset/history controls and empty page list, grouped image/photo/import settings, and allowed choosing the cover color before adding an image.

@@ -24,6 +24,7 @@ class MemoryBackend{
     this.draft={...structuredClone(draft),generation,savedAt};this.assets=new Map(assets.map(item=>[item.id,{...item}]));return {generation,savedAt};
   }
   async readDraft(){return this.draft?{draft:structuredClone(this.draft),assets:[...this.assets.values()].map(item=>({...item}))}:null;}
+  async readLocalState(){return {draftExists:Boolean(this.draft?.document?.pages?.length),studyExists:this.sessions.size>0};}
   async clearDraft(){this.writeCount++;this.draft=null;this.assets.clear();}
   async atomicSaveSession(){throw new Error('not implemented for T09');}
   async readSession(){return null;}
@@ -82,4 +83,25 @@ test('T09 schema-v2 WebP draft persists and restores the exact embedded image by
   const restored=await store.loadSnapshot();
   assert.deepEqual(toPlain(restored.document),toPlain(doc));
   assert.equal(core.validateEnvelope({format:'reveal-sheet',schemaVersion:2,appVersion:'1.2.0',kind:'editable',document:restored.document}).ok,true);
+});
+
+
+test('T09 clearing the working sheet stores an empty generation without a restorable draft',async()=>{
+  const backend=new MemoryBackend(),store=makeStore(backend),doc=documentFixture('Old work');
+  await store.setDraftOptIn(true);
+  const first=await store.saveSnapshot(doc,0);
+  const empty=core.newDocument(testContext(),'Empty work');
+  const cleared=await store.saveSnapshot(empty,first.generation);
+  assert.equal(cleared.generation,first.generation+1);
+  assert.deepEqual(toPlain(backend.draft.document.pages),[]);
+  assert.equal(backend.assets.size,0);
+  assert.equal((await store.getLocalState()).draftExists,false);
+  const loaded=await store.loadSnapshot();
+  assert.equal(loaded.document,null);
+  assert.equal(loaded.generation,cleared.generation);
+  assert.equal(store.settings.draftOptIn,true);
+  await assert.rejects(()=>store.saveSnapshot(doc,first.generation),error=>error?.code==='SAVE_CONFLICT');
+  const next=await store.saveSnapshot(doc,cleared.generation);
+  assert.equal(next.generation,cleared.generation+1);
+  assert.equal((await store.loadSnapshot()).document.title,'Old work');
 });

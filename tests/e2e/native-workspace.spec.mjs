@@ -36,6 +36,7 @@ for(const viewport of [{width:320,height:480},{width:700,height:390}]){
       const box=await page.locator(selector).boundingBox();expect(box.y).toBeGreaterThanOrEqual(0);expect(box.y+box.height).toBeLessThanOrEqual(nav.y+1);
     }
     await page.locator('#mobileMoreButton').click();await expect(page.locator('#editorSheet')).toBeVisible();
+    await page.locator('#editorSheet #localDraftTitle').click();
     await page.locator('#clearStudyButton').scrollIntoViewIfNeeded();
     const box=await page.locator('#clearStudyButton').boundingBox();expect(box.y+box.height).toBeLessThanOrEqual(viewport.height+1);
     await page.keyboard.press('Escape');await expect(page.locator('#editorSheet')).toBeHidden();

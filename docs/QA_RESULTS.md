@@ -2,7 +2,53 @@
 
 ## Scope and status
 
-This record contains the v1.1.0 mobile-editor verification below and the historical release/CI evidence that follows it. It does not mark all 48 formal acceptance items complete. The automated matrix includes runtime-network/CSP/hostile-input auditing, repeated standard-size round trips and the configured 30-page / 1,000-cover boundary in addition to editing, study, persistence, lesson, mobile/touch and bilingual accessibility work. Physical phones, real screen readers, Safari, Firefox, background/screen-lock behavior and OS save-cancel/file-handoff behavior remain untested.
+This record contains the v1.2.1 candidate audit below, the v1.1.0 mobile-editor verification, and earlier historical release/CI evidence. It does not mark all 48 formal acceptance items complete. The automated matrix includes runtime-network/CSP/hostile-input auditing, repeated standard-size round trips and the configured 30-page / 1,000-cover boundary in addition to editing, study, persistence, lesson, mobile/touch and bilingual accessibility work. Physical phones, real screen readers, Safari, Firefox, background/screen-lock behavior and OS save-cancel/file-handoff behavior remain untested.
+
+## v1.2.1 pre-release audit — 2026-11-24
+
+**PR:** [#22](https://github.com/ttomohisa/htmlapps-reveal-sheet/pull/22).
+The published release is still v1.2.0; v1.2.1 has not yet been tagged or published.
+
+**Automated evidence for the application code before this documentation update:**
+[application run 45232671193](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/runs/45232671193)
+completed with **155 unit tests, 163 readable HTML Chromium tests, and
+163 self-extracting Chromium tests, all passed**.
+The [standalone build](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/runs/45232671184),
+[PR preview](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/runs/45232671328)
+and [UI screenshots](https://github.com/ttomohisa/htmlapps-reveal-sheet/actions/runs/45232671301)
+also succeeded. These runs used commit `c4cbb8688fe98b0a07f1f42c056de4f63fd6a125`.
+Retest the final branch head after documentation corrections; this is not
+a claim of tests passing on any future commit.
+
+**Code/source review:** Verified current PNG/WebP normalization and
+schemaVersion 1/2 rules, optional opt-in storage, save formats and
+confirmation/download paths against source and the regression suite.
+The candidate includes earlier fixes for stale blank drafts, exported
+lesson study-progress saves, and Escape cancellation. The two save
+button heights and the revised free-study controls are included in the
+readable and self-extracting browser tests.
+
+**Release packaging issues corrected:** The versioned ZIP previously included both READMEs but omitted their linked screenshots, QA documents and `CONTRIBUTING.md`. The release script now includes and checks those entries and README links. It also reuses the same CI-tested ZIP/HTML bytes when publishing rather than rebuilding the ZIP after artifact upload. The pre-merge tests verify the prepared files and their SHA-256 hashes without creating a tag or release.
+
+**Documentation issues corrected:** `README-FIRST.txt` still described
+a v0.1.0 preview without editing or saving; `SECURITY.md` said all
+normalized images are PNG; `docs/SAVE_FORMAT.md` said the current
+format is schema 1 only; `docs/QA_MATRIX.md` displayed 123/82/82 as
+if current; and `docs/RELEASE_CHECKLIST.md` was still for v1.0.0.
+The code-supported current and historical boundaries have been separated.
+
+**Current save diagnostics presentation:** `RS-SAVE-3` details are
+available on a save error, but there is no always-visible diagnostic
+hint on an error-free Save screen. The October 29 entries below
+describe the older UI at that date and are retained as history.
+
+**Unverified:** actual Android/iPhone OS file saving, Safari/Firefox,
+physical touch and file handoff, real screen-reader/200% zoom, and
+the unresolved repeated Android Chrome save error. Its observed root
+cause is still unknown; the diagnostic work is not a device-side fix.
+See `docs/RELEASE_CHECKLIST.md` for the remaining manual gates.
+
+---
 
 ## Save-error details hidden below the fold — 2026-10-29
 

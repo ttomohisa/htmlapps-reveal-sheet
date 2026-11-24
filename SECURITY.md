@@ -1,6 +1,6 @@
 # Security and privacy
 
-Reveal Sheet v1.0.0 is being frozen as a release candidate. It accepts local JPEG, static PNG and static WebP images, validates format and resource bounds, and normalizes accepted images to PNG without resizing. Failed or hostile imports are rejected before replacing the current document.
+Reveal Sheet v1.2.1 accepts local JPEG, static PNG and static WebP images and checks their format and resource limits. It corrects image orientation without resizing. With image compression enabled (the default), it may store WebP at quality 0.86 when the result is at least 10% smaller than PNG; otherwise it stores PNG. Failed or hostile imports are rejected before replacing the current document.
 
 ## Runtime network boundary
 
@@ -12,7 +12,7 @@ The self-extracting wrapper is a separate trusted loader that restores the canon
 
 ## Incoming saved data and lesson HTML
 
-Editable JSON and lesson HTML are treated as data, not trusted markup. Lesson re-import reads bytes as fatal UTF-8, locates exactly one fixed `reveal-sheet-data` JSON tag, validates depth/schema/references/resource limits and verifies embedded PNGs. Outer `script`, `style`, `img`, `iframe`, refresh markup and data-SVG markup are not inserted or executed. Unknown/newer schemas and malformed or oversized data are rejected atomically.
+Editable JSON and lesson HTML are treated as data, not trusted markup. Lesson re-import reads bytes as fatal UTF-8, locates exactly one fixed `reveal-sheet-data` JSON tag, validates depth/schema/references/resource limits and verifies embedded PNG or WebP assets as permitted by schemaVersion 1 or 2. Outer `script`, `style`, `img`, `iframe`, refresh markup and data-SVG markup are not inserted or executed. Unknown/newer schemas and malformed or oversized data are rejected atomically.
 
 Exported editable data and lesson HTML exclude current learner ratings, Undo/Redo history, view state and original input filenames. Covers are study aids, not redaction or confidentiality controls; the underlying image pixels and answers remain in saved material.
 
@@ -20,7 +20,7 @@ Exported editable data and lesson HTML exclude current learner ratings, Undo/Red
 
 Draft persistence and study-progress persistence are separate, opt-in features and are OFF by default. They use the Reveal Sheet IndexedDB namespace. Draft images/metadata and study records are separated; study progress does not duplicate image data. Generation checks prevent a stale tab from silently overwriting a newer committed draft. Quota, security and transaction failures leave manual editable-data export available.
 
-Browser storage can be cleared by the browser/OS and is not permanent backup. Use `.reveal.json` for material that must be retained.
+Turning either persistence toggle OFF stops future automatic saving but does not erase records already written to IndexedDB. Use the separate clear-saved-work / clear-study-progress actions to delete those records from the app's browser storage. Browser storage can also be cleared by the browser/OS and is not permanent backup. Use `.reveal.json` for material that must be retained.
 
 ## Resource limits and reporting
 
