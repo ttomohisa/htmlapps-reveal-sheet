@@ -28,6 +28,8 @@ lesson study-progress saves, and Escape cancellation. The two save
 button heights and the revised free-study controls are included in the
 readable and self-extracting browser tests.
 
+**Release packaging issues corrected:** The versioned ZIP previously included both READMEs but omitted their linked screenshots, QA documents and `CONTRIBUTING.md`. The release script now includes and checks those entries and README links. It also reuses the same CI-tested ZIP/HTML bytes when publishing rather than rebuilding the ZIP after artifact upload. The pre-merge tests verify the prepared files and their SHA-256 hashes without creating a tag or release.
+
 **Documentation issues corrected:** `README-FIRST.txt` still described
 a v0.1.0 preview without editing or saving; `SECURITY.md` said all
 normalized images are PNG; `docs/SAVE_FORMAT.md` said the current
