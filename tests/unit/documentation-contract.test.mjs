@@ -29,6 +29,6 @@ test('T20: release documentation matches the source version, WebP support and ma
  assert.ok(security.includes('Turning either persistence toggle OFF'));
  assert.ok(releaseNotes.includes('v'+version));
  assert.match(checklist,/Root cause still unknown|root cause \*\*not established\*\*/i);
- assert.match(checklist,/Not performed/);
+ assert.match(checklist,/not performed/i);
  assert.doesNotMatch(first,/Cover editing, studying, saving and reopening sheets are NOT implemented yet/);
 });
