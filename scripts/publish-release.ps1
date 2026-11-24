@@ -15,30 +15,70 @@ $lock = Get-Content -Raw -Encoding UTF8 'package-lock.json' | ConvertFrom-Json -
 if ($config.version -ne $version -or $package.version -ne $version -or $lock.version -ne $version) {
   throw "Release versions differ from v$version."
 }
+$documentFiles = @(
+  'README.md', 'README.ja.md', 'README-FIRST.txt',
+  'CHANGELOG.md', 'APP_SPEC.md', 'CONTRIBUTING.md',
+  'SECURITY.md', 'VERIFY_OFFLINE.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md'
+)
+$documentPaths = @(
+  'docs/QA_RESULTS.md', 'docs/QA_MATRIX.md',
+  'docs/MOBILE_ACCESSIBILITY_QA.md', 'docs/RELEASE_CHECKLIST.md',
+  'docs/SAVE_FORMAT.md', "docs/releases/v$version.md"
+)
+$assetPaths = @(
+  'assets/favicon.svg', 'assets/screenshot.png', 'assets/screenshot-en.png',
+  'assets/screenshot-mobile.png', 'assets/screenshot-mobile-edit.png',
+  'assets/screenshot-lesson-mobile.png',
+  'assets/screenshot-lesson-settings-mobile.png',
+  'assets/screenshot-lesson-settings-desktop.png'
+)
 $required = @(
   'dist/index.html', 'dist/index.self-extract.html',
   'dist/dependency-manifest.json', 'dist/self-extract-manifest.json',
-  'dist/build-size-report.json', 'README.md', 'README.ja.md',
-  'CHANGELOG.md', 'APP_SPEC.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md',
-  'assets/favicon.svg', "docs/releases/v$version.md"
-)
+  'dist/build-size-report.json'
+) + $documentFiles + $documentPaths + $assetPaths
 foreach ($path in $required) {
   if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing release input: $path" }
 }
 $out = Join-Path $root 'release-out'
 $bundle = Join-Path $root 'release-bundle'
+# Start from clean generated directories so repeated local builds cannot
+# accidentally ship removed or unrelated files from a previous package.
+foreach ($generated in @($out, $bundle)) {
+  if (Test-Path -LiteralPath $generated) { Remove-Item -LiteralPath $generated -Recurse -Force }
+}
 New-Item -ItemType Directory -Force -Path $out, $bundle | Out-Null
 Copy-Item 'dist/index.html' (Join-Path $out "$prefix.html")
 Copy-Item 'dist/index.self-extract.html' (Join-Path $out "$prefix.self-extract.html")
 Copy-Item 'dist/index.html' (Join-Path $bundle 'reveal-sheet.html')
 Copy-Item 'dist/index.self-extract.html' (Join-Path $bundle 'reveal-sheet.self-extract.html')
-foreach ($path in @('README.md','README.ja.md','CHANGELOG.md','APP_SPEC.md','LICENSE','THIRD_PARTY_NOTICES.md')) {
+foreach ($path in $documentFiles) {
   Copy-Item $path (Join-Path $bundle (Split-Path -Leaf $path))
 }
-New-Item -ItemType Directory -Force -Path (Join-Path $bundle 'manifests'),(Join-Path $bundle 'assets') | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $bundle 'manifests'),(Join-Path $bundle 'assets'),(Join-Path $bundle 'docs'),(Join-Path $bundle 'docs/releases') | Out-Null
+foreach ($path in $documentPaths) { Copy-Item $path (Join-Path $bundle $path) }
+foreach ($path in $assetPaths) { Copy-Item $path (Join-Path $bundle $path) }
 Copy-Item 'dist/dependency-manifest.json','dist/self-extract-manifest.json','dist/build-size-report.json' -Destination (Join-Path $bundle 'manifests')
-Copy-Item 'assets/favicon.svg' (Join-Path $bundle 'assets/favicon.svg')
-Compress-Archive -Path (Join-Path $bundle '*') -DestinationPath (Join-Path $out "$prefix.zip") -CompressionLevel Optimal -Force
+$zipPath = Join-Path $out "$prefix.zip"
+Compress-Archive -Path (Join-Path $bundle '*') -DestinationPath $zipPath -CompressionLevel Optimal -Force
+
+# README links are relative to the ZIP root. Verify those resources were
+# actually packaged, not merely present in the public source repository.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$zip = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
+try {
+  $entries = @($zip.Entries | ForEach-Object { $_.FullName.Replace('\', '/') })
+  $manifestPaths = @(
+    'manifests/dependency-manifest.json', 'manifests/self-extract-manifest.json',
+    'manifests/build-size-report.json'
+  )
+  $expectedEntries = @('reveal-sheet.html', 'reveal-sheet.self-extract.html') + $documentFiles + $documentPaths + $assetPaths + $manifestPaths
+  foreach ($entry in $expectedEntries) {
+    if ($entries -notcontains $entry) { throw "Release ZIP is missing required file: $entry" }
+  }
+} finally {
+  $zip.Dispose()
+}
 
 $assets = @("$prefix.html", "$prefix.self-extract.html", "$prefix.zip")
 $checksums = foreach ($asset in $assets) {
