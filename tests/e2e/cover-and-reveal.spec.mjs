@@ -81,6 +81,7 @@ test('T03: selected cover moves and resizes directly on the image',async({page})
 
 test('T03: cover color changes editor rendering and survives editable export',async({page})=>{
   await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
+  await page.locator('.settings-toggle').click();
   await page.locator('#coverColor').fill('#a04372');
   const a=await screenPointForImage(page,20,18),b=await screenPointForImage(page,55,38);
   await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);await page.mouse.up();
@@ -143,11 +144,13 @@ test('T03: free study uses compact numbered answer controls with distinct bulk a
   await expect(page.locator('#revealPageButton')).toHaveText('このページの答えを表示');
   for(const width of [390,320]){
     await page.setViewportSize({width,height:780});
-    await expect(page.locator('#questionList .free-question')).toHaveCount(3);
+    await page.locator('#studyToolsButton').click();
+    await expect(page.locator('#editorSheet #questionList .free-question')).toHaveCount(3);
     const rects=await page.locator('#questionList .free-question').evaluateAll(nodes=>nodes.map(el=>{const r=el.getBoundingClientRect();return {top:r.top,left:r.left,width:r.width,height:r.height};}));
     expect(Math.abs(rects[0].top-rects[1].top)).toBeLessThanOrEqual(2);
     expect(rects[1].left).toBeGreaterThan(rects[0].left);
     expect(rects[0].height).toBeGreaterThanOrEqual(44);
+    await page.keyboard.press('Escape');
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   }
 });

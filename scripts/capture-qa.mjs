@@ -95,6 +95,7 @@ try {
  await lesson.locator('#lessonGuidedMode').click();
  await lesson.locator('#lessonRevealCurrent').waitFor({state:'visible'});
  await lesson.screenshot({path:output+'/screenshot-lesson-mobile.png'});
+ await lesson.locator('#lessonQuestionsButton').click();
  await lesson.locator('#lessonSettingsButton').click();
  await lesson.locator('#lessonSheet').waitFor({state:'visible'});
  await lesson.screenshot({path:output+'/screenshot-lesson-settings-mobile.png'});

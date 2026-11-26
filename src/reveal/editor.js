@@ -13,6 +13,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   let gesture=null,draftRect=null,pageDrag=null,editTool='draw',maskAdjustMode='move',mobilePagesOpen=false,fineAdjustOpen=false;
   const activeTouches=new Map();
   const mobileLayout=env.matchMedia('(max-width:767px)');
+  const studyLayout=env.matchMedia('(max-width:767px), (pointer:coarse) and (max-height:520px)');
   let editorSheetKind='',editorSheetOpener=null,editorSheetMoves=[];
   const expandedPageDescriptions=new Set();
   let draftSaveTimer=0,draftSaveChain=Promise.resolve(),localDraftGeneration=0,draftConflict=false,localAvailable=false,localDraftExists=false,lastDraftSavedAt='';
@@ -23,7 +24,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function setSvgHidden(hidden){if(hidden)svg.setAttribute('hidden','');else svg.removeAttribute('hidden');}
   const t=translate;
   let lastDraftStatus=null,lastStudyStatus=null;
-  const studyView=createStudyView({core,dom:env.document,onAction:action=>handleViewAction(action),translate:t,pointerActions:false});
+  const studyView=createStudyView({core,dom:env.document,onAction:action=>handleViewAction(action),translate:t,pointerActions:false,onViewResize:refreshViewControls});
   function setDraftStatus(key,values={}){lastDraftStatus={key,values};const node=$('draftSaveStatus');if(node)node.textContent=t(key,values);}
   function setStudyStatus(key,values={}){lastStudyStatus={key,values};const node=$('studySaveStatus');if(node)node.textContent=t(key,values);}
   function identityToken(identity){return identity?identity.documentId+'|'+identity.revision+'|'+identity.fingerprint:'';}
@@ -129,8 +130,10 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     restoreEditorSheet(options);
   }
   function openEditorSheet(kind,opener){
-    if(!mobileLayout.matches||mode!=='create'||!currentPage())return;
-    const selectors={pages:['.page-panel'],covers:['#coverPanel'],tools:['#editControls','#failureSection','.image-meta-row','#localDraftPanel','.data-notice']};
+    const studying=kind==='study';
+    if(!(studying?studyLayout:mobileLayout).matches||mode!==(studying?'study':'create')||!currentPage())return;
+    const studyTools=studyMode==='free'?['#studyPageChoice','#studyPageDescription','#freeStudyPanel .study-actions','#questionList']:['#studyPageDescription','.guided-secondary-actions','#guidedSettings','#guidedQuestionList'];
+    const selectors={study:['.app-header .header-actions',...studyTools],pages:['.page-panel'],covers:['#coverPanel'],tools:['#editControls','#failureSection','.image-meta-row','#localDraftPanel','.data-notice']};
     if(!selectors[kind]||(kind!=='tools'&&busy))return;
     cancelTransientInteraction();closeEditorSheet({restoreFocus:false});fineAdjustOpen=false;
     editorSheetKind=kind;editorSheetOpener=opener||env.document.activeElement;
@@ -142,7 +145,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       const placeholder=env.document.createComment('editor-sheet-home');node.before(placeholder);
       editorSheetMoves.push({node,placeholder});body.append(node);
     }
-    $('editorSheetTitle').textContent=t({pages:'pages',covers:'coverPanelTitle',adjust:'fineAdjust',tools:'moreTools'}[kind]);
+    $('editorSheetTitle').textContent=t({pages:'pages',covers:'coverPanelTitle',adjust:'fineAdjust',tools:'moreTools',study:'studyTools'}[kind]);
     dialog.dataset.sheet=kind;mobilePagesOpen=kind==='pages';
     env.document.body.classList.add('editor-sheet-open');
     refreshMobileEditor();dialog.showModal();$('editorSheetClose').focus({preventScroll:true});
@@ -156,7 +159,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   // Mobile editing and page switcher state is transient; the saved sheet format is unchanged.
   function refreshMobileEditor(){
     const activePage=currentPage(),pageIndex=doc.pages.findIndex(page=>page.id===selectedId);
-    if(editorSheetKind&&(!mobileLayout.matches||mode!=='create'||!activePage||(editorSheetKind==='covers'&&!doc.masks.some(mask=>mask.pageId===selectedId))))closeEditorSheet();
+    if(editorSheetKind&&(!(editorSheetKind==='study'?studyLayout:mobileLayout).matches||mode!==(editorSheetKind==='study'?'study':'create')||!activePage||(editorSheetKind==='covers'&&!doc.masks.some(mask=>mask.pageId===selectedId))))closeEditorSheet();
     $('mobilePageSwitch').hidden=mode!=='create'||!activePage;
     $('mobilePageLabel').textContent=activePage?.title||'';
     $('mobilePagePosition').textContent=t('mobilePagePosition',{current:pageIndex+1,total:doc.pages.length});
@@ -170,12 +173,18 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('mobileCoversButton').disabled=!editable||!doc.masks.some(mask=>mask.pageId===selectedId);
     $('mobileMoreButton').disabled=!activePage;
     $('editModeToolbar').hidden=!editable;
+    $('placeCoverButton').hidden=mode!=='create'||!activePage;
+    $('placeCoverButton').disabled=!editable;
     $('drawModeButton').setAttribute('aria-pressed',String(editTool==='draw'));
     $('panModeButton').setAttribute('aria-pressed',String(editTool==='pan'));
     $('editorGuide').textContent=t(editTool==='pan'?'editorGuidePan':'editorGuide');
     env.document.body.classList.toggle('pan-tool-active',editable&&editTool==='pan');
     const chosen=currentMask(),showMaskTools=editable&&Boolean(chosen)&&chosen.pageId===selectedId;
     $('maskQuickActions').hidden=!showMaskTools;
+    const questionCount=doc.questions.length;
+    const hint=$('stageInstruction');
+    hint.hidden=!editable||editTool!=='draw'||(mobileLayout.matches&&showMaskTools);
+    hint.textContent=t(questionCount?'readyStudyHint':'firstCoverHint',{count:questionCount});
     $('maskQuickTitle').textContent=showMaskTools?t('maskQuickTitle')+' '+(doc.masks.filter(mask=>mask.pageId===selectedId).findIndex(mask=>mask.id===chosen.id)+1):'';
     $('maskAdjustMove').setAttribute('aria-pressed',String(maskAdjustMode==='move'));
     $('maskAdjustResize').setAttribute('aria-pressed',String(maskAdjustMode==='size'));
@@ -193,7 +202,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('maskFineAdjustButton').setAttribute('aria-expanded',String(showFine));
     env.document.body.classList.toggle('fine-adjust-open',showFine);
     refreshPanHint();
-    if(editorSheetKind)$('editorSheetTitle').textContent=t({pages:'pages',covers:'coverPanelTitle',adjust:'fineAdjust',tools:'moreTools'}[editorSheetKind]);
+    if(editorSheetKind)$('editorSheetTitle').textContent=t({pages:'pages',covers:'coverPanelTitle',adjust:'fineAdjust',tools:'moreTools',study:'studyTools'}[editorSheetKind]);
   }
   function setEditTool(next){
     if(!['draw','pan'].includes(next)||mode!=='create')return;
@@ -270,6 +279,8 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     const page=currentPage();$('viewControls').hidden=!page||mode==='save';$('returnToStudyButton').hidden=!studyEditActive;
     if(!page){$('focusQuestionButton').hidden=true;refreshPanHint();return;}
     const view=studyView.getViewState(page.id);refreshPanHint();$('viewFit').textContent=Math.round(view.zoom*100)+'%';
+    $('viewFit').classList.toggle('zoomed',mode==='study'&&view.zoom!==1);
+    $('viewFit').dataset.fitLabel=t('wholeImage');
     const qid=mode==='study'&&studySession?.mode==='guided'?currentGuidedId():null;
     if(!qid){$('focusQuestionButton').hidden=true;return;}
     const focused=core.revealTarget(doc,qid,view);$('focusQuestionButton').hidden=sameView(view,focused);
@@ -296,10 +307,24 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function refreshStudy(){
     $('studyButton').disabled=busy||doc.questions.length===0;$('saveButton').disabled=busy||exportBusy||doc.pages.length===0;$('openButton').disabled=busy;$('sheetInput').disabled=busy;$('studyPanel').hidden=mode!=='study';$('savePanel').hidden=mode!=='save';$('editControls').hidden=mode!=='create';
     $('createButton').setAttribute('aria-current',mode==='create'?'page':'false');$('studyButton').setAttribute('aria-current',mode==='study'?'page':'false');$('saveButton').setAttribute('aria-current',mode==='save'?'page':'false');
+    $('sheetWorkspace').setAttribute('aria-label',t(mode));
+    const studyLabel=mode==='create'&&doc.questions.length?(studySession?'continueStudyLabel':'startStudyLabel'):'study';
+    $('studyNavLabel').textContent=t(studyLabel);
     if(mode!=='study')return;if(!studySession)studySession=core.startSession(doc,{mode:studyMode},ctx);studyMode=studySession.mode;
+    $('freeStudyHint').hidden=studyMode!=='free';
+    const pageChoice=$('studyPageChoice');
+    pageChoice.hidden=studyMode!=='free'||doc.pages.length<2;
+    if(!pageChoice.hidden){
+      const select=$('studyPageSelect');
+      if(select.options.length!==doc.pages.length||doc.pages.some((page,index)=>select.options[index].value!==page.id||select.options[index].text!==page.title)){
+        select.replaceChildren(...doc.pages.map(page=>new env.Option(page.title,page.id)));
+      }
+      select.value=selectedId;
+    }
     const studyPage=currentPage();$('studyPageDescription').hidden=!studyPage?.description;$('studyPageDescription').textContent=studyPage?.description||'';
     $('freeModeButton').setAttribute('aria-pressed',String(studyMode==='free'));$('guidedModeButton').setAttribute('aria-pressed',String(studyMode==='guided'));$('freeStudyPanel').hidden=studyMode!=='free';$('guidedPanel').hidden=studyMode!=='guided';
     if(studyMode==='free'){
+      $('freeStudyPanel').classList.toggle('with-study-notes',doc.questions.some(q=>q.answer));
       const summary=core.summaryFree(studySession);$('confirmedCount').textContent=String(summary.confirmed);$('studyQuestionCount').textContent=String(summary.total);$('questionList').replaceChildren();
       const open=new Set(studySession.openQuestionIds);
       studySession.queue.forEach((qid,index)=>{
@@ -316,7 +341,14 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
         state.className='free-question-action';state.textContent=t(isOpen?'hideAnswerShort':'revealAnswerShort');
         button.append(label,state);button.setAttribute('aria-label',question.prompt?action+' · '+question.prompt:action);
         button.setAttribute('aria-pressed',String(isOpen));
-        button.addEventListener('click',()=>handleViewAction({type:'TOGGLE_QUESTION',questionId:qid}));
+        button.addEventListener('click',()=>{
+          const inSheet=editorSheetKind==='study';
+          const hadFocus=env.document.activeElement===button;
+          if(inSheet)closeEditorSheet();
+          selectPage(question.pageId);
+          handleViewAction({type:'TOGGLE_QUESTION',questionId:qid});
+          if(hadFocus&&!inSheet)$('questionList').children[index]?.focus({preventScroll:true});
+        });
         $('questionList').append(button);
       });
       const answers=studySession.queue.filter(qid=>open.has(qid)).map(qid=>doc.questions.find(question=>question.id===qid)?.answer||'').filter(Boolean);$('freeAnswerBox').hidden=answers.length===0;$('freeAnswerText').textContent=answers.join('\n');
@@ -325,11 +357,13 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('otherAnswersHidden').checked=studySession.otherAnswers==='hidden';$('otherAnswersVisible').checked=studySession.otherAnswers==='visible';
     const total=studySession.queue.length,current=Math.min(studySession.index+1,total);$('guidedProgress').textContent=t('questionProgress',{current:studySession.ended?total:current,total});
     const qid=currentGuidedId(),question=qid&&doc.questions.find(item=>item.id===qid);const revealed=Boolean(question&&studySession.stage==='revealed');
-    $('guidedPrompt').hidden=!question?.prompt;$('guidedPrompt').textContent=question?.prompt||'';$('guidedAnswerBox').hidden=!revealed;$('guidedAnswer').textContent=revealed?(question?.answer||''):'';
+    $('guidedPanel').classList.toggle('with-study-notes',Boolean(question?.prompt||question?.answer));
+    if($('guidedAnswerBox').hidden&&revealed)$('guidedAnswerBox').parentElement.scrollTop=0;
+    $('guidedPrompt').hidden=!question?.prompt;$('guidedPrompt').textContent=question?.prompt||'';$('guidedAnswerBox').hidden=!revealed||!question?.answer;$('guidedAnswer').textContent=revealed?(question?.answer||''):'';
     $('revealCurrentButton').hidden=!question||revealed;$('guidedRatingActions').hidden=!revealed;$('revealCurrentButton').disabled=!question||studySession.stage!=='hidden';$('editCurrentQuestionButton').disabled=!question;$('recalledButton').disabled=!revealed;$('againButton').disabled=!revealed;$('skipButton').disabled=!question;$('previousQuestionButton').disabled=studySession.queue.length===0||(!studySession.ended&&studySession.index<=0);$('finishStudyButton').disabled=studySession.ended;
     const summary=core.summary(studySession);fillGuidedResults(summary);$('studyResults').hidden=!studySession.ended;
     $('previousResultSummary').hidden=!previousStudySummary;$('previousResultSummary').textContent=previousStudySummary?t('previousResultLabel')+`: ${previousStudySummary.recalled}/${previousStudySummary.total}`:'';
-    $('guidedQuestionList').replaceChildren();studySession.queue.forEach((item,index)=>{const button=env.document.createElement('button');button.type='button';button.className='question-item';button.dataset.questionId=item.questionId;const rating=studySession.ratings[item.questionId]||'unanswered';button.dataset.rating=rating;button.textContent=`${t('guidedQuestion',{number:index+1})} · ${t('rating_'+rating)}`;button.setAttribute('aria-current',String(!studySession.ended&&index===studySession.index));button.addEventListener('click',()=>goGuidedQuestion(item.questionId));$('guidedQuestionList').append(button);});
+    $('guidedQuestionList').replaceChildren();studySession.queue.forEach((item,index)=>{const button=env.document.createElement('button');button.type='button';button.className='question-item';button.dataset.questionId=item.questionId;const rating=studySession.ratings[item.questionId]||'unanswered';button.dataset.rating=rating;button.textContent=`${t('guidedQuestion',{number:index+1})} · ${t('rating_'+rating)}`;button.setAttribute('aria-current',String(!studySession.ended&&index===studySession.index));button.addEventListener('click',()=>{if(editorSheetKind==='study')closeEditorSheet();goGuidedQuestion(item.questionId);});$('guidedQuestionList').append(button);});
   }
   function status(key, params={}) {
     lastStatus=key;progress=Object.keys(params).length?params:null;
@@ -362,6 +396,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     cancelTransientInteraction();selectedId=pageId;selectedMaskId=null;selectedMaskIds.clear();
     $('pageList').querySelectorAll('.page-item').forEach(card=>card.setAttribute('aria-current',card.dataset.pageId===pageId?'page':'false'));
     const asset=currentAsset();if(asset){$('imageDimensions').textContent=`${asset.width} × ${asset.height} px`;$('imageFormat').textContent=asset.mime==='image/webp'?'WebP':'PNG';$('imageBytes').textContent=formatBytes(asset.byteLength);}
+    if(mode==='study')refreshStudy();
     refreshCoverPanel();refreshMobileEditor();showPreview();refreshViewControls();
   }
   function movePageTo(pageId,targetIndex){
@@ -436,7 +471,9 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     env.document.documentElement.style.setProperty('--cover-color',doc.defaults.coverColor||'#16624f');
     env.document.body.classList.toggle('has-pages',doc.pages.length>0);env.document.body.classList.toggle('is-busy',busy);env.document.body.classList.toggle('create-mode',mode==='create');env.document.body.classList.toggle('study-mode',mode==='study');env.document.body.classList.toggle('save-mode',mode==='save');
     $('sheetTitle').textContent=doc.title;
-    $('sheetCount').textContent=t('pageCount',{count:doc.pages.length});
+    $('lessonNeedsQuestion').hidden=doc.questions.length>0;
+    env.document.body.classList.toggle('can-study',doc.questions.length>0);
+    $('sheetCount').textContent=doc.pages.length===1?t('singlePage'):t('pageCount',{count:doc.pages.length});
     const savedDiagnostic=lastStatus.startsWith('error_')&&mode==='save'&&!$('saveDiagnostics').hidden
       ?$('saveDiagnosticText').textContent:'';
     $('inputStatus').textContent=t(lastStatus,progress||{})+(savedDiagnostic?'\n'+savedDiagnostic:'');
@@ -454,7 +491,6 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('cancelButton').hidden=!busy;
     $('undoButton').disabled=busy||mode==='study'||undo.length===0;
     $('redoButton').disabled=busy||mode==='study'||redo.length===0;
-    $('emptyPreview').hidden=doc.pages.length!==0;
     $('imageMeta').hidden=!selectedId||mode==='study';
     $('loadedSection').hidden=doc.pages.length===0;
     const activePage=currentPage();
@@ -470,6 +506,11 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     }
     const page=doc.pages.find(p=>p.id===selectedId),asset=page&&doc.assets.find(a=>a.id===page.imageId);
     if(asset){$('imageDimensions').textContent=`${asset.width} × ${asset.height} px`;$('imageFormat').textContent=asset.mime==='image/webp'?'WebP':'PNG';$('imageBytes').textContent=formatBytes(asset.byteLength);}
+    if(mode==='save'){
+      $('savePageNames').replaceChildren(...doc.pages.map(page=>{
+        const item=env.document.createElement('li');item.textContent=page.title;return item;
+      }));
+    }
     const totalAssetBytes=doc.assets.reduce((sum,a)=>sum+a.byteLength,0);
     $('totalBytes').textContent=formatBytes(totalAssetBytes);$('savePageCount').textContent=String(doc.pages.length);$('saveQuestionCount').textContent=String(doc.questions.length);$('saveAuxCount').textContent=String(doc.masks.filter(mask=>mask.kind==='auxiliary').length);$('saveImageBytes').textContent=formatBytes(totalAssetBytes);$('saveJsonBytes').textContent=preparedJsonExport?formatBytes(preparedJsonExport.size):t('saveSizeOnDemand');$('saveHtmlBytes').textContent=preparedLessonExport?formatBytes(preparedLessonExport.size):t('saveSizeOnDemand');$('downloadJsonButton').disabled=busy||exportBusy||doc.pages.length===0;$('downloadHtmlButton').disabled=busy||exportBusy||doc.questions.length===0||!playerTemplate;$('previewLessonButton').disabled=busy||exportBusy||doc.questions.length===0||!playerTemplate;
     if(!$('outputFilename').value)$('outputFilename').value=filenameBase;
@@ -638,14 +679,14 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     if(!data)return [];
     return Array.from(data.items||[]).filter(item=>item.kind==='file').map(item=>item.getAsFile()).filter(Boolean);
   }
-  function editableTarget(target){return target?.closest?.('input,textarea,[contenteditable="true"],dialog[open]');}
+  function editableTarget(target){return target?.closest?.('input,textarea,select,[contenteditable="true"],dialog[open]');}
   function paste(event) {
     if(editableTarget(event.target)||env.document.querySelector('dialog[open]'))return;
     const files=filesFromTransfer(event.clipboardData).filter(file=>!file.type||file.type.startsWith('image/'));
     if(!files.length)return;event.preventDefault();addImages(files);
   }
   function drop(event) {
-    event.preventDefault();$('dropZone').classList.remove('drag-over');
+    event.preventDefault();surface.classList.remove('drag-over');$('sheetWorkspace').classList.remove('drag-over');
     if(env.document.querySelector('dialog[open]'))return;
     const files=filesFromTransfer(event.dataTransfer);if(files.length)addImages(files);
   }
@@ -659,6 +700,23 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       commit(result,added?.id||null);selectedMaskIds=added?new Set([added.id]):new Set();status('coverAdded');refreshCopy();
     }catch(error){status('error_'+(error?.code||'INVALID_SHEET'));refreshCopy();}
     finally{clearDraft();}
+  }
+  function placeCover(){
+    const asset=currentAsset();
+    if(!asset||busy||mode!=='create')return;
+    closeEditorSheet({restoreFocus:false});
+    setEditTool('draw');
+    const view=studyView.getViewState(selectedId);
+    const width=Math.max(1,Math.round(asset.width*.24/view.zoom));
+    const height=Math.max(1,Math.round(asset.height*.1/view.zoom));
+    const x=Math.max(0,Math.min(asset.width-width,Math.round(view.centerX*asset.width-width/2)));
+    const y=Math.max(0,Math.min(asset.height-height,Math.round(view.centerY*asset.height-height/2)));
+    const previousId=selectedMaskId;
+    addCover({x:x/asset.width,y:y/asset.height,w:width/asset.width,h:height/asset.height});
+    if(selectedMaskId!==previousId){
+      svg.querySelector('.mask-rect.selected')?.focus();
+      if(!mobileLayout.matches)env.AppToast?.show({message:t('keyAdjustHint')});
+    }
   }
   function directEditRect(active,point){
     const asset=currentAsset();if(!asset||!point)return active.startRect;
@@ -731,7 +789,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       activeTouches.set(event.pointerId,{x:event.clientX,y:event.clientY});
       if(activeTouches.size===2){event.preventDefault();startPinch();return;}
     }
-    const handle=event.target?.closest?.('.mask-resize-handle'),maskNode=event.target?.closest?.('.mask-rect');
+    const handle=event.target?.closest?.('.mask-resize-handle'),maskNode=event.target?.closest?.('.mask-rect,.open-answer-target');
     if(mode==='create'&&editTool==='draw'&&!event.shiftKey){
       if(handle?.dataset.maskId&&beginDirectEdit(event,handle.dataset.maskId,'mask-resize',handle.dataset.resizeCorner))return;
       if(maskNode?.dataset.maskId&&beginDirectEdit(event,maskNode.dataset.maskId,'mask-move'))return;
@@ -1010,7 +1068,14 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     if(mode!=='create')return;
     if(event.key==='Escape'){event.preventDefault();selectedMaskId=null;selectedMaskIds.clear();pointerCancel();updateToolButtons();refreshCopy();return;}
     if(!currentMask())return;
-    const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};if(map[event.key]){event.preventDefault();const amount=event.shiftKey?10:1;if(event.altKey){const resizeMap={ArrowLeft:'narrower',ArrowRight:'wider',ArrowUp:'shorter',ArrowDown:'taller'};editSelected(resizeMap[event.key],amount);}else editSelected(map[event.key],amount);}else if(event.key==='Delete'||event.key==='Backspace'){event.preventDefault();deleteSelected();}
+    const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};
+    if(map[event.key]){
+      event.preventDefault();
+      const keepFocus=svg.contains(event.target),amount=event.shiftKey?10:1;
+      const resizeMap={ArrowLeft:'narrower',ArrowRight:'wider',ArrowUp:'shorter',ArrowDown:'taller'};
+      editSelected(event.altKey?resizeMap[event.key]:map[event.key],amount);
+      if(keepFocus)svg.querySelector('.mask-rect.selected')?.focus({preventScroll:true});
+    }else if(event.key==='Delete'||event.key==='Backspace'){event.preventDefault();deleteSelected();}
   }
   function stopCamera(){
     cameraRequest++;
@@ -1073,6 +1138,8 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   $('cameraCloseButton').addEventListener('click',closeCamera);
   $('cameraDialog').addEventListener('close',stopCamera);
   $('cameraInput').addEventListener('change',event=>{const files=Array.from(event.target.files||[]);event.target.value='';addImages(files);});
+  $('studyPageSelect').addEventListener('change',event=>{if(editorSheetKind==='study')closeEditorSheet();selectPage(event.currentTarget.value);});
+  $('studyToolsButton').addEventListener('click',event=>openEditorSheet('study',event.currentTarget));
   $('mobilePageToggle').addEventListener('click',event=>openEditorSheet('pages',event.currentTarget));
   $('mobileCoversButton').addEventListener('click',event=>openEditorSheet('covers',event.currentTarget));
   $('mobileMoreButton').addEventListener('click',event=>openEditorSheet('tools',event.currentTarget));
@@ -1084,6 +1151,10 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   $('maskFineClose').addEventListener('click',()=>{fineAdjustOpen=false;refreshMobileEditor();$('maskFineAdjustButton').focus({preventScroll:true});});
   $('mobileUndoButton').addEventListener('click',()=>history('undo'));
   $('mobileRedoButton').addEventListener('click',()=>history('redo'));
+  $('editorSheetBody').addEventListener('click',event=>{
+    if(editorSheetKind==='study'&&event.target.closest('#previousQuestionButton,#skipButton,#finishStudyButton,#hideAllButton,#revealPageButton'))closeEditorSheet();
+  });
+  studyLayout.addEventListener('change',()=>{if(editorSheetKind==='study'&&!studyLayout.matches)closeEditorSheet();});
   $('editorSheetClose').addEventListener('click',()=>closeEditorSheet());
   $('editorSheet').addEventListener('close',()=>{if(!$('editorSheet').open)restoreEditorSheet();});
   $('editorSheet').addEventListener('click',event=>{if(event.target!==$('editorSheet'))return;const box=event.target.getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)closeEditorSheet();});
@@ -1095,6 +1166,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   $('maskAdjustMove').addEventListener('click',()=>{maskAdjustMode='move';refreshMobileEditor();});
   $('maskAdjustResize').addEventListener('click',()=>{maskAdjustMode='size';refreshMobileEditor();});
   $('maskFineControls').querySelectorAll('[data-mask-direction]').forEach(button=>button.addEventListener('click',()=>adjustSelected(button.dataset.maskDirection)));
+  $('placeCoverButton').addEventListener('click',placeCover);
   $('maskQuickDuplicate').addEventListener('click',duplicateSelected);
   $('maskQuickDelete').addEventListener('click',deleteSelected);
   $('retryButton').addEventListener('click',()=>$('imageInput').click());
@@ -1121,8 +1193,16 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   env.document.addEventListener('keydown',keydown);
   env.document.addEventListener('paste',paste);
   env.document.addEventListener('dragover',event=>{if(Array.from(event.dataTransfer?.types||[]).includes('Files'))event.preventDefault();});
-  $('dropZone').addEventListener('dragover',event=>{event.preventDefault();if(!busy)$('dropZone').classList.add('drag-over');});
-  $('dropZone').addEventListener('dragleave',()=>$('dropZone').classList.remove('drag-over'));
+  for(const area of [surface,$('sheetWorkspace')]){
+    area.addEventListener('dragover',event=>{
+      if(busy||area!==(doc.pages.length?surface:$('sheetWorkspace'))||!Array.from(event.dataTransfer?.types||[]).includes('Files'))return;
+      event.preventDefault();
+      area.classList.add('drag-over');
+    });
+    area.addEventListener('dragleave',event=>{
+      if(!area.contains(event.relatedTarget))area.classList.remove('drag-over');
+    });
+  }
   env.document.addEventListener('drop',drop);
   env.addEventListener('pagehide',()=>{closeCamera();pointerCancel();controller?.abort();imageIO.releaseAll();viewKey='';image.hidden=true;setSvgHidden(true);});
   env.addEventListener('pageshow',()=>{if(doc.pages.length)showPreview(true);});

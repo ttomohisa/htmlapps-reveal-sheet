@@ -7,9 +7,15 @@ $html = [IO.File]::ReadAllText($Path, [Text.Encoding]::UTF8)
 foreach ($token in @("/* REVEAL:APP_JS */", "/* REVEAL:SHARED_CSS */", "__REVEAL_PLAYER_TEMPLATE_JSON__", "/* REVEAL:PLAYER_RUNTIME */", "__REVEAL_PLAYER_RUNTIME_SHA256__", "__REVEAL_PLAYER_RUNTIME_CSP_HASH__")) {
   if ($html.Contains($token)) { throw "Unresolved Reveal marker: $token" }
 }
-foreach ($token in @("function createRevealCore", "function createImageIO", "function createPersistence", "function createPlayer", "function createEditor", "const REVEAL_PLAYER_TEMPLATE =", "reveal-sheet-data", "default-src 'none'", "connect-src 'none'", "worker-src 'none'", "frame-src 'none'", "script-src 'sha256-", "reveal-player-runtime-sha256", "id=`"previewImage`"")) {
+foreach ($token in @("function createRevealCore", "function createImageIO", "function createPersistence", "function createPlayer", "function createEditor", "const REVEAL_PLAYER_TEMPLATE =", "reveal-sheet-data", "default-src 'none'", "connect-src 'none'", "worker-src 'none'", "frame-src 'none'", "reveal-player-runtime-sha256", "id=`"previewImage`"")) {
   if (-not $html.Contains($token)) { throw "Missing Reveal contract: $token" }
 }
+# Windows PowerShell may JSON-escape apostrophes in the embedded player.
+# Inspect the decoded policy that the browser actually receives.
+$playerLiteral = [regex]::Match($html, '(?m)^\s*const REVEAL_PLAYER_TEMPLATE = (".*");\s*$')
+if (-not $playerLiteral.Success) { throw "Missing embedded Reveal player" }
+$embeddedPlayer = ConvertFrom-Json -InputObject $playerLiteral.Groups[1].Value
+if (-not $embeddedPlayer.Contains("script-src 'sha256-")) { throw "Missing Reveal player script hash policy" }
 $playerTemplateSource = [IO.File]::ReadAllText((Join-Path $Root "src/player.template.html"), [Text.Encoding]::UTF8)
 if ($playerTemplateSource.Contains("script-src 'unsafe-inline'")) { throw "Reveal lesson player must not allow unsafe-inline scripts." }
 foreach ($token in @("script-src '__REVEAL_PLAYER_RUNTIME_CSP_HASH__'", "/* REVEAL:PLAYER_RUNTIME */", "__REVEAL_PLAYER_RUNTIME_SHA256__")) {

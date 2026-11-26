@@ -99,8 +99,76 @@ test('T15: mobile study keeps the image and primary guided action in one viewpor
   if(await page.locator('#appConfirmDialog').isVisible())await page.locator('#appConfirmOk').click();
   await expect(page.locator('.page-panel')).toBeHidden();await expect(page.locator('#loadedSection')).toBeHidden();
   const preview=await page.locator('.preview-surface').boundingBox(),panel=await page.locator('#studyPanel').boundingBox(),action=await page.locator('#revealCurrentButton').boundingBox(),nav=await page.locator('.reveal-nav').boundingBox();
-  expect(preview.height).toBeGreaterThanOrEqual(150);expect(action.y+action.height).toBeLessThanOrEqual(nav.y+1);expect(panel.y).toBeGreaterThanOrEqual(preview.y+preview.height-1);
+  await expect(page.locator('.app-header')).toBeHidden();
+  expect(preview.y).toBeLessThanOrEqual(1);
+  expect(preview.width).toBeGreaterThanOrEqual(386);
+  expect(preview.height).toBeGreaterThanOrEqual(450);
+  const mask=page.locator('#maskSvg');
+  const currentCover=await mask.locator('.current-answer').boundingBox();
+  expect(currentCover.width).toBeGreaterThan(preview.width*.42);
+  const viewBefore=await mask.getAttribute('style');
+  expect(action.y+action.height).toBeLessThanOrEqual(nav.y+1);expect(panel.y).toBeGreaterThanOrEqual(preview.y+preview.height-1);
   await expect(page.locator('#guidedMoreActions')).not.toHaveAttribute('open','');
   await page.locator('#revealCurrentButton').click();await expect(page.locator('#revealCurrentButton')).toBeHidden();await expect(page.locator('#guidedRatingActions')).toBeVisible();
+  expect(await mask.getAttribute('style')).toBe(viewBefore);
+  expect(await page.locator('#dropZone').boundingBox()).toEqual(preview);
+  await page.locator('#studyToolsButton').click();
+  await expect(page.locator('#editorSheet #guidedQuestionList button')).toHaveCount(1);
+  await page.locator('#editorSheet #languageButton').click();
+  await page.locator('#editorSheet #helpButton').click();
+  await expect(page.locator('#helpDialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#editorSheet #helpButton')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#studyToolsButton')).toBeFocused();
   const ratings=await page.locator('#guidedRatingActions').boundingBox();expect(ratings.y+ratings.height).toBeLessThanOrEqual(nav.y+1);
+  for(const id of ['saveButton','createButton']){
+    await page.locator('#'+id).click();
+    await expect(page.locator('.app-header #helpButton')).toBeInViewport();
+  }
+});
+
+test.describe('touch study on a notebook photo',()=>{
+  test.use({hasTouch:true});
+  test('a portrait page fills the phone and answers toggle in place',async({page})=>{
+    await page.setViewportSize({width:390,height:844});
+    await openApp(page);
+    const photo=await page.evaluate(()=>{
+      const canvas=document.createElement('canvas');canvas.width=900;canvas.height=1600;
+      const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,900,1600);
+      ctx.font='36px sans-serif';ctx.fillStyle='black';ctx.fillText('The Pacific Ocean',140,700);
+      return canvas.toDataURL().split(',')[1];
+    });
+    await page.locator('#imageInput').setInputFiles({name:'notes.png',mimeType:'image/png',buffer:Buffer.from(photo,'base64')});
+    await expect(page.locator('#previewImage')).toBeVisible();
+    await dragCover(page,[130,650],[480,715]);
+    await page.locator('#studyButton').tap();
+    const stage=page.locator('#dropZone'),svg=page.locator('#maskSvg');
+    const initial=await stage.boundingBox();
+    expect(Math.min(initial.width,initial.height*900/1600)).toBeGreaterThan(335);
+    await svg.locator('.mask-rect').tap();
+    await expect(svg.locator('.open-answer-target')).toHaveCount(1);
+    await svg.locator('.open-answer-target').tap();
+    await expect(svg.locator('.mask-rect')).toHaveCount(1);
+    expect(await stage.boundingBox()).toEqual(initial);
+    await page.locator('#guidedModeButton').tap();
+    if(await page.locator('#appConfirmDialog').isVisible())await page.locator('#appConfirmOk').tap();
+    await expect(svg.locator('.current-answer')).toBeVisible();
+    await page.locator('#viewZoomIn').tap();
+    const zoom=await svg.getAttribute('data-view-zoom');
+    await svg.locator('.current-answer').tap();
+    await expect(page.locator('#guidedRatingActions')).toBeVisible();
+    await expect(svg).toHaveAttribute('data-view-zoom',zoom);
+    await page.setViewportSize({width:844,height:390});
+    await expect(page.locator('#studyToolsButton')).toBeInViewport();
+    await page.locator('#studyToolsButton').tap();
+    await expect(page.locator('#editorSheet #guidedSettings')).toBeVisible();
+    await page.locator('#editorSheetClose').tap();
+    await expect(page.locator('.app-header')).toBeHidden();
+    const landscape=await stage.boundingBox();
+    const controls=await page.locator('#studyPanel').boundingBox();
+    expect(landscape.height).toBeGreaterThan(240);
+    expect(landscape.x+landscape.width).toBeLessThanOrEqual(controls.x+1);
+    expect(await page.evaluate(()=>document.documentElement.scrollHeight)).toBeLessThanOrEqual(391);
+  });
 });

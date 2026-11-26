@@ -64,6 +64,8 @@ The generated app is written to `dist/index.html`. A self-extracting single-HTML
 
 ## Usage
 
+Add your image, drag over an answer, and choose **Start studying**. You can also select **Place a cover** (under **More** on phones), then use the arrows to move it or Alt + arrows to resize it. In free study, choosing a question on another page brings its image into view. Open **Import options** to change image compression or cover color.
+
 1. **Add images** — Use the file picker, desktop drag-and-drop, or paste an image file. Imported images retain their orientation-fixed dimensions. Compression is on by default: WebP (quality 0.86) is used only if at least 10% smaller than a normalized PNG; otherwise PNG is used.
 2. **Create covers** — Drag over each answer. Drag a selected cover to move it and use the corner handles to resize it.
 3. **Organize pages** — Edit page names and optional descriptions directly in the cards. On mobile, tap the page title to open the horizontal carousel; swipe normally and start reordering only from the drag handle.
@@ -88,7 +90,7 @@ On smartphones, **Create / Study / Save** stays in bottom navigation. After impo
 
 Use **Place covers** to draw covers, or **Move image** to pan. Within the pan limits, the image follows your finger by the same distance regardless of zoom. A two-finger pinch zooms in either mode, and a remaining finger can continue panning. Selecting a cover shows **Adjust**, duplicate, and delete near the image without changing the image area. On short screens these actions overlay the image's lower edge; on very short landscape screens they share the bottom dock with the four editing tools, clear of the zoom controls. **Adjust** opens Move / Size controls with 1 / 5 / 10 image-pixel steps. **Covers** opens grouping and question settings. **More** contains image import, camera, color, and local-saving settings. **Take photo** uses a camera-capable chooser where supported; regular image selection remains available.
 
-Guided study is compacted so the image and the primary action — **Reveal answer** or the rating buttons — fit together on a 390 × 760 viewport in the automated regression suite. Secondary actions such as Previous, Skip, Edit this question, and Finish study are kept under **More**.
+On phones, **One at a time** zooms in on the current question and marks its covers with the question number. Tap the percentage to see the whole page. In **Reveal freely**, tap the same spot to show or hide an answer. The phone header stays hidden while studying. Tap **Study tools** at the bottom to choose a page or question, switch languages, or open help. In an exported lesson, this menu also contains **Settings & save**.
 
 ## Keyboard shortcuts
 

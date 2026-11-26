@@ -83,6 +83,7 @@ test('T02/T11: default WebP saves schema v2 in both JSON and offline lesson HTML
 });
 test('T02/T04: disabling compression preserves PNG and v1 schema for older clients',async({page},testInfo)=>{
   await openApp(page);
+  await page.locator('.settings-toggle').click();
   await page.locator('#compressImages').uncheck();
   await page.locator('#imageInput').setInputFiles({name:'offline-photo.jpg',mimeType:'image/jpeg',buffer:await syntheticPhoto(page)});
   await expect(page.locator('#previewImage')).toBeVisible();
