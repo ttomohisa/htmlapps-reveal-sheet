@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Enlarged the study image on phones, framed the current guided question, and added tap-to-hide in free study, including exported lessons.
+
 - Placed brief instructions beside the image picker and folded import options below it.
 - Placed desktop editing and study controls beside the image. Added first-cover guidance, keyboard placement and adjustment, a study shortcut when questions are ready, and page selection in free study on phones.
 - Simplified the save screen, with page names under file details and an explanation of when study HTML becomes available.

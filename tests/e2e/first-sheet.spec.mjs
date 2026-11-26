@@ -62,12 +62,15 @@ test('free study follows a question to its page and keeps keyboard focus', async
     await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
   }
   await page.locator('#studyButton').click();
+  const tools=page.locator('#studyToolsButton');
+  await tools.click();
   const pages=page.locator('#studyPageSelect');
   const first=page.locator('#questionList button').first();
   await first.focus();
   await page.keyboard.press('Enter');
   await expect(pages.locator('option:checked')).toHaveText('Page 1');
-  await expect(first).toBeFocused();
+  await expect(tools).toBeFocused();
+  await tools.press('Enter');
   await pages.selectOption({label:'Page 2'});
   await expect(page.locator('#maskSvg .mask-rect')).toHaveCount(1);
   await expect(page.locator('#confirmedCount')).toHaveText('1');

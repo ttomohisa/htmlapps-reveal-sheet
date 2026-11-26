@@ -655,3 +655,15 @@ body:not(.has-pages) .data-notice{display:none}
   .study-mode #freeStudyPanel .study-actions .button { font-size:10px; }
   .study-mode #freeStudyPanel>.question-list { grid-template-columns:repeat(2,minmax(0,1fr));gap:5px; }
 }
+
+.open-answer-target { fill:transparent;pointer-events:all;cursor:pointer; }
+.open-answer-target:focus-visible { stroke:var(--focus,#16624f);stroke-width:3;vector-effect:non-scaling-stroke; }
+
+.mask-rect.current-answer { stroke:#fff;stroke-width:2.5;stroke-dasharray:6 3; }
+.question-marker { pointer-events:none; }
+.question-marker circle { fill:white; }
+.question-marker text { fill:#163e34;font:700 12px system-ui;text-anchor:middle; }
+#viewFit.zoomed,#lessonZoomFit.zoomed { display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;line-height:1.1; }
+#viewFit.zoomed::after,#lessonZoomFit.zoomed::after { content:attr(data-fit-label);font-size:10px;font-weight:500; }
+
+.study-mode .preview-surface img,.study-mode .mask-layer,.lesson-body .mask-layer { will-change:auto; }

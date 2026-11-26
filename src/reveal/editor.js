@@ -13,6 +13,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   let gesture=null,draftRect=null,pageDrag=null,editTool='draw',maskAdjustMode='move',mobilePagesOpen=false,fineAdjustOpen=false;
   const activeTouches=new Map();
   const mobileLayout=env.matchMedia('(max-width:767px)');
+  const studyLayout=env.matchMedia('(max-width:767px), (pointer:coarse) and (max-height:520px)');
   let editorSheetKind='',editorSheetOpener=null,editorSheetMoves=[];
   const expandedPageDescriptions=new Set();
   let draftSaveTimer=0,draftSaveChain=Promise.resolve(),localDraftGeneration=0,draftConflict=false,localAvailable=false,localDraftExists=false,lastDraftSavedAt='';
@@ -23,7 +24,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   function setSvgHidden(hidden){if(hidden)svg.setAttribute('hidden','');else svg.removeAttribute('hidden');}
   const t=translate;
   let lastDraftStatus=null,lastStudyStatus=null;
-  const studyView=createStudyView({core,dom:env.document,onAction:action=>handleViewAction(action),translate:t,pointerActions:false});
+  const studyView=createStudyView({core,dom:env.document,onAction:action=>handleViewAction(action),translate:t,pointerActions:false,onViewResize:refreshViewControls});
   function setDraftStatus(key,values={}){lastDraftStatus={key,values};const node=$('draftSaveStatus');if(node)node.textContent=t(key,values);}
   function setStudyStatus(key,values={}){lastStudyStatus={key,values};const node=$('studySaveStatus');if(node)node.textContent=t(key,values);}
   function identityToken(identity){return identity?identity.documentId+'|'+identity.revision+'|'+identity.fingerprint:'';}
@@ -129,8 +130,10 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     restoreEditorSheet(options);
   }
   function openEditorSheet(kind,opener){
-    if(!mobileLayout.matches||mode!=='create'||!currentPage())return;
-    const selectors={pages:['.page-panel'],covers:['#coverPanel'],tools:['#editControls','#failureSection','.image-meta-row','#localDraftPanel','.data-notice']};
+    const studying=kind==='study';
+    if(!(studying?studyLayout:mobileLayout).matches||mode!==(studying?'study':'create')||!currentPage())return;
+    const studyTools=studyMode==='free'?['#studyPageChoice','#studyPageDescription','#freeStudyPanel .study-actions','#questionList']:['#studyPageDescription','.guided-secondary-actions','#guidedSettings','#guidedQuestionList'];
+    const selectors={study:studyTools,pages:['.page-panel'],covers:['#coverPanel'],tools:['#editControls','#failureSection','.image-meta-row','#localDraftPanel','.data-notice']};
     if(!selectors[kind]||(kind!=='tools'&&busy))return;
     cancelTransientInteraction();closeEditorSheet({restoreFocus:false});fineAdjustOpen=false;
     editorSheetKind=kind;editorSheetOpener=opener||env.document.activeElement;
@@ -142,7 +145,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       const placeholder=env.document.createComment('editor-sheet-home');node.before(placeholder);
       editorSheetMoves.push({node,placeholder});body.append(node);
     }
-    $('editorSheetTitle').textContent=t({pages:'pages',covers:'coverPanelTitle',adjust:'fineAdjust',tools:'moreTools'}[kind]);
+    $('editorSheetTitle').textContent=t({pages:'pages',covers:'coverPanelTitle',adjust:'fineAdjust',tools:'moreTools',study:'studyTools'}[kind]);
     dialog.dataset.sheet=kind;mobilePagesOpen=kind==='pages';
     env.document.body.classList.add('editor-sheet-open');
     refreshMobileEditor();dialog.showModal();$('editorSheetClose').focus({preventScroll:true});
@@ -156,7 +159,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   // Mobile editing and page switcher state is transient; the saved sheet format is unchanged.
   function refreshMobileEditor(){
     const activePage=currentPage(),pageIndex=doc.pages.findIndex(page=>page.id===selectedId);
-    if(editorSheetKind&&(!mobileLayout.matches||mode!=='create'||!activePage||(editorSheetKind==='covers'&&!doc.masks.some(mask=>mask.pageId===selectedId))))closeEditorSheet();
+    if(editorSheetKind&&(!(editorSheetKind==='study'?studyLayout:mobileLayout).matches||mode!==(editorSheetKind==='study'?'study':'create')||!activePage||(editorSheetKind==='covers'&&!doc.masks.some(mask=>mask.pageId===selectedId))))closeEditorSheet();
     $('mobilePageSwitch').hidden=mode!=='create'||!activePage;
     $('mobilePageLabel').textContent=activePage?.title||'';
     $('mobilePagePosition').textContent=t('mobilePagePosition',{current:pageIndex+1,total:doc.pages.length});
@@ -199,7 +202,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('maskFineAdjustButton').setAttribute('aria-expanded',String(showFine));
     env.document.body.classList.toggle('fine-adjust-open',showFine);
     refreshPanHint();
-    if(editorSheetKind)$('editorSheetTitle').textContent=t({pages:'pages',covers:'coverPanelTitle',adjust:'fineAdjust',tools:'moreTools'}[editorSheetKind]);
+    if(editorSheetKind)$('editorSheetTitle').textContent=t({pages:'pages',covers:'coverPanelTitle',adjust:'fineAdjust',tools:'moreTools',study:'studyTools'}[editorSheetKind]);
   }
   function setEditTool(next){
     if(!['draw','pan'].includes(next)||mode!=='create')return;
@@ -276,6 +279,8 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     const page=currentPage();$('viewControls').hidden=!page||mode==='save';$('returnToStudyButton').hidden=!studyEditActive;
     if(!page){$('focusQuestionButton').hidden=true;refreshPanHint();return;}
     const view=studyView.getViewState(page.id);refreshPanHint();$('viewFit').textContent=Math.round(view.zoom*100)+'%';
+    $('viewFit').classList.toggle('zoomed',mode==='study'&&view.zoom!==1);
+    $('viewFit').dataset.fitLabel=t('wholeImage');
     const qid=mode==='study'&&studySession?.mode==='guided'?currentGuidedId():null;
     if(!qid){$('focusQuestionButton').hidden=true;return;}
     const focused=core.revealTarget(doc,qid,view);$('focusQuestionButton').hidden=sameView(view,focused);
@@ -319,6 +324,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     const studyPage=currentPage();$('studyPageDescription').hidden=!studyPage?.description;$('studyPageDescription').textContent=studyPage?.description||'';
     $('freeModeButton').setAttribute('aria-pressed',String(studyMode==='free'));$('guidedModeButton').setAttribute('aria-pressed',String(studyMode==='guided'));$('freeStudyPanel').hidden=studyMode!=='free';$('guidedPanel').hidden=studyMode!=='guided';
     if(studyMode==='free'){
+      $('freeStudyPanel').classList.toggle('with-study-notes',doc.questions.some(q=>q.answer));
       const summary=core.summaryFree(studySession);$('confirmedCount').textContent=String(summary.confirmed);$('studyQuestionCount').textContent=String(summary.total);$('questionList').replaceChildren();
       const open=new Set(studySession.openQuestionIds);
       studySession.queue.forEach((qid,index)=>{
@@ -336,10 +342,12 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
         button.append(label,state);button.setAttribute('aria-label',question.prompt?action+' · '+question.prompt:action);
         button.setAttribute('aria-pressed',String(isOpen));
         button.addEventListener('click',()=>{
+          const inSheet=editorSheetKind==='study';
           const hadFocus=env.document.activeElement===button;
+          if(inSheet)closeEditorSheet();
           selectPage(question.pageId);
           handleViewAction({type:'TOGGLE_QUESTION',questionId:qid});
-          if(hadFocus)$('questionList').children[index]?.focus({preventScroll:true});
+          if(hadFocus&&!inSheet)$('questionList').children[index]?.focus({preventScroll:true});
         });
         $('questionList').append(button);
       });
@@ -349,11 +357,13 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('otherAnswersHidden').checked=studySession.otherAnswers==='hidden';$('otherAnswersVisible').checked=studySession.otherAnswers==='visible';
     const total=studySession.queue.length,current=Math.min(studySession.index+1,total);$('guidedProgress').textContent=t('questionProgress',{current:studySession.ended?total:current,total});
     const qid=currentGuidedId(),question=qid&&doc.questions.find(item=>item.id===qid);const revealed=Boolean(question&&studySession.stage==='revealed');
-    $('guidedPrompt').hidden=!question?.prompt;$('guidedPrompt').textContent=question?.prompt||'';$('guidedAnswerBox').hidden=!revealed;$('guidedAnswer').textContent=revealed?(question?.answer||''):'';
+    $('guidedPanel').classList.toggle('with-study-notes',Boolean(question?.prompt||question?.answer));
+    if($('guidedAnswerBox').hidden&&revealed)$('guidedAnswerBox').parentElement.scrollTop=0;
+    $('guidedPrompt').hidden=!question?.prompt;$('guidedPrompt').textContent=question?.prompt||'';$('guidedAnswerBox').hidden=!revealed||!question?.answer;$('guidedAnswer').textContent=revealed?(question?.answer||''):'';
     $('revealCurrentButton').hidden=!question||revealed;$('guidedRatingActions').hidden=!revealed;$('revealCurrentButton').disabled=!question||studySession.stage!=='hidden';$('editCurrentQuestionButton').disabled=!question;$('recalledButton').disabled=!revealed;$('againButton').disabled=!revealed;$('skipButton').disabled=!question;$('previousQuestionButton').disabled=studySession.queue.length===0||(!studySession.ended&&studySession.index<=0);$('finishStudyButton').disabled=studySession.ended;
     const summary=core.summary(studySession);fillGuidedResults(summary);$('studyResults').hidden=!studySession.ended;
     $('previousResultSummary').hidden=!previousStudySummary;$('previousResultSummary').textContent=previousStudySummary?t('previousResultLabel')+`: ${previousStudySummary.recalled}/${previousStudySummary.total}`:'';
-    $('guidedQuestionList').replaceChildren();studySession.queue.forEach((item,index)=>{const button=env.document.createElement('button');button.type='button';button.className='question-item';button.dataset.questionId=item.questionId;const rating=studySession.ratings[item.questionId]||'unanswered';button.dataset.rating=rating;button.textContent=`${t('guidedQuestion',{number:index+1})} · ${t('rating_'+rating)}`;button.setAttribute('aria-current',String(!studySession.ended&&index===studySession.index));button.addEventListener('click',()=>goGuidedQuestion(item.questionId));$('guidedQuestionList').append(button);});
+    $('guidedQuestionList').replaceChildren();studySession.queue.forEach((item,index)=>{const button=env.document.createElement('button');button.type='button';button.className='question-item';button.dataset.questionId=item.questionId;const rating=studySession.ratings[item.questionId]||'unanswered';button.dataset.rating=rating;button.textContent=`${t('guidedQuestion',{number:index+1})} · ${t('rating_'+rating)}`;button.setAttribute('aria-current',String(!studySession.ended&&index===studySession.index));button.addEventListener('click',()=>{if(editorSheetKind==='study')closeEditorSheet();goGuidedQuestion(item.questionId);});$('guidedQuestionList').append(button);});
   }
   function status(key, params={}) {
     lastStatus=key;progress=Object.keys(params).length?params:null;
@@ -779,7 +789,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
       activeTouches.set(event.pointerId,{x:event.clientX,y:event.clientY});
       if(activeTouches.size===2){event.preventDefault();startPinch();return;}
     }
-    const handle=event.target?.closest?.('.mask-resize-handle'),maskNode=event.target?.closest?.('.mask-rect');
+    const handle=event.target?.closest?.('.mask-resize-handle'),maskNode=event.target?.closest?.('.mask-rect,.open-answer-target');
     if(mode==='create'&&editTool==='draw'&&!event.shiftKey){
       if(handle?.dataset.maskId&&beginDirectEdit(event,handle.dataset.maskId,'mask-resize',handle.dataset.resizeCorner))return;
       if(maskNode?.dataset.maskId&&beginDirectEdit(event,maskNode.dataset.maskId,'mask-move'))return;
@@ -1128,7 +1138,8 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   $('cameraCloseButton').addEventListener('click',closeCamera);
   $('cameraDialog').addEventListener('close',stopCamera);
   $('cameraInput').addEventListener('change',event=>{const files=Array.from(event.target.files||[]);event.target.value='';addImages(files);});
-  $('studyPageSelect').addEventListener('change',event=>selectPage(event.currentTarget.value));
+  $('studyPageSelect').addEventListener('change',event=>{if(editorSheetKind==='study')closeEditorSheet();selectPage(event.currentTarget.value);});
+  $('studyToolsButton').addEventListener('click',event=>openEditorSheet('study',event.currentTarget));
   $('mobilePageToggle').addEventListener('click',event=>openEditorSheet('pages',event.currentTarget));
   $('mobileCoversButton').addEventListener('click',event=>openEditorSheet('covers',event.currentTarget));
   $('mobileMoreButton').addEventListener('click',event=>openEditorSheet('tools',event.currentTarget));
@@ -1140,6 +1151,10 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   $('maskFineClose').addEventListener('click',()=>{fineAdjustOpen=false;refreshMobileEditor();$('maskFineAdjustButton').focus({preventScroll:true});});
   $('mobileUndoButton').addEventListener('click',()=>history('undo'));
   $('mobileRedoButton').addEventListener('click',()=>history('redo'));
+  $('editorSheetBody').addEventListener('click',event=>{
+    if(editorSheetKind==='study'&&event.target.closest('#previousQuestionButton,#skipButton,#finishStudyButton,#hideAllButton,#revealPageButton'))closeEditorSheet();
+  });
+  studyLayout.addEventListener('change',()=>{if(editorSheetKind==='study'&&!studyLayout.matches)closeEditorSheet();});
   $('editorSheetClose').addEventListener('click',()=>closeEditorSheet());
   $('editorSheet').addEventListener('close',()=>{if(!$('editorSheet').open)restoreEditorSheet();});
   $('editorSheet').addEventListener('click',event=>{if(event.target!==$('editorSheet'))return;const box=event.target.getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)closeEditorSheet();});
