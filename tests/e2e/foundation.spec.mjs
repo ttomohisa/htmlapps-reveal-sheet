@@ -24,12 +24,14 @@ test('T01/T02: loaded image begins within the narrow viewport, not below introdu
  const box=await page.locator('#previewImage').boundingBox();expect(box.y).toBeLessThan(600);
 });
 
-test('the start screen puts the import and the working example together at both widths',async({page})=>{
+test('the start screen shows brief instructions beside the import controls',async({page})=>{
   for(const viewport of [{width:1360,height:900},{width:390,height:844}]){
     await page.setViewportSize(viewport);await openApp(page);
     await expect(page.locator('.brand-name')).toHaveJSProperty('tagName','H1');
-    await expect(page.locator('#introDescription')).toContainText('Create a study sheet');
-    await expect(page.locator('#exampleCover')).toBeInViewport();
+    await expect(page.locator('#introDescription')).toContainText('Draw a box');
+    await expect(page.locator('#editControls h2, #emptyPreview')).toHaveCount(0);
+    await expect(page.locator('#dropZone')).toBeHidden();
+    await expect(page.locator('#introDescription')).toBeInViewport();
     await expect(page.locator('#addButton')).toBeInViewport();
     await expect(page.locator('.reveal-nav')).toBeHidden();
     if(viewport.width>767)await expect(page.locator('.local-badge')).toBeVisible();
@@ -63,7 +65,7 @@ test('T01: the intro disappears after loading an image on desktop and phone',asy
   const {imagePath}=await import('../helpers/app.mjs');
   await page.setViewportSize({width:1200,height:800});await openApp(page);
   await page.locator('#languageButton').click();
-  await expect(page.locator('#introDescription')).toHaveText('図やノートの画像に覆いを置き、答えをめくって覚える暗記シートを作れます。');
+  await expect(page.locator('#introDescription')).toHaveText('ノートの写真を選んで、隠したい答えを囲んでください。学習中はそこを押すと答えが見えます。');
   await expect(page.locator('.local-badge')).toBeVisible();
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
   await expect(page.locator('#previewImage')).toBeVisible();

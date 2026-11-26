@@ -64,7 +64,7 @@ The generated app is written to `dist/index.html`. A self-extracting single-HTML
 
 ## Usage
 
-Try revealing the triangle’s answer on the start screen. Add your own image, drag over an answer, and choose **Start studying**. You can also select **Place a cover** (under **More** on phones), then use the arrows to move it or Alt + arrows to resize it. In free study, choosing a question on another page brings its image into view. Open **Import options** to change image compression or cover color.
+Add your image, drag over an answer, and choose **Start studying**. You can also select **Place a cover** (under **More** on phones), then use the arrows to move it or Alt + arrows to resize it. In free study, choosing a question on another page brings its image into view. Open **Import options** to change image compression or cover color.
 
 1. **Add images** — Use the file picker, desktop drag-and-drop, or paste an image file. Imported images retain their orientation-fixed dimensions. Compression is on by default: WebP (quality 0.86) is used only if at least 10% smaller than a normalized PNG; otherwise PNG is used.
 2. **Create covers** — Drag over each answer. Drag a selected cover to move it and use the corner handles to resize it.

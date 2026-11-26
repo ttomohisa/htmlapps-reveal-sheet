@@ -34,6 +34,26 @@ test('T02: invalid image leaves existing page intact and makes no external reque
  await page.locator('#imageInput').setInputFiles([imagePath('animated.png'),imagePath('animated.webp'),imagePath('truncated.png'),imagePath('oversize-header.png')]);
  await expect(page.locator('#failureList li')).toHaveCount(4);await expect(page.locator('#pageList .page-item')).toHaveCount(1);await loaded(page);expect(requests).toEqual([]);
 });
+test('T02: dropping images works on the empty workspace and the loaded image',async({page})=>{
+  await openApp(page);
+  const bytes=await import('node:fs').then(fs=>Array.from(fs.readFileSync(imagePath('static.png'))));
+  const dataTransfer=await page.evaluateHandle(bytes=>{
+    const transfer=new DataTransfer();
+    transfer.items.add(new File([new Uint8Array(bytes)],'notes.png',{type:'image/png'}));
+    return transfer;
+  },bytes);
+  for(const [index,selector] of ['#sheetWorkspace','#dropZone'].entries()){
+    const target=page.locator(selector);
+    await expect(target).toBeVisible();
+    await target.dispatchEvent('dragover',{dataTransfer});
+    await expect(target).toHaveClass(/drag-over/);
+    await target.dispatchEvent('drop',{dataTransfer});
+    await expect(target).not.toHaveClass(/drag-over/);
+    await expect(page.locator('#pageList .page-item')).toHaveCount(index+1);
+    await loaded(page);
+  }
+  await dataTransfer.dispose();
+});
 test('T02: URL/HTML paste is ignored, file paste is accepted',async({page})=>{
  await openApp(page);
  await page.evaluate(()=>{const d=new DataTransfer();d.setData('text/html','<img src="https://example.invalid/secret">');d.setData('text/plain','https://example.invalid/secret');document.dispatchEvent(new ClipboardEvent('paste',{clipboardData:d,bubbles:true}));});

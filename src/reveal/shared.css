@@ -9,7 +9,6 @@ button:disabled,input:disabled { cursor:not-allowed; }
 .main { width:min(1120px,100%);padding:24px clamp(14px,2.8vw,30px) 56px; }
 .header-inner { width:min(1120px,100%);min-height:var(--header-height,66px);padding:10px clamp(14px,2.8vw,30px); }
 .page-intro { display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin:0;padding:0 2px 20px;max-width:none; }
-.page-intro>div:first-child { min-width:0; }
 .page-intro p { max-width:780px;margin:0;font-size:14px;line-height:1.65; }
 .local-badge { flex:0 0 auto;margin-top:3px;white-space:nowrap; }
 .header-actions .header-icon-button{min-width:0;min-height:0}.header-actions .language-button{min-width:0;min-height:0}
@@ -56,10 +55,6 @@ button:disabled,input:disabled { cursor:not-allowed; }
 .preview-surface { min-height:360px;height:clamp(300px,48vh,540px);background:#f2f3ef;border:1px solid var(--line);border-radius:14px;display:grid;place-items:center;position:relative;overflow:hidden; }
 .preview-surface img { width:100%;height:100%;object-fit:contain;min-width:0;min-height:0; }
 .preview-surface.drag-over { outline:3px solid #16624f;outline-offset:-4px;background:#edf4f0; }
-.empty-preview { padding:28px;text-align:center;max-width:390px; }
-.empty-preview svg { width:56px;height:56px;color:#16624f; }
-.empty-preview h2 { font-size:18px;margin:18px 0 10px; }
-.empty-preview p { color:var(--muted);font-size:14px;line-height:1.8;margin:0; }
 .preview-wait { position:absolute;inset:0;background:#f2f3ef;display:grid;place-items:center;text-align:center;padding:24px; }
 .image-meta-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:6px;min-height:24px}.image-meta { display:flex;flex:0 0 auto;flex-wrap:wrap;justify-content:flex-end;gap:8px 14px;margin:0;color:var(--muted);font-size:11px;line-height:1.4; }
 .image-meta strong { color:var(--text);font-weight:550; }
@@ -515,12 +510,7 @@ button:disabled,input:disabled { cursor:not-allowed; }
 /* Keep unavailable actions off the empty screen. All page actions return after import. */
 .reveal-tools .button[hidden],.reveal-tools .secondary-tools[hidden]{display:none!important}
 .create-mode:not(.has-pages) .page-panel{display:none}
-.create-mode:not(.has-pages) .reveal-grid{display:block}
-.create-mode:not(.has-pages) .preview-surface{height:220px;min-height:180px;max-height:260px;border-style:dashed;background:#f8faf8}
-.create-mode:not(.has-pages) .empty-preview{padding:16px 20px}
-.create-mode:not(.has-pages) .empty-preview svg{width:38px;height:38px}
-.create-mode:not(.has-pages) .empty-preview h2{margin:6px 0;font-size:15px}
-.create-mode:not(.has-pages) .empty-preview p{font-size:12px;line-height:1.55}
+.create-mode:not(.has-pages) .reveal-grid{display:none}
 .create-mode:not(.has-pages) .input-status-row:has(.empty-status-only){display:none}
 .create-mode:not(.has-pages) .input-note{margin:8px 0 12px}
 @media(max-width:767px){
@@ -536,7 +526,6 @@ button:disabled,input:disabled { cursor:not-allowed; }
  .create-mode:not(.has-pages) .cover-color-control{min-width:0;justify-content:center;color:var(--text)}
  .create-mode:not(.has-pages) .cover-color-control span{display:inline;font-size:11px}
  .create-mode:not(.has-pages) .secondary-tools{grid-column:1/-1;margin:0}
- .create-mode:not(.has-pages) .preview-surface{height:170px;min-height:150px;max-height:200px}
 }
 /* Free-study question chips share the compact mobile presentation. */
 .study-mode #freeStudyPanel>.question-list{display:flex;flex-wrap:wrap;gap:7px;overflow-x:visible}

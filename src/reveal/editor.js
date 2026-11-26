@@ -463,7 +463,6 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('sheetTitle').textContent=doc.title;
     $('lessonNeedsQuestion').hidden=doc.questions.length>0;
     env.document.body.classList.toggle('can-study',doc.questions.length>0);
-    setExampleOpen(!doc.pages.length&&!$('exampleAnswer').hidden);
     $('sheetCount').textContent=doc.pages.length===1?t('singlePage'):t('pageCount',{count:doc.pages.length});
     const savedDiagnostic=lastStatus.startsWith('error_')&&mode==='save'&&!$('saveDiagnostics').hidden
       ?$('saveDiagnosticText').textContent:'';
@@ -482,7 +481,6 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     $('cancelButton').hidden=!busy;
     $('undoButton').disabled=busy||mode==='study'||undo.length===0;
     $('redoButton').disabled=busy||mode==='study'||redo.length===0;
-    $('emptyPreview').hidden=doc.pages.length!==0;
     $('imageMeta').hidden=!selectedId||mode==='study';
     $('loadedSection').hidden=doc.pages.length===0;
     const activePage=currentPage();
@@ -678,7 +676,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     if(!files.length)return;event.preventDefault();addImages(files);
   }
   function drop(event) {
-    event.preventDefault();$('dropZone').classList.remove('drag-over');
+    event.preventDefault();surface.classList.remove('drag-over');$('sheetWorkspace').classList.remove('drag-over');
     if(env.document.querySelector('dialog[open]'))return;
     const files=filesFromTransfer(event.dataTransfer);if(files.length)addImages(files);
   }
@@ -1130,14 +1128,6 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   $('cameraCloseButton').addEventListener('click',closeCamera);
   $('cameraDialog').addEventListener('close',stopCamera);
   $('cameraInput').addEventListener('change',event=>{const files=Array.from(event.target.files||[]);event.target.value='';addImages(files);});
-  function setExampleOpen(open){
-    const cover=$('exampleCover');
-    cover.setAttribute('aria-expanded',String(open));
-    cover.setAttribute('aria-label',open?'5 cm · '+t('exampleHide'):t('exampleReveal'));
-    $('exampleCoverLabel').hidden=open;
-    $('exampleAnswer').hidden=!open;
-  }
-  $('exampleCover').addEventListener('click',()=>setExampleOpen($('exampleAnswer').hidden));
   $('studyPageSelect').addEventListener('change',event=>selectPage(event.currentTarget.value));
   $('mobilePageToggle').addEventListener('click',event=>openEditorSheet('pages',event.currentTarget));
   $('mobileCoversButton').addEventListener('click',event=>openEditorSheet('covers',event.currentTarget));
@@ -1188,8 +1178,16 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
   env.document.addEventListener('keydown',keydown);
   env.document.addEventListener('paste',paste);
   env.document.addEventListener('dragover',event=>{if(Array.from(event.dataTransfer?.types||[]).includes('Files'))event.preventDefault();});
-  $('dropZone').addEventListener('dragover',event=>{event.preventDefault();if(!busy)$('dropZone').classList.add('drag-over');});
-  $('dropZone').addEventListener('dragleave',()=>$('dropZone').classList.remove('drag-over'));
+  for(const area of [surface,$('sheetWorkspace')]){
+    area.addEventListener('dragover',event=>{
+      if(busy||area!==(doc.pages.length?surface:$('sheetWorkspace'))||!Array.from(event.dataTransfer?.types||[]).includes('Files'))return;
+      event.preventDefault();
+      area.classList.add('drag-over');
+    });
+    area.addEventListener('dragleave',event=>{
+      if(!area.contains(event.relatedTarget))area.classList.remove('drag-over');
+    });
+  }
   env.document.addEventListener('drop',drop);
   env.addEventListener('pagehide',()=>{closeCamera();pointerCancel();controller?.abort();imageIO.releaseAll();viewKey='';image.hidden=true;setSvgHidden(true);});
   env.addEventListener('pageshow',()=>{if(doc.pages.length)showPreview(true);});

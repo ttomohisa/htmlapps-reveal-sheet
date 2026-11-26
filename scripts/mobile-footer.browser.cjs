@@ -19,7 +19,7 @@ async function main(){
  assert.equal((await headerVersion.textContent()).trim(),'v'+JSON.parse(fs.readFileSync(path.resolve(__dirname,'../app.config.json'),'utf8')).version,label+': current version');
  assert.ok(await headerVersion.evaluate(el=>{const r=el.getBoundingClientRect();if(r.left<0||r.right>innerWidth||el.scrollWidth>el.clientWidth+1)return false;for(let p=el.parentElement;p;p=p.parentElement){if(/hidden|clip/.test(getComputedStyle(p).overflowX)){const b=p.getBoundingClientRect();if(r.left<b.left-1||r.right>b.right+1)return false;}}return true;}),label+': version is not clipped');
  const badge=page.locator('[data-i18n="'+cfg.badge+'"]');
- assert.equal((await badge.textContent()).trim(),language==='ja'?'完全ローカル処理':'Fully local processing');
+ assert.equal((await badge.textContent()).trim(),language==='ja'?'画像はこの端末で処理します':'Images stay on this device');
  const phone=width<=cfg.bp||(cfg.slug==='photo-collage'&&touch&&height<=520);
  assert.equal(await page.locator('body > footer').isVisible(),!phone,label+': footer');
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),label+': page width');

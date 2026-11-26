@@ -36,7 +36,7 @@ test('T05: deleting the last page from its trash icon returns to empty and Undo 
   await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
   const cards=page.locator('#pageList .page-item');await expect(cards).toHaveCount(1);
   await cards.first().locator('.page-delete-button').click();await page.locator('#appConfirmOk').click();
-  await expect(cards).toHaveCount(0);await expect(page.locator('#previewImage')).toBeHidden();await expect(page.locator('#emptyPreview')).toBeVisible();
+  await expect(cards).toHaveCount(0);await expect(page.locator('#previewImage')).toBeHidden();await expect(page.locator('#introDescription')).toBeVisible();await expect(page.locator('#dropZone')).toBeHidden();
   await page.locator('#undoButton').click();await expect(cards).toHaveCount(1);await expect(page.locator('#previewImage')).toBeVisible();
 });
 

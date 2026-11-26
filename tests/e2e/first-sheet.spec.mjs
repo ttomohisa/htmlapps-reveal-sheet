@@ -1,22 +1,14 @@
 import {test, expect} from '@playwright/test';
 import {openApp, imagePath} from '../helpers/app.mjs';
 
-test('the example reveals from the keyboard without creating a sheet', async ({page}) => {
+test('the import instructions lead into editing and saving a draft', async ({page}) => {
   await openApp(page);
-  const cover = page.locator('#exampleCover');
-  await expect(cover).toBeVisible();
-  await cover.focus();
-  await page.keyboard.press('Enter');
-  await expect(cover).toHaveAccessibleName(/5 cm/);
-  await expect(page.locator('#exampleAnswer')).toBeVisible();
   await page.locator('#languageButton').click();
-  await expect(cover).toHaveAttribute('aria-expanded', 'true');
-  await cover.click();
-  await expect(cover).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('#introDescription')).toContainText('答えを囲んで');
   await expect(page.locator('#studyButton')).toBeDisabled();
   await expect(page.locator('#saveButton')).toBeDisabled();
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));
-  await expect(cover).toBeHidden();
+  await expect(page.locator('#introDescription')).toBeHidden();
   await expect(page.locator('#stageInstruction')).toContainText('ドラッグ');
   await expect(page.locator('#saveButton')).toBeEnabled();
   await page.locator('#saveButton').click();
