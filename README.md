@@ -90,7 +90,7 @@ On smartphones, **Create / Study / Save** stays in bottom navigation. After impo
 
 Use **Place covers** to draw covers, or **Move image** to pan. Within the pan limits, the image follows your finger by the same distance regardless of zoom. A two-finger pinch zooms in either mode, and a remaining finger can continue panning. Selecting a cover shows **Adjust**, duplicate, and delete near the image without changing the image area. On short screens these actions overlay the image's lower edge; on very short landscape screens they share the bottom dock with the four editing tools, clear of the zoom controls. **Adjust** opens Move / Size controls with 1 / 5 / 10 image-pixel steps. **Covers** opens grouping and question settings. **More** contains image import, camera, color, and local-saving settings. **Take photo** uses a camera-capable chooser where supported; regular image selection remains available.
 
-On phones, **One at a time** zooms in on the current question and marks its covers with the question number. Tap the percentage to see the whole page. In **Reveal freely**, tap the same spot to show or hide an answer. On phones the header is hidden while studying. Open **Study tools** to choose a page or question, switch languages, or read the help.
+On phones, **One at a time** zooms in on the current question and marks its covers with the question number. Tap the percentage to see the whole page. In **Reveal freely**, tap the same spot to show or hide an answer. The phone header stays hidden while studying. Tap **Study tools** at the bottom to choose a page or question, switch languages, or open help. In an exported lesson, this menu also contains **Settings & save**.
 
 ## Keyboard shortcuts
 
