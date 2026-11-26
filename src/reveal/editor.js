@@ -133,7 +133,7 @@ function createEditor({core,imageIO,projectIO,persistence,playerTemplate,appVers
     const studying=kind==='study';
     if(!(studying?studyLayout:mobileLayout).matches||mode!==(studying?'study':'create')||!currentPage())return;
     const studyTools=studyMode==='free'?['#studyPageChoice','#studyPageDescription','#freeStudyPanel .study-actions','#questionList']:['#studyPageDescription','.guided-secondary-actions','#guidedSettings','#guidedQuestionList'];
-    const selectors={study:studyTools,pages:['.page-panel'],covers:['#coverPanel'],tools:['#editControls','#failureSection','.image-meta-row','#localDraftPanel','.data-notice']};
+    const selectors={study:['.app-header .header-actions',...studyTools],pages:['.page-panel'],covers:['#coverPanel'],tools:['#editControls','#failureSection','.image-meta-row','#localDraftPanel','.data-notice']};
     if(!selectors[kind]||(kind!=='tools'&&busy))return;
     cancelTransientInteraction();closeEditorSheet({restoreFocus:false});fineAdjustOpen=false;
     editorSheetKind=kind;editorSheetOpener=opener||env.document.activeElement;

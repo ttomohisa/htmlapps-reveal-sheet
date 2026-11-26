@@ -106,10 +106,12 @@ test('exported lesson: mobile pages, settings, language and editable save remain
   await lesson.locator('#lessonSheet #lessonPages .lesson-page-button').first().click();
   await expect(lesson.locator('#lessonSheet')).toBeHidden();
   await expect(lesson.locator('#lessonPrevPage')).toBeDisabled();
+  await lesson.locator('#lessonQuestionsButton').click();
   await lesson.locator('#lessonSettingsButton').click();
   await expect(lesson.locator('#lessonSheet #lessonStudyOptIn')).toBeVisible();
   await expect(lesson.locator('#lessonSheet #lessonSaveEditableButton')).toBeVisible();
   await lesson.locator('#lessonSheetClose').click();
+  await lesson.locator('#lessonQuestionsButton').click();
   await lesson.locator('#lessonLanguage').click();
   await lesson.locator('#lessonSettingsButton').click();
   await expect(lesson.locator('#lessonSheetTitle')).toContainText('設定');
@@ -119,7 +121,7 @@ test('exported lesson: mobile pages, settings, language and editable save remain
   await lesson.locator('#lessonConfirmOk').click();
   const saved=await download;expect(saved.suggestedFilename()).toMatch(/\.reveal\.json$/);
   await lesson.locator('#lessonSheetClose').click();
-  await expect(lesson.locator('#lessonSettingsButton')).toBeFocused();
+  await expect(lesson.locator('#lessonQuestionsButton')).toBeFocused();
   await lesson.close();
 });
 
@@ -128,6 +130,7 @@ for(const viewport of [{width:390,height:844},{width:320,height:640}]){
     const filepath=await exportLesson(page,testInfo);
     const lesson=await openLesson(context,filepath,viewport);
     await lesson.locator('#lessonGuidedMode').click();
+    await lesson.locator('#lessonQuestionsButton').click();
     await lesson.locator('#lessonSettingsButton').click();
     const sheet=lesson.locator('#lessonSheet');
     await expect(sheet).toBeVisible();
@@ -171,7 +174,7 @@ for(const viewport of [{width:390,height:844},{width:320,height:640}]){
     await expect(gear.locator('path')).toHaveCount(1);
     await expect(gear.locator('circle')).toHaveCount(1);
     await lesson.locator('#lessonSheetClose').click();
-    await expect(lesson.locator('#lessonSettingsButton')).toBeFocused();
+    await expect(lesson.locator('#lessonQuestionsButton')).toBeFocused();
     await lesson.close();
   });
 }
@@ -185,6 +188,7 @@ test('exported lesson: desktop gear opens Settings & Save and restores it after 
   expect(image.width).toBeGreaterThan(800);
   expect(reveal.x).toBeGreaterThanOrEqual(image.x+image.width);
   expect(reveal.y+reveal.height).toBeLessThan(800);
+  await expect(lesson.locator('.lesson-header')).toBeVisible();
   const gear=lesson.locator('#lessonSettingsButton');
   await expect(gear).toBeVisible();
   await gear.click();
@@ -213,6 +217,7 @@ for(const viewport of [{width:320,height:480},{width:700,height:390}]){
     expect(image.height).toBeGreaterThanOrEqual(75);
     expect(control.y+control.height).toBeLessThanOrEqual(viewport.height+1);
     expect(await lesson.evaluate(()=>document.documentElement.scrollWidth<=innerWidth&&document.documentElement.scrollHeight<=innerHeight+1)).toBe(true);
+    await lesson.locator('#lessonQuestionsButton').click();
     await lesson.locator('#lessonSettingsButton').click();
     await expect(lesson.locator('#lessonSheet')).toBeVisible();
     await lesson.locator('#lessonSaveEditableButton').scrollIntoViewIfNeeded();
@@ -223,15 +228,21 @@ for(const viewport of [{width:320,height:480},{width:700,height:390}]){
   });
 }
 
-test('exported lesson: neutral header and comfortable Help spacing on a 320px phone',async({page,context},testInfo)=>{
+test('exported lesson: phone study frees the header space and keeps Help in Study tools',async({page,context},testInfo)=>{
   const path=await exportLesson(page,testInfo);
   const lesson=await openLesson(context,path,{width:320,height:640});
-  await expect(lesson.locator('.lesson-header')).toHaveCSS('background-color','rgb(245, 245, 242)');
+  await expect(lesson.locator('.lesson-header')).toBeHidden();
+  expect((await lesson.locator('#lessonStage').boundingBox()).y).toBeLessThanOrEqual(7);
+  await lesson.locator('#lessonQuestionsButton').click();
   const help=await lesson.locator('#lessonHelpButton').boundingBox();
   expect(help.width).toBeGreaterThanOrEqual(44);
   expect(320-(help.x+help.width)).toBeGreaterThanOrEqual(16);
   expect(await lesson.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await lesson.locator('#lessonHelpButton').click();
   await expect(lesson.locator('#lessonHelpDialog')).toBeVisible();
+  await lesson.keyboard.press('Escape');
+  await expect(lesson.locator('#lessonSheet #lessonHelpButton')).toBeFocused();
+  await lesson.keyboard.press('Escape');
+  await expect(lesson.locator('#lessonQuestionsButton')).toBeFocused();
   await lesson.close();
 });

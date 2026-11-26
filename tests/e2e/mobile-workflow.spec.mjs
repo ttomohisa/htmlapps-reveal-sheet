@@ -99,6 +99,8 @@ test('T15: mobile study keeps the image and primary guided action in one viewpor
   if(await page.locator('#appConfirmDialog').isVisible())await page.locator('#appConfirmOk').click();
   await expect(page.locator('.page-panel')).toBeHidden();await expect(page.locator('#loadedSection')).toBeHidden();
   const preview=await page.locator('.preview-surface').boundingBox(),panel=await page.locator('#studyPanel').boundingBox(),action=await page.locator('#revealCurrentButton').boundingBox(),nav=await page.locator('.reveal-nav').boundingBox();
+  await expect(page.locator('.app-header')).toBeHidden();
+  expect(preview.y).toBeLessThanOrEqual(1);
   expect(preview.width).toBeGreaterThanOrEqual(386);
   expect(preview.height).toBeGreaterThanOrEqual(450);
   const mask=page.locator('#maskSvg');
@@ -112,9 +114,18 @@ test('T15: mobile study keeps the image and primary guided action in one viewpor
   expect(await page.locator('#dropZone').boundingBox()).toEqual(preview);
   await page.locator('#studyToolsButton').click();
   await expect(page.locator('#editorSheet #guidedQuestionList button')).toHaveCount(1);
+  await page.locator('#editorSheet #languageButton').click();
+  await page.locator('#editorSheet #helpButton').click();
+  await expect(page.locator('#helpDialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#editorSheet #helpButton')).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(page.locator('#studyToolsButton')).toBeFocused();
   const ratings=await page.locator('#guidedRatingActions').boundingBox();expect(ratings.y+ratings.height).toBeLessThanOrEqual(nav.y+1);
+  for(const id of ['saveButton','createButton']){
+    await page.locator('#'+id).click();
+    await expect(page.locator('.app-header #helpButton')).toBeInViewport();
+  }
 });
 
 test.describe('touch study on a notebook photo',()=>{
@@ -153,6 +164,7 @@ test.describe('touch study on a notebook photo',()=>{
     await page.locator('#studyToolsButton').tap();
     await expect(page.locator('#editorSheet #guidedSettings')).toBeVisible();
     await page.locator('#editorSheetClose').tap();
+    await expect(page.locator('.app-header')).toBeHidden();
     const landscape=await stage.boundingBox();
     const controls=await page.locator('#studyPanel').boundingBox();
     expect(landscape.height).toBeGreaterThan(240);

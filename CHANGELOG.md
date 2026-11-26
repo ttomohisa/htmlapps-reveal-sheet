@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Hid the header during mobile study and moved its controls into Study tools in the app and exported lessons.
+
 - Enlarged the study image on phones, framed the current guided question, and added tap-to-hide in free study, including exported lessons.
 
 - Placed brief instructions beside the image picker and folded import options below it.

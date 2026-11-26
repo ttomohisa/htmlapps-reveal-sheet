@@ -383,7 +383,7 @@ IndexedDBが利用可能なら、教材スナップショットとPNG Blobを同
 
 ### 18.1 画面構成
 
-PCはページ一覧、中央画像、選択対象の操作を同時表示する。スマートフォンは「作る／学習／保存」の三画面へ分け、テンプレートの下部ページ切替コンポーネントを適用する。ヘルプは右上のボタンから開く。
+PCはページ一覧、中央画像、選択対象の操作を同時表示する。スマートフォンは「作る／学習／保存」の三画面へ分け、テンプレートの下部ページ切替コンポーネントを適用する。ヘルプは右上のボタンから開く。スマホで学習中は「問題と操作」から開く。
 
 学習画面は画像と「答えを見る／自己評価」を近接させる。下部ナビと学習アクションの合計高さを一元管理し、コンテンツ用余白にsafe-areaを含める。別々の固定バーを同じ位置へ重ねない。
 
@@ -602,7 +602,7 @@ Hide only the main informational footer using the existing smartphone layout que
 
 ## Header visibility
 
-Keep the header version visible on narrow smartphones without overlapping the app name or language/Help controls. Verify Japanese and English at 320px, 360px, 390px and desktop widths.
+When the header is shown, keep its version visible on narrow smartphones without overlapping the app name or language/Help controls. Verify Japanese and English at 320px, 360px, 390px and desktop widths.
 
 ## 付記：v1.1.0 スマートフォン編集UI（2026-10-28）
 
@@ -657,7 +657,7 @@ Keep the header version visible on narrow smartphones without overlapping the ap
 - 画像がない間は空のページ一覧と「新しい教材」を表示せず、画像追加・撮影・教材読み込みと設定を優先する。Undo可能な履歴が残る場合はUndoを隠さない。
 - 覆いの色は画像を追加する前にも変更でき、あとから追加した画像にも反映する。保存形式の互換性は変えない。
 - PCの「写真を撮る」は明示的な操作の後でカメラ権限を要求し、ライブプレビューを表示して撮影する。カメラ映像は端末内でJPEG化して通常の画像取り込みへ渡す。画面を閉じる、タブを隠す、ページ移動する際には映像トラックを停止する。スマホは既存の撮影入力を維持する。
-- 出力教材HTMLは作成画面と同じ中立色のヘッダーを使い、スマホのヘルプボタンに余白とタップ領域を確保する。自由学習の問題ボタンはPCとスマホで統一感のある形状にする。
+- 出力教材HTMLは作成画面と同じ中立色のヘッダーを使い、スマホで学習中はヘッダーを隠し、「問題と操作」内のヘルプボタンにタップ領域を確保する。自由学習の問題ボタンはPCとスマホで統一感のある形状にする。
 
 ## 付記：最初の一問までの操作
 

@@ -86,13 +86,13 @@ html,.lesson-body{max-width:100%;overflow-x:hidden}
 .lesson-sheet .lesson-persistence:first-child,.lesson-sheet .lesson-save:first-child{margin-top:0;border-top:0;padding-top:0}
 @media (max-width:720px), (min-width:721px) and (pointer:coarse) and (max-height:500px){
   .lesson-body.lesson-active{display:flex;flex-direction:column;height:100dvh;min-height:0;overflow:hidden}
-  .lesson-active .lesson-header{flex:0 0 auto;padding-top:env(safe-area-inset-top)}
+  .lesson-active .lesson-header{display:none}
   .lesson-active .lesson-header-inner{width:100%;min-height:55px;padding:4px max(10px,env(safe-area-inset-right)) 4px max(10px,env(safe-area-inset-left));gap:9px}
   .lesson-active .lesson-icon{width:34px;height:34px}
   .lesson-active .lesson-header-copy h1{font-size:14px}
   .lesson-active .lesson-header-copy p{font-size:10px}
   .lesson-active .lesson-header-actions{gap:1px}
-  .lesson-active .lesson-main{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;width:100%;margin:0;padding:0}
+  .lesson-active .lesson-main{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;width:100%;margin:0;padding:env(safe-area-inset-top,0px) 0 0}
   .lesson-active #lessonReady{display:flex;flex:1 1 auto;flex-direction:column;min-height:0}
   .lesson-active .lesson-layout{display:flex;flex:1 1 auto;flex-direction:column;gap:0;min-height:0;padding:0}
   .lesson-active .lesson-layout>.lesson-pages{display:none}
@@ -292,6 +292,10 @@ html,.lesson-body{max-width:100%;overflow-x:hidden}
   .single-lesson-page .lesson-preview,.single-lesson-page .lesson-study{grid-row:1}
 }
 @media (max-width:720px), (min-width:721px) and (pointer:coarse) and (max-height:500px){
+  .lesson-sheet-body .lesson-header-copy{margin:0 0 4px;overflow-wrap:anywhere}
+  .lesson-sheet-body .lesson-header-actions{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:6px;margin:0 0 10px}
+  .lesson-sheet-body .lesson-header-actions button{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:44px;min-width:44px;width:auto;padding:5px 8px}
+  .lesson-sheet-body :is(#lessonHelpButton,#lessonSettingsButton)::after{content:attr(aria-label);font-size:13px}
   .lesson-active .lesson-command-row{display:flex;align-items:center;gap:7px}
   .lesson-active .lesson-mode-switch{flex:1;min-width:0}
   .lesson-active .lesson-mobile-extras{display:block;flex:none;margin:0}
