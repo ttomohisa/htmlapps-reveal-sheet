@@ -100,6 +100,7 @@ test('mobile: initial action layout and cover color before adding an image',asyn
   await expect(page.locator('.page-panel')).toBeHidden();
   await expect(page.locator('#coverColor')).toBeEnabled();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.locator('.settings-toggle').click();
   await page.locator('#coverColor').fill('#aabbcc');
   await page.locator('#coverColor').dispatchEvent('change');
   await page.locator('#imageInput').setInputFiles(imagePath('static.png'));

@@ -24,33 +24,18 @@ test('T01/T02: loaded image begins within the narrow viewport, not below introdu
  const box=await page.locator('#previewImage').boundingBox();expect(box.y).toBeLessThan(600);
 });
 
-test('T01: compact intro replaces the hero heading and hides the privacy badge only on phones',async({page})=>{
- await page.setViewportSize({width:1360,height:780});await openApp(page);
- await expect(page.locator('.brand-name')).toHaveJSProperty('tagName','H1');
- await expect(page.locator('#heroTitle')).toHaveCount(0);
- await expect(page.locator('#introDescription')).toContainText('Create a study sheet from diagrams or notes');
- await expect(page.locator('.local-badge')).toBeVisible();
- await page.locator('#languageButton').click();
- await expect(page.locator('#introDescription')).toHaveText('図やノートの画像に覆いを置き、答えをめくって覚える暗記シートを作れます。');
- await expect(page.locator('.local-badge')).toContainText('完全ローカル処理');
- const desktop=await page.evaluate(()=>{
-   const header=document.querySelector('.header-inner').getBoundingClientRect(),main=document.querySelector('.main').getBoundingClientRect(),mark=document.querySelector('.brand-mark').getBoundingClientRect(),intro=document.querySelector('.page-intro').getBoundingClientRect(),badge=document.querySelector('.local-badge').getBoundingClientRect(),description=document.querySelector('#introDescription').getBoundingClientRect();
-   return {headerWidth:header.width,mainWidth:main.width,markWidth:mark.width,markHeight:mark.height,introRight:intro.right,badgeRight:badge.right,badgeLeft:badge.left,descriptionRight:description.right,introDisplay:getComputedStyle(document.querySelector('.page-intro')).display};
- });
- expect(desktop.headerWidth).toBeCloseTo(1120,0);expect(desktop.mainWidth).toBeCloseTo(1120,0);
- expect(desktop.markWidth).toBeCloseTo(38,0);expect(desktop.markHeight).toBeCloseTo(38,0);
- expect(desktop.introDisplay).toBe('flex');expect(desktop.badgeLeft).toBeGreaterThan(desktop.descriptionRight);
- expect(desktop.badgeRight).toBeLessThanOrEqual(desktop.introRight+1);
- await page.setViewportSize({width:390,height:780});
- await expect(page.locator('#introDescription')).toBeVisible();
- await expect(page.locator('.local-badge')).toBeHidden();
- expect(await page.locator('.page-intro').evaluate(node=>getComputedStyle(node).flexDirection)).toBe('column');
- expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
- await page.locator('#languageButton').click();
- await expect(page.locator('#introDescription')).toContainText('Create a study sheet');
- await expect(page.locator('.local-badge')).toBeHidden();
- await page.setViewportSize({width:768,height:780});
- await expect(page.locator('.local-badge')).toBeVisible();
+test('the start screen puts the import and the working example together at both widths',async({page})=>{
+  for(const viewport of [{width:1360,height:900},{width:390,height:844}]){
+    await page.setViewportSize(viewport);await openApp(page);
+    await expect(page.locator('.brand-name')).toHaveJSProperty('tagName','H1');
+    await expect(page.locator('#introDescription')).toContainText('Create a study sheet');
+    await expect(page.locator('#exampleCover')).toBeInViewport();
+    await expect(page.locator('#addButton')).toBeInViewport();
+    await expect(page.locator('.reveal-nav')).toBeHidden();
+    if(viewport.width>767)await expect(page.locator('.local-badge')).toBeVisible();
+    else await expect(page.locator('.local-badge')).toBeHidden();
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  }
 });
 
 test('T01: workspace cards are understated without hiding active page state',async({page})=>{
@@ -111,6 +96,8 @@ test('T01: import actions are distinct from image options, and local storage is 
   await expect(page.locator('.import-actions #addButton')).toBeVisible();
   await expect(page.locator('.import-actions #cameraButton')).toBeVisible();
   await expect(page.locator('.import-actions #openButton')).toBeVisible();
+  await expect(page.locator('#compressImages')).toBeHidden();
+  await page.locator('.settings-toggle').click();
   await expect(page.locator('.import-settings .image-compression-control')).toBeVisible();
   await expect(page.locator('.import-settings .cover-color-control')).toBeVisible();
   const buttons=await page.evaluate(()=>({

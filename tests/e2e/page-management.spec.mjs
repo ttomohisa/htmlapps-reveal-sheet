@@ -88,11 +88,13 @@ test('T05: drag handle keeps a keyboard reorder alternative',async({page})=>{
 });
 
 
-test('T05: save mode keeps page-card titles readable in the full card width',async({page})=>{
-  await page.setViewportSize({width:1100,height:800});await openApp(page);await page.locator('#imageInput').setInputFiles([imagePath('static.png'),imagePath('static.jpg')]);
-  await page.locator('#saveButton').click();await expect(page.locator('#savePanel')).toBeVisible();
-  const card=page.locator('#pageList .page-item').first(),title=card.locator('.page-card-title-static');await expect(title).toContainText(/Page 1|ページ1/);
-  const cb=await card.boundingBox(),tb=await title.boundingBox();expect(tb.width).toBeGreaterThan(cb.width*.65);
+test('T05: saved page names remain available under file details',async({page})=>{
+  await openApp(page);await page.locator('#imageInput').setInputFiles([imagePath('static.png'),imagePath('static.jpg')]);
+  await expect(page.locator('#pageList .page-item')).toHaveCount(2);
+  await page.locator('#saveButton').click();
+  await expect(page.locator('.reveal-grid')).toBeHidden();
+  await page.locator('#saveFileDetails summary').click();
+  await expect(page.locator('#savePageNames li')).toHaveText(['Page 1','Page 2']);
 });
 
 test('T05: many page cards keep the Add description row visible instead of flex-shrinking',async({page})=>{

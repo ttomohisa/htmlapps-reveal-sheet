@@ -81,6 +81,7 @@ test('T03: selected cover moves and resizes directly on the image',async({page})
 
 test('T03: cover color changes editor rendering and survives editable export',async({page})=>{
   await openApp(page);await page.locator('#imageInput').setInputFiles(imagePath('static.png'));await expect(page.locator('#previewImage')).toBeVisible();
+  await page.locator('.settings-toggle').click();
   await page.locator('#coverColor').fill('#a04372');
   const a=await screenPointForImage(page,20,18),b=await screenPointForImage(page,55,38);
   await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y);await page.mouse.up();

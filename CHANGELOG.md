@@ -1,3 +1,9 @@
+## Unreleased
+
+- Added a bilingual, keyboard-operable example to the start screen and folded import options below the image actions.
+- Placed desktop editing and study controls beside the image. Added first-cover guidance, keyboard placement and adjustment, a study shortcut when questions are ready, and page selection in free study on phones.
+- Simplified the save screen, with page names under file details and an explanation of when study HTML becomes available.
+
 ## 1.2.1 - 2026-11-23
 
 - Fixed incomplete release ZIP contents: bundled README screenshots and linked QA/contributing documents, with a ZIP-entry and relative-link check.
