@@ -179,6 +179,12 @@ for(const viewport of [{width:390,height:844},{width:320,height:640}]){
 test('exported lesson: desktop gear opens Settings & Save and restores it after close',async({page,context},testInfo)=>{
   const filepath=await exportLesson(page,testInfo);
   const lesson=await openLesson(context,filepath,{width:1280,height:800});
+  await lesson.locator('#lessonGuidedMode').click();
+  const image=await lesson.locator('#lessonStage').boundingBox();
+  const reveal=await lesson.locator('#lessonRevealCurrent').boundingBox();
+  expect(image.width).toBeGreaterThan(800);
+  expect(reveal.x).toBeGreaterThanOrEqual(image.x+image.width);
+  expect(reveal.y+reveal.height).toBeLessThan(800);
   const gear=lesson.locator('#lessonSettingsButton');
   await expect(gear).toBeVisible();
   await gear.click();

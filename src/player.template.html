@@ -305,6 +305,25 @@ html,.lesson-body{max-width:100%;overflow-x:hidden}
   .lesson-active .lesson-reading .lesson-answer{order:-1}
   .lesson-active .lesson-reading :is(.lesson-prompt,.lesson-answer){flex:none;margin:0;padding:3px 0}
 }
+
+/* The desktop reader keeps the worksheet visible while the controls scroll. */
+@media (min-width:721px) and (min-height:501px), (min-width:721px) and (pointer:fine) {
+  .lesson-active .lesson-layout {
+    display:grid;grid-template-columns:minmax(0,1fr) clamp(240px,23vw,300px);
+    grid-template-rows:auto minmax(0,1fr);gap:10px 16px;
+    height:clamp(340px,calc(100dvh - 128px),960px);align-items:stretch;
+  }
+  .lesson-active .lesson-panel { display:contents; }
+  .lesson-active .lesson-layout>.lesson-pages { grid-area:1/2;position:static;max-height:22dvh; }
+  .single-lesson-page .lesson-layout>.lesson-pages { display:none; }
+  .lesson-active .lesson-preview { grid-area:1/1/3/2;height:100%;min-height:0; }
+  .lesson-active .lesson-study {
+    grid-area:2/2;min-width:0;min-height:0;overflow:auto;overscroll-behavior:contain;
+    margin:0;padding:12px;border:1px solid var(--lesson-stroke);border-radius:12px;background:white;
+  }
+  .single-lesson-page .lesson-study { grid-row:1/3; }
+  .lesson-study .lesson-guided-secondary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
 </style>
 </head>
 <body class="lesson-body">
